@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}로그인 - 청년 정책 상담 챗봇{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card login-card">
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <img src="{% static 'images/logo.png' %}" alt="청년모아 로고" class="login-logo mb-3">
+                    <h2 class="card-title">청년 정책 상담 챗봇</h2>
+                    <p class="card-text">로그인하세요</p>
+                </div>
+                
+                <form method="post" action="{% url 'user:login' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="email" class="form-label">이메일</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">비밀번호</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">로그인</button>
+                    </div>
+                </form>
+
+                <p class="text-center mt-3 privacy-text">
+                    로그인 시 개인정보 처리방침에 동의하게 됩니다.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
