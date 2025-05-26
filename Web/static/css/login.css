@@ -65,4 +65,21 @@ body {
     background-color: #f8f9fa;
     border-color: #dadce0;
     color: #3c4043;
+}
+
+.google-btn {
+  display: inline-flex;
+  align-items: center;
+  background-color: white;
+  color: #444;
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-family: 'Arial', sans-serif;
+  font-size: 14px;
+  text-decoration: none;
+}
+.google-icon {
+  height: 18px;
+  margin-right: 8px;
 } 
