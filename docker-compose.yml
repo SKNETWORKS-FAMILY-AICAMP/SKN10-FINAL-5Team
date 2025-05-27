@@ -1,0 +1,13 @@
+version: '3.1'
+services:
+  neo4j:
+    container_name: neo4j-server
+    image: neo4j
+    ports:
+      - 7474:7474
+      - 7687:7687
+    volumes:
+      - ./data:/data
+      - ./logs:/logs
+    environment:
+      NEO4J_AUTH: neo4j/neo4j1234
