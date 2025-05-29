@@ -426,7 +426,7 @@ df.to_excel('청년정책목록_전체_매핑완료.xlsx', index=False)
 print("Excel 파일 저장 완료: 청년정책목록_전체_매핑완료.xlsx")
 
 # CSV 파일로도 저장 (주석 처리됨)
-# df.to_csv('청년정책목록_전체_매핑완료_3.csv', encoding='utf-8', index=False)
+df.to_csv('청년정책목록_전체_매핑완료.csv', encoding='utf-8', index=False)
 
 print("\n전처리 작업이 완료되었습니다!")
 print(f"최종 데이터 크기: {df.shape}")
