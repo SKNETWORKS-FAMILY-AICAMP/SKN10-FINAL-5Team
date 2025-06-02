@@ -1,0 +1,49 @@
+body {
+    background-color: #e9ecef;
+}
+
+.login-card {
+    margin-top: 10%;
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.login-logo {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+}
+
+.card-title {
+    font-weight: 600;
+    color: #343a40;
+}
+
+.card-text {
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+}
+
+.privacy-text {
+    font-size: 0.8rem;
+    color: #868e96;
+}
+
+.naver-btn {
+    display: inline-block;
+    text-decoration: none;
+}
+
+.naver-login-img {
+    width: auto;
+    height: 50px;
+    display: block;
+}
+
+.naver-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    vertical-align: middle;
+} 

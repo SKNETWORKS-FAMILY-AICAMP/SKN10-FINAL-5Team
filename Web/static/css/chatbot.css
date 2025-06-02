@@ -1,0 +1,105 @@
+/* Custom styles for chatbot page */
+
+body, html, .container-fluid, .row, main {
+    height: 100%;
+    overflow: hidden; /* Prevent scroll on body */
+}
+
+.sidebar {
+    width: 250px; /* Default sidebar width */
+    position: fixed;
+    top: 56px; /* Height of the fixed navbar */
+    bottom: 0;
+    left: 0;
+    z-index: 1000; /* Behind the navbar */
+    padding: 0;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+    transition: transform .3s ease-in-out;
+}
+
+/* Adjust main content margin when sidebar is open */
+main {
+    margin-left: 250px; /* Match sidebar width */
+    transition: margin-left .3s ease-in-out;
+}
+
+/* Styles for when sidebar is collapsed (optional, if adding toggle) */
+/*
+.sidebar.collapse {
+    transform: translateX(-100%);
+}
+main.sidebar-collapsed {
+    margin-left: 0;
+}
+*/
+
+#chatWindow {
+    flex-grow: 1;
+    overflow-y: auto; /* Enable scrolling for chat messages */
+    padding-bottom: 100px; /* Add padding for input area */
+}
+
+/* Chat message bubble styles */
+.chat-bubble {
+    max-width: 70%;
+    padding: 10px 15px;
+    border-radius: 15px;
+    margin-bottom: 10px;
+    word-break: break-word; /* Break long words */
+}
+
+.chat-bubble.user {
+    background-color: #007bff; /* User message color */
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 5px;
+}
+
+.chat-bubble.bot {
+    background-color: #e9ecef; /* Bot message color */
+    color: #212529;
+    align-self: flex-start;
+    border-bottom-left-radius: 5px;
+}
+
+#chatBubbles {
+    display: flex;
+    flex-direction: column; /* Arrange bubbles vertically */
+}
+
+#messageInput {
+    resize: none; /* Disable textarea resize handle */
+}
+
+#suggestedQuestions .btn {
+    width: auto; /* Adjust width to content */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%); /* Hide sidebar by default on small screens */
+        width: 100%;
+        top: 56px;
+        bottom: 0;
+        left: 0;
+    }
+
+    .sidebar.show {
+        transform: translateX(0%); /* Show sidebar when toggled */
+    }
+
+    main {
+        margin-left: 0; /* No margin on small screens */
+    }
+
+    /* Adjust main content margin when sidebar is shown on small screens */
+    main.sidebar-visible-sm {
+         margin-left: 250px; /* Or sidebar width if desired */
+         /* This might require JS to add/remove this class */
+    }
+
+     #chatWindow {
+        padding-bottom: 120px; /* Adjust for input area height on small screens */
+    }
+} 

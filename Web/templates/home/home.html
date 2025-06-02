@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container text-center mt-5 pt-5">
+    <h1 class="display-4 my-4">청년을 위한 스마트 정책 가이드</h1>
+    <p class="lead mb-5">복잡하고 정보를 찾기 힘든 청년 정책, AI 챗봇이 쉽게 알려드려요</p>
+
+    <div class="row my-5">
+        <div class="col-md-4">
+            <div class="card h-100 feature-card">
+                <div class="card-body">
+                    <i class="fas fa-question-circle fa-4x mb-3 text-primary"></i>
+                    <h5 class="card-title">청년정책 Q&A</h5>
+                    <p class="card-text">궁금한 정책을 바로 물어보세요</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 feature-card">
+                <div class="card-body">
+                    <i class="fas fa-bullseye fa-4x mb-3 text-success"></i>
+                    <h5 class="card-title">맞춤 정책 추천</h5>
+                    <p class="card-text">나에게 맞는 정책을 찾아드려요</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 feature-card">
+                <div class="card-body">
+                    <i class="fas fa-comments fa-4x mb-3 text-info"></i>
+                    <h5 class="card-title">24시간 상담</h5>
+                    <p class="card-text">언제든지 정책 상담 가능</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="my-4">인기 청년 정책</h2>
+    <div class="row" id="popular-policies-container">
+        {# Policy cards will be loaded here. Example structure: #}
+        {% comment %}
+        <div class="col-md-6 col-lg-4"> {# Adjust column size based on desired layout #}
+            <div class="card policy-card" data-url="https://example.com/policy1"> {# Add data-url for JS #}
+                <div class="card-body">
+                    <h5 class="card-title">청년내일채움공제</h5>
+                    <p class="card-text">중소기업 취업 청년에게 2년간 300만원 지원</p>
+                    <span class="policy-category">취업지원</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="card policy-card" data-url="https://example.com/policy2">
+                <div class="card-body">
+                    <h5 class="card-title">청년 전세임대주택</h5>
+                    <p class="card-text">만 19~39세 청년에게 시중 시세보다 저렴</p>
+                    <span class="policy-category">주거지원</span>
+                </div>
+            </div>
+        </div>
+        {# Add more policy cards as needed #}
+        {% endcomment %}
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/home.js' %}"></script>
+{% endblock %}
