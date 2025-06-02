@@ -1,0 +1,36 @@
+/* Custom styles for cards and sections */
+.feature-card {
+    transition: transform 0.3s ease-in-out;
+}
+.feature-card:hover {
+    transform: translateY(-5px);
+}
+.policy-card {
+    margin-bottom: 20px;
+    cursor: pointer; /* Indicate it's clickable */
+    transition: transform 0.3s ease-in-out;
+}
+.policy-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.policy-category {
+    font-size: 0.8em;
+    color: #007bff; /* Bootstrap primary color */
+    margin-top: 10px;
+    display: block;
+}
+.notification-dropdown {
+    width: 300px; /* Adjust width as needed */
+}
+.notification-item {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+.notification-item:last-child {
+    border-bottom: none;
+}
+.notification-item .close {
+    font-size: 1.2rem;
+    font-weight: normal;
+}

@@ -25,61 +25,25 @@ body {
     margin-bottom: 1.5rem;
 }
 
-.google-login-button {
-    border-color: #ced4da;
-    color: #495057;
-    background-color: #fff;
-    transition: all 0.3s ease;
-}
-
-.google-login-button:hover {
-    background-color: #f8f9fa;
-    border-color: #dae0e5;
-}
-
 .privacy-text {
     font-size: 0.8rem;
     color: #868e96;
 }
 
-.google-logo {
+.naver-btn {
+    display: inline-block;
+    text-decoration: none;
+}
+
+.naver-login-img {
+    width: auto;
+    height: 50px;
+    display: block;
+}
+
+.naver-icon {
     width: 18px;
     height: 18px;
     margin-right: 8px;
     vertical-align: middle;
-}
-
-.btn-outline-dark {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 8px 16px;
-    border: 1px solid #dadce0;
-    background-color: white;
-    color: #3c4043;
-    font-weight: 500;
-    transition: background-color 0.3s ease;
-}
-
-.btn-outline-dark:hover {
-    background-color: #f8f9fa;
-    border-color: #dadce0;
-    color: #3c4043;
-}
-
-.google-btn {
-  display: inline-flex;
-  align-items: center;
-  background-color: white;
-  color: #444;
-  border: 1px solid #ccc;
-  padding: 8px 12px;
-  border-radius: 4px;
-  font-family: 'Arial', sans-serif;
-  font-size: 14px;
-  text-decoration: none;
-}
-.google-icon {
-  height: 18px;
-  margin-right: 8px;
 } 

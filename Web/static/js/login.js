@@ -1,93 +1,42 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const googleLoginBtn = document.getElementById('googleLoginBtn');
-    const loginSuccessToast = new bootstrap.Toast(document.getElementById('loginSuccessToast'), { delay: 2000 });
-    const toastMessage = document.getElementById('toastMessage');
+    const naverLoginBtn = document.getElementById('naver-login-btn');
+    const loginSuccessToast = document.getElementById('login-success-toast');
 
-    if (googleLoginBtn) {
-        const googleLoginUrl = googleLoginBtn.dataset.googleLoginUrl;
-        const chatbotUrl = googleLoginBtn.dataset.chatbotUrl;
-        const loginUrl = googleLoginBtn.dataset.loginUrl;
-
-        // Google 로그인 버튼 클릭 이벤트
-        googleLoginBtn.addEventListener('click', function() {
-            // Google OAuth2 클라이언트 초기화
-            google.accounts.id.initialize({
-                client_id: 'YOUR_GOOGLE_CLIENT_ID', // 실제 클라이언트 ID로 교체 필요
-                callback: handleCredentialResponse
-            });
-
-            // Google 로그인 프롬프트 표시
-            google.accounts.id.prompt();
+    if (naverLoginBtn) {
+        naverLoginBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            // 네이버 OAuth 인증 프로세스 시작
+            // TODO: 실제 네이버 OAuth 인증 URL로 변경 필요
+            window.location.href = 'YOUR_NAVER_OAUTH_LOGIN_URL';
         });
+    }
 
-        // Google 로그인 응답 처리
-        function handleCredentialResponse(response) {
-            // 서버로 토큰 전송
-            fetch(googleLoginUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({
-                    credential: response.credential
-                })
-            })
-            .then(response => {
-                if (response.ok) {
-                    // 로그인 성공
-                    toastMessage.textContent = '로그인 성공! 챗봇 페이지로 이동합니다.';
-                    loginSuccessToast.show();
-                    
-                    // 2초 후 챗봇 페이지로 이동
-                    setTimeout(() => {
-                        window.location.href = chatbotUrl;
-                    }, 2000);
-                } else {
-                    // 로그인 실패
-                    toastMessage.textContent = '로그인에 실패했습니다. 다시 시도해주세요.';
-                    loginSuccessToast.show();
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                toastMessage.textContent = '로그인 처리 중 오류가 발생했습니다.';
-                loginSuccessToast.show();
-            });
-        }
+    // 로그인 성공 후 토스트 메시지 표시 및 리다이렉션 (예시)
+    // 실제로는 백엔드로부터 로그인 성공 응답을 받은 후 호출됩니다.
+    function showLoginSuccessToastAndRedirect() {
+        if (loginSuccessToast) {
+            const toast = new bootstrap.Toast(loginSuccessToast);
+            toast.show();
 
-        // CSRF 토큰 가져오기
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
+            // 2초 후 메인 페이지로 리다이렉션
+            setTimeout(function() {
+                // TODO: 실제 메인 페이지 URL로 변경 필요
+                window.location.href = 'YOUR_MAIN_PAGE_URL';
+            }, 2000);
         }
     }
 
-    // 알림 버튼 클릭 이벤트 (로그인 페이지에는 없지만, base.html에 있어 js 에러 방지)
-    const notificationBtn = document.getElementById('notificationBtn');
-    if (notificationBtn) {
-        notificationBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            alert('새로운 알림이 없습니다.');
-        });
+    // 예시: 페이지 로드 시 URL 파라미터 등을 확인하여 로그인 성공 여부를 판단하고
+    // showLoginSuccessToastAndRedirect 함수를 호출하는 로직 추가 필요
+    // 예를 들어, 네이버 OAuth 리다이렉션 후 URL에 success=true 파라미터가 있다면:
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('login') === 'success') {
+         // TODO: 실제 사용자 이름 가져오는 로직 필요
+        const userName = urlParams.get('username') || '사용자님';
+        const toastBody = loginSuccessToast.querySelector('.toast-body');
+        if(toastBody) {
+             toastBody.innerText = `로그인 성공! ${userName} 안녕하세요!`;
+        }
+        showLoginSuccessToastAndRedirect();
     }
-
-    // 로그아웃 버튼 클릭 이벤트 (로그인 페이지에는 없지만, base.html에 있어 js 에러 방지)
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', function() {
-            // 로그아웃 처리
-            window.location.href = '{% url "home" %}'; // 실제 URL 패턴에 맞게 수정
-        });
-    }
-}); 
+});
