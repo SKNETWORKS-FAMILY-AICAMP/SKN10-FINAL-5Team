@@ -17,7 +17,7 @@ services:
       - backend
 
   neo4j:
-    image: neo4j:5.22.0
+    image: neo4j
     container_name: neo4j_db
     restart: unless-stopped
     environment:

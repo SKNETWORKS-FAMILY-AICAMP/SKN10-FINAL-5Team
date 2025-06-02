@@ -103,3 +103,7 @@ widgetsnbextension==4.0.14
 seaborn==0.13.1
 matplotlib==3.9.2
 koreanize_matplotlib
+openai
+sqlalchemy
+psycopg2-binary
+python-dotenv
