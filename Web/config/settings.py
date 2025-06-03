@@ -92,8 +92,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'servicedb',
+        'USER': 'admin',
+        'PASSWORD': 'admin1234',
+        'HOST': 'localhost',  # 또는 Docker 컨테이너 안에서 실행한다면 'db'
+        'PORT': '5432',
     }
 }
 
