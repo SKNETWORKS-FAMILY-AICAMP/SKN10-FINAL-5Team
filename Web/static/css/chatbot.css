@@ -1,8 +1,21 @@
 /* Custom styles for chatbot page */
 
-body, html, .container-fluid, .row, main {
+body, html {
     height: 100%;
     overflow: hidden; /* Prevent scroll on body */
+}
+
+.container-fluid, .row {
+    height: 100%;
+}
+
+main, .main-chat-area {
+    height: 100vh; /* 전체 뷰포트 높이 사용 */
+    margin-left: 250px; /* Match sidebar width */
+    transition: margin-left .3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* 메인 컨테이너에서 오버플로우 방지 */
 }
 
 .sidebar {
@@ -17,12 +30,6 @@ body, html, .container-fluid, .row, main {
     transition: transform .3s ease-in-out;
 }
 
-/* Adjust main content margin when sidebar is open */
-main {
-    margin-left: 250px; /* Match sidebar width */
-    transition: margin-left .3s ease-in-out;
-}
-
 /* Styles for when sidebar is collapsed (optional, if adding toggle) */
 /*
 .sidebar.collapse {
@@ -34,9 +41,21 @@ main.sidebar-collapsed {
 */
 
 #chatWindow {
-    flex-grow: 1;
-    overflow-y: auto; /* Enable scrolling for chat messages */
-    padding-bottom: 100px; /* Add padding for input area */
+    flex: 1; /* 남은 공간 모두 사용 */
+    overflow-y: auto; /* 세로 스크롤 활성화 */
+    overflow-x: hidden; /* 가로 스크롤 숨김 */
+    padding: 15px;
+    height: 0; /* flex가 제대로 작동하도록 */
+    scroll-behavior: smooth; /* 부드러운 스크롤 */
+    position: relative; /* 자식 요소들의 위치 기준점 */
+}
+
+/* 메시지 입력 영역 스타일 */
+.message-input-area {
+    flex-shrink: 0; /* 축소되지 않도록 */
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    padding: 15px;
 }
 
 /* Chat message bubble styles */
@@ -65,6 +84,19 @@ main.sidebar-collapsed {
 #chatBubbles {
     display: flex;
     flex-direction: column; /* Arrange bubbles vertically */
+    gap: 10px; /* 버블 사이 간격 */
+    min-height: min-content; /* 컨텐츠에 맞는 최소 높이 */
+    padding-bottom: 20px; /* 마지막 메시지 아래 여백 */
+    width: 100%; /* 전체 너비 사용 */
+}
+
+/* 초기 메시지 화면 스타일 개선 */
+#initialMessage {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh; /* 최소 높이 설정 */
 }
 
 #messageInput {
@@ -73,6 +105,84 @@ main.sidebar-collapsed {
 
 #suggestedQuestions .btn {
     width: auto; /* Adjust width to content */
+}
+
+/* Loading animation styles */
+.loading-message {
+    background-color: #f8f9fa !important; /* Slightly different background for loading */
+    opacity: 0.8;
+}
+
+.loading-dots {
+    display: inline-block;
+    margin-left: 5px;
+}
+
+.loading-dots span {
+    animation: loading-dots 1.4s infinite ease-in-out both;
+    display: inline-block;
+    font-size: 1.2em;
+}
+
+.loading-dots span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.loading-dots span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes loading-dots {
+    0%, 80%, 100% {
+        opacity: 0.3;
+    }
+    40% {
+        opacity: 1;
+    }
+}
+
+/* Better code block styling */
+code {
+    background-color: #f1f3f4;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+/* Better text formatting in chat bubbles */
+.chat-bubble strong {
+    font-weight: 600;
+}
+
+.chat-bubble em {
+    font-style: italic;
+    color: #666;
+}
+
+/* 스크롤바 스타일링 */
+#chatWindow::-webkit-scrollbar {
+    width: 8px;
+}
+
+#chatWindow::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+#chatWindow::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+#chatWindow::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Firefox 스크롤바 스타일 */
+#chatWindow {
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 #f1f1f1;
 }
 
 /* Responsive adjustments */
@@ -89,17 +199,22 @@ main.sidebar-collapsed {
         transform: translateX(0%); /* Show sidebar when toggled */
     }
 
-    main {
+    main, .main-chat-area {
         margin-left: 0; /* No margin on small screens */
+        height: 100vh; /* 모바일에서도 전체 높이 사용 */
     }
 
     /* Adjust main content margin when sidebar is shown on small screens */
-    main.sidebar-visible-sm {
+    main.sidebar-visible-sm, .main-chat-area.sidebar-visible-sm {
          margin-left: 250px; /* Or sidebar width if desired */
          /* This might require JS to add/remove this class */
     }
 
-     #chatWindow {
-        padding-bottom: 120px; /* Adjust for input area height on small screens */
+    #chatWindow {
+        padding: 10px; /* 모바일에서 패딩 줄임 */
     }
-} 
+
+    .chat-bubble {
+        max-width: 85%; /* 모바일에서 더 넓게 */
+    }
+}
