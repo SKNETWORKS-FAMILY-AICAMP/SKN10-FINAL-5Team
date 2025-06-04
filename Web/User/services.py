@@ -6,7 +6,6 @@ from .token import (
     decode_access_token, decode_refresh_token
 )
 
-
 def get_naver_user_info(access_token):
     headers = {
         "Authorization": f"Bearer {access_token}"

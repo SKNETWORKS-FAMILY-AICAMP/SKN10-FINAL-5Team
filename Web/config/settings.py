@@ -152,17 +152,3 @@ CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 
 AUTH_USER_MODEL = "User.User"
-
-# settings.py
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        # 기본 세션 인증 제거
-        # 'rest_framework.authentication.SessionAuthentication', ❌ 제거
-        # JWT 인증만 사용
-        'core.jwt_auth.JWTAuthentication',  # (아래에 직접 구현할 클래스)
-    ],
-}
-
-# 쿠키 보안 관련
-CSRF_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = True  # HTTPS일 때

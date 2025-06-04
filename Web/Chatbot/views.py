@@ -4,15 +4,10 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from .service import get_rag_chain
-
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
 
-class ChatbotPageView(APIView):
-    # permission_classes = [IsAuthenticated]
-    
+class ChatbotPageView(APIView):    
     def get(self, request):
-        """챗봇 페이지 뷰"""
         return render(request, 'chatbot/chatbot.html')
 
 @csrf_exempt

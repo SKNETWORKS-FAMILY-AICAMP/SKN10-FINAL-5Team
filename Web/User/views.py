@@ -20,23 +20,9 @@ from .services import (
 )
 
 from django.shortcuts import render, redirect
-
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-
-class UserInfoView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        user = request.user
-        return Response({
-            "user_nm": user.user_nm,
-            "email": user.email,
-            "profile_img": user.profile_img or "/static/images/default_profile.png"
-        })
-    
 
 # ✅ 로그인 화면 렌더링
 def login_view(request):
@@ -51,11 +37,11 @@ class NaverLoginRedirectView(APIView):
             f"response_type=code&client_id={settings.NAVER_CLIENT_ID}"
             f"&redirect_uri={settings.NAVER_REDIRECT_URI}&state=random_state"
         )
-        from django.shortcuts import redirect
+
         return redirect(url)
 
 
-# ✅ 네이버 로그인 콜백 처리 (세션 없이 JWT 발급)
+# ✅ 네이버 로그인 콜백 처리 
 class NaverLoginCallbackView(APIView):
     def get(self, request):
         code = request.GET.get("code")
@@ -100,12 +86,10 @@ class NaverLoginCallbackView(APIView):
             key='refreshToken',
             value=refresh_token,
             httponly=True,
-            secure=False,
-            samesite='Lax'
         )
         
-        # access token을 쿼리 파라미터로 전달
-        response['Location'] = f"{response['Location']}?access_token={access_token}"
+        # access token을 어디에 저장해야 하는가?
+        response.data = {'token': access_token}
 
         return response
 
@@ -132,7 +116,7 @@ class RefreshView(APIView):
 
         access_token, _ = generate_tokens(user_id)
 
-        return Response({'accessToken': access_token}, status=200)
+        return Response({'token': access_token})
 
 
 # ✅ 로그아웃
