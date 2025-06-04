@@ -1,220 +1,99 @@
-/* Custom styles for chatbot page */
-
-body, html {
-    height: 100%;
-    overflow: hidden; /* Prevent scroll on body */
+body {
+    font-family: 'Noto Sans KR', sans-serif;
 }
 
-.container-fluid, .row {
-    height: 100%;
-}
-
-main, .main-chat-area {
-    height: 100vh; /* 전체 뷰포트 높이 사용 */
-    margin-left: 250px; /* Match sidebar width */
-    transition: margin-left .3s ease-in-out;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden; /* 메인 컨테이너에서 오버플로우 방지 */
-}
-
-.sidebar {
-    width: 250px; /* Default sidebar width */
-    position: fixed;
-    top: 56px; /* Height of the fixed navbar */
-    bottom: 0;
-    left: 0;
-    z-index: 1000; /* Behind the navbar */
-    padding: 0;
-    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
-    transition: transform .3s ease-in-out;
-}
-
-/* Styles for when sidebar is collapsed (optional, if adding toggle) */
-/*
-.sidebar.collapse {
-    transform: translateX(-100%);
-}
-main.sidebar-collapsed {
-    margin-left: 0;
-}
-*/
-
-#chatWindow {
-    flex: 1; /* 남은 공간 모두 사용 */
-    overflow-y: auto; /* 세로 스크롤 활성화 */
-    overflow-x: hidden; /* 가로 스크롤 숨김 */
-    padding: 15px;
-    height: 0; /* flex가 제대로 작동하도록 */
-    scroll-behavior: smooth; /* 부드러운 스크롤 */
-    position: relative; /* 자식 요소들의 위치 기준점 */
-}
-
-/* 메시지 입력 영역 스타일 */
-.message-input-area {
-    flex-shrink: 0; /* 축소되지 않도록 */
-    background-color: #f8f9fa;
-    border-top: 1px solid #dee2e6;
-    padding: 15px;
-}
-
-/* Chat message bubble styles */
-.chat-bubble {
-    max-width: 70%;
-    padding: 10px 15px;
-    border-radius: 15px;
-    margin-bottom: 10px;
-    word-break: break-word; /* Break long words */
-}
-
-.chat-bubble.user {
-    background-color: #007bff; /* User message color */
-    color: white;
-    align-self: flex-end;
-    border-bottom-right-radius: 5px;
-}
-
-.chat-bubble.bot {
-    background-color: #e9ecef; /* Bot message color */
-    color: #212529;
-    align-self: flex-start;
-    border-bottom-left-radius: 5px;
-}
-
-#chatBubbles {
-    display: flex;
-    flex-direction: column; /* Arrange bubbles vertically */
-    gap: 10px; /* 버블 사이 간격 */
-    min-height: min-content; /* 컨텐츠에 맞는 최소 높이 */
-    padding-bottom: 20px; /* 마지막 메시지 아래 여백 */
-    width: 100%; /* 전체 너비 사용 */
-}
-
-/* 초기 메시지 화면 스타일 개선 */
-#initialMessage {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 60vh; /* 최소 높이 설정 */
-}
-
-#messageInput {
-    resize: none; /* Disable textarea resize handle */
-}
-
-#suggestedQuestions .btn {
-    width: auto; /* Adjust width to content */
-}
-
-/* Loading animation styles */
-.loading-message {
-    background-color: #f8f9fa !important; /* Slightly different background for loading */
-    opacity: 0.8;
-}
-
-.loading-dots {
+.material-icons {
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
     display: inline-block;
-    margin-left: 5px;
+    line-height: 1;
+    text-transform: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    white-space: nowrap;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'liga';
 }
 
-.loading-dots span {
-    animation: loading-dots 1.4s infinite ease-in-out both;
-    display: inline-block;
-    font-size: 1.2em;
+/* Markdown 스타일링 */
+.prose {
+    color: #374151;
+    max-width: none;
 }
 
-.loading-dots span:nth-child(1) {
-    animation-delay: -0.32s;
-}
-
-.loading-dots span:nth-child(2) {
-    animation-delay: -0.16s;
-}
-
-@keyframes loading-dots {
-    0%, 80%, 100% {
-        opacity: 0.3;
-    }
-    40% {
-        opacity: 1;
-    }
-}
-
-/* Better code block styling */
-code {
-    background-color: #f1f3f4;
-    padding: 2px 4px;
-    border-radius: 3px;
-    font-family: 'Courier New', monospace;
-    font-size: 0.9em;
-}
-
-/* Better text formatting in chat bubbles */
-.chat-bubble strong {
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+    color: #111827;
     font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
 }
 
-.chat-bubble em {
+.prose h1 { font-size: 1.25rem; }
+.prose h2 { font-size: 1.125rem; }
+.prose h3 { font-size: 1rem; }
+
+.prose p {
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+.prose ul, .prose ol {
+    margin-bottom: 0.75rem;
+    padding-left: 1.25rem;
+}
+
+.prose li {
+    margin-bottom: 0.25rem;
+}
+
+.prose strong {
+    font-weight: 600;
+    color: #111827;
+}
+
+.prose em {
     font-style: italic;
-    color: #666;
 }
 
-/* 스크롤바 스타일링 */
-#chatWindow::-webkit-scrollbar {
-    width: 8px;
+.prose code {
+    background-color: #f3f4f6;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+    font-family: 'Courier New', monospace;
 }
 
-#chatWindow::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
+.prose pre {
+    background-color: #f3f4f6;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin-bottom: 0.75rem;
 }
 
-#chatWindow::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 4px;
+.prose pre code {
+    background-color: transparent;
+    padding: 0;
 }
 
-#chatWindow::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+.prose blockquote {
+    border-left: 4px solid #d1d5db;
+    padding-left: 1rem;
+    margin: 0.75rem 0;
+    font-style: italic;
+    color: #6b7280;
 }
 
-/* Firefox 스크롤바 스타일 */
-#chatWindow {
-    scrollbar-width: thin;
-    scrollbar-color: #c1c1c1 #f1f1f1;
+.prose a {
+    color: #3b82f6;
+    text-decoration: underline;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .sidebar {
-        transform: translateX(-100%); /* Hide sidebar by default on small screens */
-        width: 100%;
-        top: 56px;
-        bottom: 0;
-        left: 0;
-    }
-
-    .sidebar.show {
-        transform: translateX(0%); /* Show sidebar when toggled */
-    }
-
-    main, .main-chat-area {
-        margin-left: 0; /* No margin on small screens */
-        height: 100vh; /* 모바일에서도 전체 높이 사용 */
-    }
-
-    /* Adjust main content margin when sidebar is shown on small screens */
-    main.sidebar-visible-sm, .main-chat-area.sidebar-visible-sm {
-         margin-left: 250px; /* Or sidebar width if desired */
-         /* This might require JS to add/remove this class */
-    }
-
-    #chatWindow {
-        padding: 10px; /* 모바일에서 패딩 줄임 */
-    }
-
-    .chat-bubble {
-        max-width: 85%; /* 모바일에서 더 넓게 */
-    }
+.prose a:hover {
+    color: #1d4ed8;
 }
