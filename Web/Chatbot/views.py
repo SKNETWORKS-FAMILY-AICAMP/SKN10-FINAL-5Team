@@ -42,17 +42,9 @@ def chat_message(request):
         # LLM 질의 응답 수행
         result = rag_chain.invoke({"input": user_message})
         
-        # 관련 정책 문서 제목 추출
-        related_policies = []
-        for doc in result.get('context', []):
-            policy_name = doc.metadata.get("정책명", "제목 없음")
-            if policy_name not in related_policies:
-                related_policies.append(policy_name)
-        
         return JsonResponse({
             'status': 'success',
             'answer': result['answer'],
-            'related_policies': related_policies
         })
         
     except json.JSONDecodeError:
