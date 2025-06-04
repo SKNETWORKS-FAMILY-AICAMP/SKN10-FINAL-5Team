@@ -32,7 +32,6 @@ class JWT_KEY(enum.Enum):
         '랜덤한 조합의 키'
     )
 
-
 # 내부 함수: JWT 토큰을 생성해주는 핵심 함수
 # id는 사용자 고유 ID, key는 JWT_KEY Enum 객체
 # 반환값은 JWT 문자열 (Header.Payload.Signature 형태)

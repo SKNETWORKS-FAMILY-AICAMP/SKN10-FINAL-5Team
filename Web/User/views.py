@@ -9,25 +9,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from .models import RefreshToken
-from .services import (
-    get_naver_user_info,
-    create_access_token,
-    create_refresh_token,
-    get_or_create_user_from_naver,
-)
-
-# ✅ 테스트용 사용자 정보 페이지
-def test_user_info_view(request):
-    user_nm = request.GET.get('user_nm')
-    email = request.GET.get('email')
-    profile_img = request.GET.get('profile_img')
-
-    context = {
-        "user_nm": user_nm,
-        "email": email,
-        "profile_img": profile_img
-    }
-    return render(request, 'user/test.html', context)
+from .services import *
 
 # ✅ 로그인 화면 렌더링
 def login_view(request):
@@ -72,26 +54,39 @@ class NaverLoginCallbackView(APIView):
         user = get_or_create_user_from_naver(user_info)
 
         # 4. JWT 생성
-        access_token = create_access_token(user)
-        refresh_token = create_refresh_token(user)
+        access_token, refresh_token = generate_tokens(user.user_id)
 
-        # 5. RefreshToken 저장
+        # ✅ 5. 기존 RefreshToken 삭제 → 새로 저장
+        RefreshToken.objects.filter(user=user).delete()
+   
         RefreshToken.objects.create(
             token=refresh_token,
             expired_dt=datetime.utcnow() + timedelta(days=7),
             user=user
         )
 
-        # ✅ 6. 사용자 정보를 테스트 페이지로 전달
-        return redirect(
-            f"/user/test/?user_nm={user.user_nm}&email={user.email}&profile_img={user.profile_img}"
-        )
+        # 6. 응답 쿠키 설정
+        response = Response()
+        response.set_cookie(key='refreshToken', value=refresh_token, httponly=True)
+        response.data = {'token': access_token}
+        
+        return response
+    
 
+class RefreshView(APIView):
+    def post(self, request):
+        refresh_token = request.COOKIES.get('refreshToken')
 
-# ✅ 로그아웃 처리 (리프레시 토큰 삭제)
+        user_id = verify_refresh_token(refresh_token)
+        access_token, _ = generate_tokens(user_id)
+
+        return Response({'token': access_token})
+    
+
 class LogoutView(APIView):
     def post(self, request):
-        refresh_token = request.data.get("refresh_token")
+        refresh_token = request.COOKIES.get("refreshToken")
+
         if not refresh_token:
             return Response({"error": "Refresh token not provided."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -108,4 +103,7 @@ class LogoutView(APIView):
         if deleted_count == 0:
             return Response({"error": "Token not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        return Response({"message": "Logout successful. Refresh token deleted."}, status=status.HTTP_200_OK)
+        response = Response({"message": "Logout successful. Refresh token deleted."}, status=status.HTTP_200_OK)
+        response.delete_cookie("refreshToken")
+        
+        return response
