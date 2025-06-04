@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageInput = document.querySelector('input[placeholder="메시지 입력..."]');
     const sendButton = document.querySelector('.bg-blue-500');
     const chatContainer = document.querySelector('.flex-grow.flex.flex-col.items-center.justify-center.p-6');
-    
     // 사이드바 토글 기능 추가
     const sidebarCloseBtn = document.getElementById('sidebar-close-btn');
     const sidebarOpenBtn = document.getElementById('sidebar-open-btn');
@@ -20,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
     sidebarOpenBtn.addEventListener('click', function() {
         showSidebar();
     });
-    
+
     function hideSidebar() {
         sidebar.style.display = 'none';
         mainContainer.style.marginLeft = '0';
@@ -28,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
         sidebarOpenBtn.style.display = 'block';
         sidebarVisible = false;
     }
-    
+
     function showSidebar() {
         sidebar.style.display = 'flex';
         mainContainer.style.marginLeft = '-1rem';

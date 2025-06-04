@@ -13,6 +13,7 @@
       font-family: 'Noto Sans KR', sans-serif;
     }
   </style>
+  {% block extra_css %}{% endblock %}
 </head>
 <body class="{% block body_class %}bg-white{% endblock %}">
 
@@ -39,11 +40,13 @@
       {% endif %}
     </div>
   </header>
-
   <!-- ✅ 본문 영역 -->
-  <main class="container mx-auto px-4 py-6">
+  {% block main_container %}
+  <main class="{% block main_class %}container mx-auto px-4 py-6{% endblock %}">
     {% block content %}{% endblock %}
   </main>
+  {% endblock %}
 
+  {% block extra_js %}{% endblock %}
 </body>
 </html>
