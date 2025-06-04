@@ -1,6 +1,4 @@
 import requests
-import jwt
-from datetime import datetime, timedelta
 from django.conf import settings
 from .models import User
 from .token import (

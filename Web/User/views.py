@@ -1,13 +1,15 @@
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime
 import jwt
+import pytz
 
 from django.conf import settings
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout  # ✅ 추가
+from django.contrib.auth import login, logout  
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from .token import JWT_KEY
 
 from .models import RefreshToken
 from .services import *
@@ -63,26 +65,48 @@ class NaverLoginCallbackView(APIView):
 
         # 5. 기존 리프레시 토큰 삭제 후 새로 저장
         RefreshToken.objects.filter(user=user).delete()
+
+        seoul_tz = pytz.timezone("Asia/Seoul")
+        now = datetime.now(seoul_tz)
+        expired_dt = now + JWT_KEY.RANDOM_OF_REFRESH_KEY.value[2]
+
         RefreshToken.objects.create(
             token=refresh_token,
-            expired_dt=datetime.utcnow() + timedelta(days=7),
+            expired_dt=expired_dt,
             user=user
         )
 
         # 6. 쿠키 저장 후 챗봇 페이지로 리디렉션
-        response = redirect('chatbot:chatbot')  # app_name: 'chatbot', name: 'chatbot'
+        # 수정 필요할듯
+        response = redirect('chatbot:chatbot')  
         response.set_cookie(key='refreshToken', value=refresh_token, httponly=True)
         response.set_cookie(key='accessToken', value=access_token, httponly=False)
 
         return response
 
 
-# ✅ accessToken 재발급
 class RefreshView(APIView):
     def post(self, request):
         refresh_token = request.COOKIES.get('refreshToken')
 
-        user_id = verify_refresh_token(refresh_token)
+        if not refresh_token:
+            return Response({"error": "Refresh token not provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user_id = verify_refresh_token(refresh_token)
+        except jwt.ExpiredSignatureError:
+            return Response({"error": "Expired refresh token."}, status=status.HTTP_401_UNAUTHORIZED)
+        except jwt.InvalidTokenError:
+            return Response({"error": "Invalid refresh token."}, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # ✅ 리프레시 토큰이 DB에 존재하는지 검증
+        from .models import RefreshToken
+        if not RefreshToken.objects.filter(token=refresh_token, user__user_id=user_id).exists():
+            return Response({"error": "Refresh token not found in database."}, status=status.HTTP_404_NOT_FOUND)
+
+        # ✅ 새 accessToken 발급
         access_token, _ = generate_tokens(user_id)
 
         return Response({'token': access_token})
@@ -114,10 +138,12 @@ class LogoutView(APIView):
         if deleted_count == 0:
             return Response({"error": "Token not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        # 쿠키 삭제 및 로그아웃 응답
-        response = Response({"message": "Logout successful. Refresh token deleted."}, status=status.HTTP_200_OK)
+        # ✅ 쿠키 삭제 후 홈으로 리디렉션
+        response = redirect('home:home')
+        
         response.delete_cookie("refreshToken")
         response.delete_cookie("accessToken")
 
         return response
+    
 

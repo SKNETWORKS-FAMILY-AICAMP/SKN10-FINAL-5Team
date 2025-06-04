@@ -8,7 +8,9 @@ import datetime
 import enum 
 
 # 인증 실패 시 사용할 DRF 예외 클래스
-from rest_framework.exceptions import AuthenticationFailed
+#from rest_framework.exceptions import AuthenticationFailed
+
+import pytz
 
 
 # 🔐 JWT에서 사용할 키, 만료시간, 알고리즘 등을 열거형(enum)으로 관리
@@ -18,7 +20,7 @@ class JWT_KEY(enum.Enum):
     RANDOM_OF_ACCESS_KEY = (
         enum.auto(),          # 내부 식별 ID (자동 증가 정수, 사용 X)
         'access_secret',      # access token 서명용 시크릿 키
-        datetime.timedelta(seconds=120),  # access token 유효기간: 2분
+        datetime.timedelta(seconds=60),  # access token 유효기간: 2분
         'HS256',              # HMAC SHA256 해시 알고리즘
         '랜덤한 조합의 키'     # 설명 (기술적 기능 없음)
     )
@@ -39,10 +41,13 @@ def __create_token(id: int, key: JWT_KEY) -> str:
     """
     사용자의 ID와 설정된 JWT_KEY 정보를 기반으로 JWT 토큰을 생성한다.
     """
+    seoul_tz = pytz.timezone("Asia/Seoul")
+    now = datetime.datetime.now(seoul_tz)
+
     payload = {
-        'user_id': id,  # 사용자 식별 ID (토큰의 주체)
-        'exp': datetime.datetime.now(tz=datetime.timezone.utc) + key.value[2],  # 토큰 만료 시간
-        'iat': datetime.datetime.now(tz=datetime.timezone.utc)  # 토큰 발급 시간 (issued at)
+        'user_id': id,
+        'exp': now + key.value[2],
+        'iat': now
     }
 
     # 시크릿 키 및 알고리즘 추출 (Enum에서 꺼냄)
