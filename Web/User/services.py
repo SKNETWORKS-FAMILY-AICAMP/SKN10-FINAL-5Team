@@ -3,6 +3,10 @@ import jwt
 from datetime import datetime, timedelta
 from django.conf import settings
 from .models import User
+from .token import (
+    create_access_token, create_refresh_token,
+    decode_access_token, decode_refresh_token
+)
 
 
 def get_naver_user_info(access_token):
@@ -13,24 +17,8 @@ def get_naver_user_info(access_token):
     data = response.json()
     if data.get("resultcode") != "00":
         raise Exception("네이버 사용자 정보 조회 실패")
+    
     return data["response"]
-
-
-def create_access_token(user):
-    payload = {
-        "user_id": user.user_id,
-        "exp": datetime.utcnow() + timedelta(minutes=5),
-    }
-    return jwt.encode(payload, settings.ACCESS_SECRET_KEY, algorithm="HS256")
-
-
-def create_refresh_token(user):
-    payload = {
-        "user_id": user.user_id,
-        "exp": datetime.utcnow() + timedelta(days=7),
-    }
-    return jwt.encode(payload, settings.REFRESH_SECRET_KEY, algorithm="HS256")
-
 
 def get_or_create_user_from_naver(user_info):
     user, created = User.objects.get_or_create(
@@ -53,3 +41,34 @@ def get_or_create_user_from_naver(user_info):
             user.save()
 
     return user
+
+def generate_tokens(user_id):
+    """
+    ✅ [변경 이유]
+    - access/refresh 토큰을 동시에 발급하는 로직을 하나의 의미 단위로 캡슐화
+    - 뷰에서 각각의 함수를 호출하는 중복 제거
+    - 추후 access만 발급하거나 구조 변경 시에도 이 함수만 수정하면 됨
+    """
+    access = create_access_token(user_id)
+    refresh = create_refresh_token(user_id)
+    return access, refresh
+
+
+def verify_access_token(token):
+    """
+    ✅ [변경 이유]
+    - access token 검증을 서비스 함수로 분리
+    - 예외처리, 로깅, 사용 중지된 토큰 체크 등의 로직 추가를 위한 구조 확보
+    - 뷰는 단순히 인증 요청만 하고, 검증은 이 함수가 책임지도록 설계
+    """
+    return decode_access_token(token)
+
+
+def verify_refresh_token(token):
+    """
+    ✅ [변경 이유]
+    - refresh token 검증도 별도 함수로 분리
+    - 향후 리프레시 토큰 재사용 방지, 만료 로그 기록, 사용자 강제 로그아웃 등 정책 적용 가능
+    """
+    return decode_refresh_token(token)
+
