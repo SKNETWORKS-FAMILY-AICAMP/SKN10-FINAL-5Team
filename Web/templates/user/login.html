@@ -19,11 +19,10 @@
                 </div>
                 
                 <div class="text-center">
-                  <a href="/auth/naver" class="naver-btn">
-                    <img src="{% static 'images/naver_login.png' %}" alt="네이버 로그인" class="naver-login-img">
-                  </a>
+                    <a href="{% url 'user:naver-login' %}" class="naver-btn">
+                        <img src="{% static 'images/naver_login.png' %}" alt="네이버 로그인" class="naver-login-img">
+                    </a>
                 </div>
-
                 <p class="text-center mt-3 privacy-text">
                     로그인 시 개인정보 처리방침에 동의하게 됩니다.
                 </p>
