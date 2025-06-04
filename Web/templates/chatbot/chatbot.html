@@ -16,7 +16,7 @@
 <div class="flex h-screen">
 <aside class="w-72 bg-white p-4 border-r border-slate-200 flex flex-col">
 <div class="flex items-center justify-end mb-6">
-<button class="text-slate-500 hover:text-slate-700">
+<button class="text-slate-500 hover:text-slate-700" id="sidebar-close-btn">
 <span class="material-icons">menu_open</span>
 </button>
 </div>
@@ -42,7 +42,12 @@
 </div>
 </div>
 </aside>
-<main class="flex-1 flex flex-col bg-white shadow-lg rounded-l-xl ml-[-1rem] z-10">
+<main class="flex-1 flex flex-col bg-white shadow-lg rounded-l-xl ml-[-1rem] z-10 relative">
+<!-- 사이드바 열기 버튼 (숨겨진 상태에서만 보임) -->
+<button id="sidebar-open-btn" class="absolute top-4 left-4 text-slate-500 hover:text-slate-700 bg-white hover:bg-slate-50 p-2 rounded-lg shadow-md border border-slate-200 z-20 hidden transition-colors">
+<span class="material-icons">menu</span>
+</button>
+
 <div class="flex-grow flex flex-col items-center justify-center p-6">
 <div class="text-center max-w-md">
 <h2 class="text-xl font-semibold text-slate-800 mb-4">청년 정책 문의 챗봇 입니다! 무엇을 도와드릴까요?</h2>

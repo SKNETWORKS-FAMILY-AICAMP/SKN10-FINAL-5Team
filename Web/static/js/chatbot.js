@@ -2,6 +2,40 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageInput = document.querySelector('input[placeholder="메시지 입력..."]');
     const sendButton = document.querySelector('.bg-blue-500');
     const chatContainer = document.querySelector('.flex-grow.flex.flex-col.items-center.justify-center.p-6');
+    
+    // 사이드바 토글 기능 추가
+    const sidebarCloseBtn = document.getElementById('sidebar-close-btn');
+    const sidebarOpenBtn = document.getElementById('sidebar-open-btn');
+    const sidebar = document.querySelector('aside');
+    const mainContainer = document.querySelector('main');
+    
+    let sidebarVisible = true;
+    
+    // 사이드바 닫기 버튼
+    sidebarCloseBtn.addEventListener('click', function() {
+        hideSidebar();
+    });
+    
+    // 사이드바 열기 버튼
+    sidebarOpenBtn.addEventListener('click', function() {
+        showSidebar();
+    });
+    
+    function hideSidebar() {
+        sidebar.style.display = 'none';
+        mainContainer.style.marginLeft = '0';
+        mainContainer.style.borderRadius = '0';
+        sidebarOpenBtn.style.display = 'block';
+        sidebarVisible = false;
+    }
+    
+    function showSidebar() {
+        sidebar.style.display = 'flex';
+        mainContainer.style.marginLeft = '-1rem';
+        mainContainer.style.borderRadius = '1rem 0 0 1rem';
+        sidebarOpenBtn.style.display = 'none';
+        sidebarVisible = true;
+    }
 
     // 전송 버튼 클릭 이벤트
     sendButton.addEventListener('click', function() {

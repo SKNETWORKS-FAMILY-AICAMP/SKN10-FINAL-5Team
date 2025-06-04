@@ -20,6 +20,20 @@ body {
     font-feature-settings: 'liga';
 }
 
+/* 사이드바 토글 애니메이션 - 더 느리고 부드럽게 */
+main {
+    transition: margin-left 1s ease-in-out, border-radius 1s ease-in-out;
+}
+
+aside {
+    transition: all 1s ease-in-out;
+}
+
+/* 사이드바 토글 버튼 애니메이션 */
+#sidebar-open-btn {
+    transition: all 1s ease-in-out;
+}
+
 /* Markdown 스타일링 */
 .prose {
     color: #374151;
