@@ -11,4 +11,5 @@ urlpatterns = [
     path('naver/callback/', NaverLoginCallbackView.as_view(), name='naver-callback'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('refresh/', RefreshView.as_view(), name='refresh'),
+    path('userinfo/', UserInfoView.as_view(), name='userinfo'),
 ]

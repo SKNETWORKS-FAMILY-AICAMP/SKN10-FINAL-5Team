@@ -8,9 +8,10 @@ import datetime
 import enum 
 
 # 인증 실패 시 사용할 DRF 예외 클래스
-#from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.exceptions import AuthenticationFailed
 
 import pytz
+from django.conf import settings
 
 
 # 🔐 JWT에서 사용할 키, 만료시간, 알고리즘 등을 열거형(enum)으로 관리
@@ -19,19 +20,19 @@ class JWT_KEY(enum.Enum):
     # access token 설정: (값ID, 시크릿키, 만료기간, 알고리즘, 설명)
     RANDOM_OF_ACCESS_KEY = (
         enum.auto(),          # 내부 식별 ID (자동 증가 정수, 사용 X)
-        'access_secret',      # access token 서명용 시크릿 키
-        datetime.timedelta(seconds=60),  # access token 유효기간: 2분
+        settings.ACCESS_SECRET_KEY,  # 환경 변수에서 가져옴
+        datetime.timedelta(minutes=30),  # 30분으로 수정
         'HS256',              # HMAC SHA256 해시 알고리즘
-        '랜덤한 조합의 키'     # 설명 (기술적 기능 없음)
+        'Access Token'     # 설명 (기술적 기능 없음)
     )
 
-    # refresh token 설정: 2일 동안 유효
+    # refresh token 설정: 7일 동안 유효
     RANDOM_OF_REFRESH_KEY = (
         enum.auto(), 
-        'refresh_secret',      # refresh token 서명용 시크릿 키
-        datetime.timedelta(days=2),  # refresh token 유효기간: 2일
+        settings.REFRESH_SECRET_KEY,  # 환경 변수에서 가져옴
+        datetime.timedelta(days=7),  # 7일로 수정
         'HS256', 
-        '랜덤한 조합의 키'
+        'Refresh Token'
     )
 
 # 내부 함수: JWT 토큰을 생성해주는 핵심 함수

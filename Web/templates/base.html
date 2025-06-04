@@ -2,95 +2,48 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}청년 정책 상담 챗봇{% endblock %}</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    {% block extra_css %}{% endblock %}
-    <style>
-        /* ✅ 프로필 이미지 스타일 */
-        .profile-img {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-right: 10px;
-        }
-        .user-info {
-            display: flex;
-            align-items: center;
-            margin-right: 10px;
-        }
-    </style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}청년 정책 가이드{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+  </style>
 </head>
-<body>
-    <!-- 네비게이션 바 -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'home:home' %}">
-                <img src="{% static 'images/logo.png' %}" alt="로고" height="30">
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" 
-                            href="{% url 'home:home' %}">홈</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'chatbot' %}active{% endif %}" 
-                            href="{% url 'chatbot:chatbot' %}">챗봇 상담</a>
-                    </li>
-                </ul>
+<body class="{% block body_class %}bg-white{% endblock %}">
 
-                <!-- ✅ 사용자 정보 또는 로그인 버튼 -->
-                <div class="d-flex align-items-center">
-                    {% if user.is_authenticated %}
-                        <!-- 알림 버튼 -->
-                        <a href="#" class="btn btn-outline-primary me-2" id="notificationBtn">
-                            <i class="fas fa-bell"></i>
-                            {% if notification_count > 0 %}
-                                <span class="badge bg-danger">{{ notification_count }}</span>
-                            {% endif %}
-                        </a>
-
-                        <!-- 사용자 프로필 및 이름 -->
-                        <div class="user-info">
-                            {% if user.profile_img %}
-                                <img src="{{ user.profile_img }}" alt="프로필 이미지" class="profile-img">
-                            {% else %}
-                                <img src="{% static 'images/default_profile.png' %}" alt="기본 프로필" class="profile-img">
-                            {% endif %}
-                            <span>{{ user.user_nm }}</span>
-                        </div>
-
-                        <!-- 로그아웃 버튼 -->
-                        <form method="post" action="{% url 'user:logout' %}" class="d-inline">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-primary">로그아웃</button>
-                        </form>
-                    {% else %}
-                        <!-- 로그인 버튼 -->
-                        <a href="{% url 'user:login' %}" class="btn btn-primary">로그인</a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- 메인 컨텐츠 -->
-    <div class="container mt-5 pt-5">
-        {% block content %}
-        {% endblock %}
+  <!-- ✅ 네비게이션 바 -->
+  <header class="flex justify-between items-center p-6 shadow-sm bg-white">
+    <div class="flex items-center">
+      <a href="{% url 'home:home' %}">
+        <img src="{% static 'images/logo.png' %}" alt="로고" class="h-10 w-auto mr-3">
+      </a>
     </div>
+    <div class="flex items-center space-x-4">
+      <a href="{% url 'home:home' %}" class="bg-cyan-400 text-white px-6 py-2 rounded-lg font-semibold hover:bg-cyan-500 transition-colors">홈</a>
+      <a href="{% url 'chatbot:chatbot' %}" class="bg-sky-400 text-white px-6 py-2 rounded-lg font-semibold hover:bg-sky-500 transition-colors">챗봇</a>
+      {% if request.user.is_authenticated %}
+        <div class="relative">
+          <button class="p-2 rounded-full hover:bg-gray-100">
+            <span class="material-icons text-gray-600">notifications</span>
+            <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+          </button>
+        </div>
+        <a href="{% url 'user:logout' %}" class="bg-green-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-600 transition-colors">로그아웃</a>
+      {% else %}
+        <a href="{% url 'user:login' %}" class="bg-gray-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-600 transition-colors">로그인</a>
+      {% endif %}
+    </div>
+  </header>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    {% block extra_js %}{% endblock %}
+  <!-- ✅ 본문 영역 -->
+  <main class="container mx-auto px-4 py-6">
+    {% block content %}{% endblock %}
+  </main>
+
 </body>
 </html>

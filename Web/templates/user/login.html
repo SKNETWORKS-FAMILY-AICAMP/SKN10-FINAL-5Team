@@ -1,33 +1,30 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load static %}
 
-{% block title %}로그인 - 청년 정책 상담 챗봇{% endblock %}
+{% block title %}청년정책 상담 챗봇 로그인{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/login.css' %}">
-{% endblock %}
+{% block body_class %}bg-green-100{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card login-card">
-            <div class="card-body">
-                <div class="text-center mb-4">
-                    <img src="{% static 'images/logo.png' %}" alt="청년모아 로고" class="login-logo mb-3">
-                    <h2 class="card-title">청년 정책 상담 챗봇</h2>
-                    <p class="card-text">로그인하세요</p>
-                </div>
-                
-                <div class="text-center">
-                    <a href="{% url 'user:naver-login' %}" class="naver-btn">
-                        <img src="{% static 'images/naver_login.png' %}" alt="네이버 로그인" class="naver-login-img">
-                    </a>
-                </div>
-                <p class="text-center mt-3 privacy-text">
-                    로그인 시 개인정보 처리방침에 동의하게 됩니다.
-                </p>
-            </div>
-        </div>
-    </div>
+<div class="flex items-center justify-center min-h-[80vh]">
+  <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md text-center">
+    <!-- 로고 이미지 -->
+    <img alt="청년모아 로고" class="mx-auto mb-6 w-24 h-24 rounded-full border-4 border-green-500"
+         src="{% static 'images/logo.png' %}"/>
+
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">청년 정책 상담 챗봇</h1>
+    <p class="text-gray-600 mb-8">Naver 계정으로 로그인하세요</p>
+
+    <!-- ✅ 네이버 로그인 이미지 버튼 -->
+    <a href="{% url 'user:login' %}">
+      <img
+        src="{% static 'images/naver_login.png' %}"
+        alt="네이버 로그인"
+        class="mx-auto w-full max-w-[240px] h-auto transition hover:opacity-90"
+      />
+    </a>
+
+    <p class="text-xs text-gray-500 mt-6">로그인 시 개인정보 처리방침에 동의하게 됩니다.</p>
+  </div>
 </div>
-{% endblock %} 
+{% endblock %}

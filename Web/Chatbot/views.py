@@ -5,13 +5,15 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from .service import get_rag_chain
 
-from django.contrib.auth.decorators import login_required
-from django.urls import reverse_lazy
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 
-@login_required(login_url=reverse_lazy('user:login'))
-def chatbot(request):
-    """챗봇 페이지 렌더링"""
-    return render(request, 'chatbot/chatbot.html')
+class ChatbotPageView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """챗봇 페이지 뷰"""
+        return render(request, 'chatbot/chatbot.html')
 
 @csrf_exempt
 @require_http_methods(["POST"])
