@@ -6,7 +6,13 @@ from .token import (
     decode_access_token, decode_refresh_token
 )
 
+# 네이버 사용자 정보 요청
 def get_naver_user_info(access_token):
+    """
+    네이버 access_token을 이용하여 사용자 정보를 요청하는 함수.
+    실패 시 예외를 발생시키고, 성공 시 사용자 정보를 반환함.
+    """
+    # 인증 헤더 설정
     headers = {
         "Authorization": f"Bearer {access_token}"
     }
@@ -17,7 +23,11 @@ def get_naver_user_info(access_token):
     
     return data["response"]
 
+# 사용자 DB 조회 or 생성
 def get_or_create_user_from_naver(user_info):
+    """
+    네이버 사용자 정보를 바탕으로 User 모델에서 해당 유저를 조회하거나 생성한다.
+    """
     user, created = User.objects.get_or_create(
         auth_id=user_info["id"],
         auth_server="naver",
@@ -31,6 +41,7 @@ def get_or_create_user_from_naver(user_info):
         }
     )
 
+    # 이미 존재하는 유저인데 프로필 이미지가 달라진 경우 → 업데이트
     if not created:
         new_profile_img = user_info.get("profile_image")
         if user.profile_img != new_profile_img:

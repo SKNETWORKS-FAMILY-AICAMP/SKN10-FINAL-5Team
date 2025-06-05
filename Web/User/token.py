@@ -21,7 +21,7 @@ class JWT_KEY(enum.Enum):
     RANDOM_OF_ACCESS_KEY = (
         enum.auto(),          # 내부 식별 ID (자동 증가 정수, 사용 X)
         settings.ACCESS_SECRET_KEY,  # 환경 변수에서 가져옴
-        datetime.timedelta(minutes=30),  # 30분으로 수정
+        datetime.timedelta(minutes=1),  # 30분으로 수정
         'HS256',              # HMAC SHA256 해시 알고리즘
         'Access Token'     # 설명 (기술적 기능 없음)
     )

@@ -8,6 +8,7 @@ from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from .token import create_access_token
 
 from .token import JWT_KEY
 from .models import RefreshToken
@@ -20,16 +21,18 @@ from .services import (
 )
 
 from django.shortcuts import render, redirect
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated 
+from .models import User 
 
 
-# ✅ 로그인 화면 렌더링
+# 로그인 화면 렌더링
 def login_view(request):
     return render(request, 'user/login.html')
 
 
-# ✅ 네이버 로그인 리다이렉트
+# 네이버 로그인 리다이렉트
+# 네이버 인증 URL 생성 후 사용자 브라우저를 그 주소로 리디렉션
+# 사용자는 네이버 로그인 → 로그인 승인 → 콜백 URL로 이동
 class NaverLoginRedirectView(APIView):
     def get(self, request):
         url = (
@@ -37,17 +40,19 @@ class NaverLoginRedirectView(APIView):
             f"response_type=code&client_id={settings.NAVER_CLIENT_ID}"
             f"&redirect_uri={settings.NAVER_REDIRECT_URI}&state=random_state"
         )
-
         return redirect(url)
 
 
-# ✅ 네이버 로그인 콜백 처리 
+# 네이버 로그인 콜백 처리 
 class NaverLoginCallbackView(APIView):
     def get(self, request):
+
+        # 1. 네이버에서 전달받은 인증 code, state를 추출
         code = request.GET.get("code")
         state = request.GET.get("state")
 
-        # 1. 네이버 토큰 요청
+        # 2. 네이버에 access_token 요청
+        # 네이버 API를 호출하여 인증 코드를 access_token으로 바꿈
         token_url = "https://nid.naver.com/oauth2.0/token"
         data = {
             "grant_type": "authorization_code",
@@ -60,17 +65,20 @@ class NaverLoginCallbackView(APIView):
         token_response = requests.post(token_url, data=data, headers=headers).json()
         access_token = token_response.get("access_token")
 
-        # 2. 사용자 정보 요청
+        # 3. access_token으로 사용자 정보 조회
         user_info = get_naver_user_info(access_token)
 
-        # 3. 사용자 조회 또는 생성
+        # 4. 사용자 조회 또는 생성
         user = get_or_create_user_from_naver(user_info)
 
-        # 4. JWT 발급
+        # 5. JWT 발급
         access_token, refresh_token = generate_tokens(user.user_id)
 
-        # 5. 기존 refreshToken 삭제 후 새로 저장
+        # 6. 기존 refreshToken 삭제 후 새로 저장
+        # 한 사용자는 하나의 refresh 토큰만 유지
+        # 새 토큰 발급 후 DB에 저장 (만료시간도 기록)
         RefreshToken.objects.filter(user=user).delete()
+
         now = datetime.now(pytz.timezone("Asia/Seoul"))
         expired_dt = now + JWT_KEY.RANDOM_OF_REFRESH_KEY.value[2]
 
@@ -80,24 +88,20 @@ class NaverLoginCallbackView(APIView):
             user=user
         )
 
-        # 6. 응답 처리: accessToken은 JSON, refreshToken은 HttpOnly 쿠키
+        # 6.응답 처리 - 쿠키 저장 및 불필요한 .data 제거
+        # 쿠키는 httponly=True로 설정하여 JS에서 접근 불가 (보안 강화)
         response = redirect('chatbot:chatbot')
-        response.set_cookie(
-            key='refreshToken',
-            value=refresh_token,
-            httponly=True,
-        )
-        
-        # access token을 어디에 저장해야 하는가?
-        response.data = {'token': access_token}
 
+        response.set_cookie(key='refresh_token', value=refresh_token, httponly=True)
+        response.set_cookie(key='access_token', value=access_token, httponly=True)  # 쿠키에서 읽도록 설정
+        
         return response
 
 
-# ✅ 토큰 갱신 (refreshToken → accessToken)
+# ✅ 토큰 갱신 (refresh_token → access_token)
 class RefreshView(APIView):
     def post(self, request):
-        refresh_token = request.COOKIES.get('refreshToken')
+        refresh_token = request.COOKIES.get('refresh_token')  
 
         if not refresh_token:
             return Response({"error": "Refresh token not provided."}, status=400)
@@ -114,7 +118,9 @@ class RefreshView(APIView):
         if not RefreshToken.objects.filter(token=refresh_token, user__user_id=user_id).exists():
             return Response({"error": "Refresh token not found in database."}, status=404)
 
-        access_token, _ = generate_tokens(user_id)
+        # access_token만 재발급
+        access_token = create_access_token(user_id)
+        print(f"access_token:{access_token}")
 
         return Response({'token': access_token})
 
@@ -122,7 +128,7 @@ class RefreshView(APIView):
 # ✅ 로그아웃
 class LogoutView(APIView):
     def post(self, request):
-        refresh_token = request.COOKIES.get("refreshToken")
+        refresh_token = request.COOKIES.get("refresh_token")  
 
         if not refresh_token:
             return Response({"error": "Refresh token not provided."}, status=400)
@@ -140,8 +146,27 @@ class LogoutView(APIView):
         if deleted_count == 0:
             return Response({"error": "Token not found."}, status=404)
 
-        # 쿠키 삭제 후 응답
-        response = JsonResponse({"message": "Logged out successfully."})
-        response.delete_cookie("refreshToken")
+        # 쿠키에서 access_token, refresh_token 모두 삭제
+        response = redirect('home:home') 
+        
+        response.delete_cookie("refresh_token")
+        response.delete_cookie("access_token")
 
         return response
+
+
+# 사용자 정보 조회 API
+class UserInfoView(APIView):
+    # JWT 인증된 사용자만 접근 가능
+    permission_classes = [IsAuthenticated]
+
+    # 인증된 사용자 정보는 request.user에 자동으로 주입
+    # CookieJWTAuthentication 클래스가 인증 처리
+    def get(self, request):
+        user: User = request.user
+        return Response({
+            "user_id": user.user_id,
+            "user_nm": user.user_nm,
+            "email": user.email,
+            "profile_img": user.profile_img
+        })

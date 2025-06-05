@@ -33,7 +33,10 @@
             <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
           </button>
         </div>
-        <a href="{% url 'user:logout' %}" class="bg-green-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-600 transition-colors">로그아웃</a>
+        <form id="logout-form" action="{% url 'user:logout' %}" method="post" class="inline">
+          {% csrf_token %}
+          <button type="submit" class="bg-green-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-600 transition-colors">로그아웃</button>
+        </form>
       {% else %}
         <a href="{% url 'user:login' %}" class="bg-gray-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-600 transition-colors">로그인</a>
       {% endif %}
