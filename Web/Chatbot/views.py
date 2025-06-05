@@ -60,3 +60,28 @@ def chat_message(request):
             'message': '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
         }, status=500)
 
+@csrf_exempt
+@require_http_methods(["POST"])
+def reset_session(request):
+    """챗봇 세션 초기화 API"""
+    try:
+        # 세션 데이터 초기화 (필요한 경우)
+        if hasattr(request, 'session'):
+            # 챗봇 관련 세션 데이터만 초기화
+            keys_to_remove = [key for key in request.session.keys() if key.startswith('chatbot_')]
+            for key in keys_to_remove:
+                del request.session[key]
+            request.session.modified = True
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': '세션이 초기화되었습니다.'
+        })
+        
+    except Exception as e:
+        print(f"세션 초기화 오류: {e}")
+        return JsonResponse({
+            'status': 'error',
+            'message': '세션 초기화 중 오류가 발생했습니다.'
+        }, status=500)
+
