@@ -133,12 +133,20 @@ def generate_data_query_code(user_question):
 - 주요 컬럼 설명:
   * 정책명: 정책의 이름
   * 정책키워드명: 정책 관련 키워드
-  * 정책대분류명: 정책의 대분류 (예: 복지문화, 생활지원 등)
-  * 정책중분류명: 정책의 중분류
+  * 정책대분류명: 정책의 대분류 (예: 복지문화, 생활지원, 일자리 등)
+  * 정책중분류명: 정책의 중분류 (예: 일자리지원, 취업지원 등)
   * 정책설명내용: 정책에 대한 상세 설명
   * 정책지원내용: 정책이 제공하는 지원 내용
-  * 지원대상최소연령, 지원대상최대연령: 지원 대상 연령
+  * 지원대상최소연령, 지원대상최대연령: 지원 대상 연령 (숫자)
   * 주관기관코드명, 운영기관코드명: 관련 기관 정보
+  * 정책거주지역코드: 거주지역 제한 (예: 서울특별시, 부산광역시 등)
+  * 정책제공방법코드: 지원 방식 (예: 현금지급, 융자지원, 서비스제공 등)
+
+- 중요한 필터링 조건들:
+  * 연령 조건: 지원대상최소연령 <= 사용자연령 <= 지원대상최대연령
+  * 지역 조건: 정책거주지역코드에서 해당 지역 포함 확인
+  * 정책 분야: 정책대분류명, 정책중분류명에서 키워드 검색
+  * 일자리 관련: '일자리', '취업', '고용', '창업', '직업' 등의 키워드
 """
     
     code_generation_prompt = f"""
@@ -153,24 +161,60 @@ def generate_data_query_code(user_question):
 2. pandas 함수만 사용하세요 (df_policies.method() 형태)
 3. 검색할 때는 .str.contains()를 사용하고 case=False, na=False 옵션을 포함하세요
 4. 개수를 구할 때는 len() 함수를 사용하세요
-5. 통계를 구할 때는 .value_counts(), .mean(), .sum() 등을 사용하세요
-6. 코드는 실행 가능한 Python 코드여야 합니다
-7. import 문은 사용하지 마세요
-8. 여러 키워드로 검색할 때는 | (OR) 연산자를 사용하세요
+5. 연령 조건은 숫자 비교를 사용하세요 (예: df['지원대상최소연령'] <= 28)
+6. 지역 조건은 정책거주지역코드 컬럼에서 해당 지역명 포함 여부를 확인하세요
+7. 다중 조건은 & (AND) 연산자로 연결하세요
+8. 코드는 실행 가능한 Python 코드여야 합니다
+9. import 문은 사용하지 마세요
+10. NaN 값 처리를 위해 .fillna() 또는 .notna() 사용을 고려하세요
 
-예시:
-질문: "일자리 관련 정책이 몇 개인가요?"
+예시들:
+질문: "서울사는 28세 남자가 받을 수 있는 일자리 정책이 총 몇개 있어?"
 코드:
 ```python
-job_related = df_policies[
-    df_policies['정책명'].str.contains('일자리', case=False, na=False) |
-    df_policies['정책키워드명'].str.contains('일자리', case=False, na=False) |
-    df_policies['정책설명내용'].str.contains('일자리', case=False, na=False) |
-    df_policies['정책지원내용'].str.contains('일자리', case=False, na=False)
-]
-result = len(job_related)
+# 연령 조건: 28세가 지원 가능한 연령 범위에 포함
+age_condition = (df_policies['지원대상최소연령'].fillna(0) <= 28) & (df_policies['지원대상최대연령'].fillna(100) >= 28)
+
+# 서울 지역 조건
+seoul_condition = df_policies['정책거주지역코드'].str.contains('서울', case=False, na=False)
+
+# 일자리 관련 조건
+job_condition = (
+    df_policies['정책명'].str.contains('일자리|취업|고용|창업|직업|직장', case=False, na=False) |
+    df_policies['정책키워드명'].str.contains('일자리|취업|고용|창업|직업|직장', case=False, na=False) |
+    df_policies['정책대분류명'].str.contains('일자리', case=False, na=False) |
+    df_policies['정책중분류명'].str.contains('일자리|취업|고용', case=False, na=False) |
+    df_policies['정책설명내용'].str.contains('일자리|취업|고용|창업|직업', case=False, na=False) |
+    df_policies['정책지원내용'].str.contains('일자리|취업|고용|창업|직업', case=False, na=False)
+)
+
+# 모든 조건을 만족하는 정책 필터링
+filtered_policies = df_policies[age_condition & seoul_condition & job_condition]
+result = len(filtered_policies)
 ```
 
+질문: "부산에서 주거 관련 현금지원 정책은 몇 개야?"
+코드:
+```python
+# 부산 지역 조건
+busan_condition = df_policies['정책거주지역코드'].str.contains('부산', case=False, na=False)
+
+# 주거 관련 조건
+housing_condition = (
+    df_policies['정책명'].str.contains('주거|주택|임대|전세|월세', case=False, na=False) |
+    df_policies['정책키워드명'].str.contains('주거|주택|임대|전세|월세', case=False, na=False) |
+    df_policies['정책설명내용'].str.contains('주거|주택|임대|전세|월세', case=False, na=False)
+)
+
+# 현금지원 조건
+cash_condition = df_policies['정책제공방법코드'].str.contains('현금', case=False, na=False)
+
+# 모든 조건을 만족하는 정책 필터링
+filtered_policies = df_policies[busan_condition & housing_condition & cash_condition]
+result = len(filtered_policies)
+```
+
+사용자의 질문을 분석하여 적절한 조건들을 조합해서 코드를 생성하세요.
 코드만 생성하고 다른 설명은 하지 마세요:
 """
 
