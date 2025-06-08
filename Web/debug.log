@@ -463,3 +463,334 @@ INFO 2025-06-08 23:15:04,122 services 21440 15580 토큰 검증 시작 - Path: /.well-
 INFO 2025-06-08 23:15:04,122 services 21440 15580 액세스 토큰 존재: False
 INFO 2025-06-08 23:15:04,123 services 21440 15580 리프레시 토큰 존재: False
 WARNING 2025-06-08 23:15:04,123 services 21440 15580 액세스 토큰 없음
+INFO 2025-06-09 02:08:57,212 services 3520 24744 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:08:57,214 services 3520 24744 액세스 토큰 존재: False
+INFO 2025-06-09 02:08:57,214 services 3520 24744 리프레시 토큰 존재: False
+INFO 2025-06-09 02:08:57,214 services 3520 24744 홈 페이지 접근 - 토큰 없음
+INFO 2025-06-09 02:08:59,278 services 3520 15896 토큰 검증 시작 - Path: /favicon.ico
+INFO 2025-06-09 02:08:59,279 services 3520 15896 액세스 토큰 존재: False
+INFO 2025-06-09 02:08:59,280 services 3520 15896 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:08:59,281 services 3520 15896 액세스 토큰 없음
+INFO 2025-06-09 02:09:08,001 services 3520 15896 토큰 검증 시작 - Path: /favicon.ico
+INFO 2025-06-09 02:09:08,002 services 3520 15896 액세스 토큰 존재: False
+INFO 2025-06-09 02:09:08,002 services 3520 15896 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:09:08,003 services 3520 15896 액세스 토큰 없음
+INFO 2025-06-09 02:09:33,421 services 3520 24124 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:09:33,422 services 3520 24124 액세스 토큰 존재: True
+INFO 2025-06-09 02:09:33,422 services 3520 24124 리프레시 토큰 존재: True
+INFO 2025-06-09 02:09:33,422 services 3520 24124 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:09:33,822 services 3520 24124 토큰 검증 시작 - Path: /favicon.ico
+INFO 2025-06-09 02:09:33,823 services 3520 24124 액세스 토큰 존재: True
+INFO 2025-06-09 02:09:33,824 services 3520 24124 리프레시 토큰 존재: True
+INFO 2025-06-09 02:09:33,825 services 3520 24124 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:09:48,383 services 3520 24124 토큰 검증 시작 - Path: /user/logout/
+INFO 2025-06-09 02:09:48,384 services 3520 24124 액세스 토큰 존재: True
+INFO 2025-06-09 02:09:48,385 services 3520 24124 리프레시 토큰 존재: True
+INFO 2025-06-09 02:09:48,385 services 3520 24124 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:09:48,468 services 3520 24124 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:09:48,469 services 3520 24124 액세스 토큰 존재: False
+INFO 2025-06-09 02:09:48,470 services 3520 24124 리프레시 토큰 존재: False
+INFO 2025-06-09 02:09:48,471 services 3520 24124 홈 페이지 접근 - 토큰 없음
+INFO 2025-06-09 02:12:43,784 services 10504 13980 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:12:43,785 services 10504 13980 액세스 토큰 존재: False
+INFO 2025-06-09 02:12:43,786 services 10504 13980 리프레시 토큰 존재: False
+INFO 2025-06-09 02:12:43,787 services 10504 13980 홈 페이지 접근 - 토큰 없음
+INFO 2025-06-09 02:12:44,303 services 10504 13980 토큰 검증 시작 - Path: /favicon.ico
+INFO 2025-06-09 02:12:44,304 services 10504 13980 액세스 토큰 존재: False
+INFO 2025-06-09 02:12:44,304 services 10504 13980 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:12:44,304 services 10504 13980 액세스 토큰 없음
+INFO 2025-06-09 02:12:46,726 services 10504 13980 토큰 검증 시작 - Path: /favicon.ico
+INFO 2025-06-09 02:12:46,726 services 10504 13980 액세스 토큰 존재: False
+INFO 2025-06-09 02:12:46,726 services 10504 13980 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:12:46,727 services 10504 13980 액세스 토큰 없음
+INFO 2025-06-09 02:12:50,529 services 10504 3584 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:12:50,530 services 10504 3584 액세스 토큰 존재: True
+INFO 2025-06-09 02:12:50,531 services 10504 3584 리프레시 토큰 존재: True
+INFO 2025-06-09 02:12:50,532 services 10504 3584 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:12:57,324 services 10504 3584 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:12:57,325 services 10504 3584 액세스 토큰 존재: True
+INFO 2025-06-09 02:12:57,326 services 10504 3584 리프레시 토큰 존재: True
+INFO 2025-06-09 02:12:57,326 services 10504 3584 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:12:57,362 services 10504 3584 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:12:57,363 services 10504 3584 액세스 토큰 존재: True
+INFO 2025-06-09 02:12:57,363 services 10504 3584 리프레시 토큰 존재: True
+INFO 2025-06-09 02:12:57,364 services 10504 3584 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:15:27,530 services 25176 11644 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:15:27,531 services 25176 11644 액세스 토큰 존재: False
+INFO 2025-06-09 02:15:27,532 services 25176 11644 리프레시 토큰 존재: False
+INFO 2025-06-09 02:15:27,532 services 25176 11644 홈 페이지 접근 - 토큰 없음
+INFO 2025-06-09 02:15:27,953 services 25176 11644 토큰 검증 시작 - Path: /favicon.ico
+INFO 2025-06-09 02:15:27,953 services 25176 11644 액세스 토큰 존재: False
+INFO 2025-06-09 02:15:27,953 services 25176 11644 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:15:27,954 services 25176 11644 액세스 토큰 없음
+INFO 2025-06-09 02:15:35,107 services 25176 11644 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:15:35,108 services 25176 11644 액세스 토큰 존재: False
+INFO 2025-06-09 02:15:35,108 services 25176 11644 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:15:35,108 services 25176 11644 액세스 토큰 없음
+INFO 2025-06-09 02:15:38,649 services 25176 11644 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:15:38,650 services 25176 11644 액세스 토큰 존재: False
+INFO 2025-06-09 02:15:38,650 services 25176 11644 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:15:38,650 services 25176 11644 액세스 토큰 없음
+INFO 2025-06-09 02:15:38,766 services 25176 11644 토큰 검증 시작 - Path: /favicon.ico
+INFO 2025-06-09 02:15:38,766 services 25176 11644 액세스 토큰 존재: False
+INFO 2025-06-09 02:15:38,767 services 25176 11644 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:15:38,767 services 25176 11644 액세스 토큰 없음
+INFO 2025-06-09 02:15:42,144 services 25176 4784 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:15:42,144 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:15:42,145 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:15:42,146 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:15:42,217 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:15:42,218 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:15:42,218 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:15:42,219 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:15:58,515 services 25176 4784 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:15:58,516 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:15:58,516 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:15:58,517 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:15:58,577 services 25176 4784 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:15:58,578 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:15:58,579 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:15:58,580 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:15:58,646 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:15:58,646 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:15:58,647 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:15:58,647 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:17:08,710 services 25176 4784 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:17:08,711 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:17:08,711 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:17:08,712 services 25176 4784 액세스 토큰 만료됨: Signature has expired
+INFO 2025-06-09 02:17:08,713 services 25176 4784 리프레시 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:17:08,754 services 25176 4784 새 액세스 토큰 발급 완료 - User ID: 11
+INFO 2025-06-09 02:17:08,762 services 25176 4784 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:17:08,762 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:17:08,763 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:17:08,764 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:17:08,869 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:17:08,870 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:17:08,870 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:17:08,871 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:17:10,531 services 25176 4784 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:17:10,532 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:17:10,532 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:17:10,533 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:17:10,575 services 25176 4784 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:17:10,576 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:17:10,577 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:17:10,578 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:17:10,643 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:17:10,644 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:17:10,644 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:17:10,645 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:17:33,438 services 25176 4784 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:17:33,439 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:17:33,439 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:17:33,440 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:17:33,570 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:17:33,571 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:17:33,571 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:17:33,572 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:17:48,332 services 25176 4784 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:17:48,333 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:17:48,334 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:17:48,335 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:17:48,452 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:17:48,453 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:17:48,453 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:17:48,454 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:18:20,712 services 25176 4784 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:18:20,713 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:18:20,717 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:18:20,718 services 25176 4784 액세스 토큰 만료됨: Signature has expired
+INFO 2025-06-09 02:18:20,718 services 25176 4784 리프레시 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:18:20,757 services 25176 4784 새 액세스 토큰 발급 완료 - User ID: 11
+INFO 2025-06-09 02:18:20,767 services 25176 4784 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:18:20,767 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:18:20,768 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:18:20,768 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:18:20,815 services 25176 4784 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:18:20,816 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:18:20,817 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:18:20,818 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:18:20,886 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:18:20,887 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:18:20,887 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:18:20,888 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:18:24,828 services 25176 4784 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:18:24,829 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:18:24,830 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:18:24,831 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:18:24,948 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:18:24,949 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:18:24,949 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:18:24,950 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:18:29,650 services 25176 4784 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:18:29,651 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:18:29,652 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:18:29,653 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:18:29,697 services 25176 4784 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:18:29,699 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:18:29,700 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:18:29,701 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:18:29,778 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:18:29,779 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:18:29,779 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:18:29,780 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:18:42,708 services 25176 4784 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:18:42,709 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:18:42,709 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:18:42,710 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:18:42,829 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:18:42,830 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:18:42,830 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:18:42,831 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:19:45,937 services 25176 4784 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:19:45,938 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:19:45,939 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:19:45,940 services 25176 4784 액세스 토큰 만료됨: Signature has expired
+INFO 2025-06-09 02:19:45,941 services 25176 4784 리프레시 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:19:45,977 services 25176 4784 새 액세스 토큰 발급 완료 - User ID: 11
+INFO 2025-06-09 02:19:45,986 services 25176 4784 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:19:45,989 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:19:45,989 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:19:45,990 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:19:46,072 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:19:46,072 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:19:46,073 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:19:46,073 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:19:48,971 services 25176 4784 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:19:48,972 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:19:48,973 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:19:48,973 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:19:49,022 services 25176 4784 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:19:49,023 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:19:49,024 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:19:49,025 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:19:49,091 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:19:49,092 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:19:49,092 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:19:49,093 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:20:40,566 services 25176 4784 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:20:40,567 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:20:40,568 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:20:40,568 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:20:40,684 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:20:40,685 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:20:40,685 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:20:40,685 services 25176 4784 액세스 토큰 유효 - User ID: 11
+INFO 2025-06-09 02:20:47,317 services 25176 4784 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:20:47,318 services 25176 4784 액세스 토큰 존재: True
+INFO 2025-06-09 02:20:47,318 services 25176 4784 리프레시 토큰 존재: True
+INFO 2025-06-09 02:20:47,319 services 25176 4784 액세스 토큰 만료됨: Signature has expired
+ERROR 2025-06-09 02:20:47,320 services 25176 4784 리프레시 토큰 만료: Signature has expired
+INFO 2025-06-09 02:20:47,404 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:20:47,404 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:20:47,404 services 25176 4784 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:20:47,405 services 25176 4784 액세스 토큰 없음
+INFO 2025-06-09 02:20:55,519 services 25176 4784 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:20:55,519 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:20:55,520 services 25176 4784 리프레시 토큰 존재: False
+INFO 2025-06-09 02:20:55,520 services 25176 4784 홈 페이지 접근 - 토큰 없음
+INFO 2025-06-09 02:20:55,581 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:20:55,582 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:20:55,582 services 25176 4784 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:20:55,585 services 25176 4784 액세스 토큰 없음
+INFO 2025-06-09 02:20:57,041 services 25176 4784 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:20:57,042 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:20:57,043 services 25176 4784 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:20:57,043 services 25176 4784 액세스 토큰 없음
+INFO 2025-06-09 02:20:57,100 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:20:57,101 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:20:57,101 services 25176 4784 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:20:57,102 services 25176 4784 액세스 토큰 없음
+INFO 2025-06-09 02:20:59,440 services 25176 4784 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:20:59,441 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:20:59,442 services 25176 4784 리프레시 토큰 존재: False
+INFO 2025-06-09 02:20:59,443 services 25176 4784 홈 페이지 접근 - 토큰 없음
+INFO 2025-06-09 02:20:59,506 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:20:59,507 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:20:59,507 services 25176 4784 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:20:59,507 services 25176 4784 액세스 토큰 없음
+INFO 2025-06-09 02:21:01,114 services 25176 4784 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:21:01,115 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:21:01,116 services 25176 4784 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:21:01,117 services 25176 4784 액세스 토큰 없음
+INFO 2025-06-09 02:21:01,194 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:21:01,194 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:21:01,195 services 25176 4784 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:21:01,195 services 25176 4784 액세스 토큰 없음
+INFO 2025-06-09 02:21:03,229 services 25176 4784 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:21:03,230 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:21:03,231 services 25176 4784 리프레시 토큰 존재: False
+INFO 2025-06-09 02:21:03,231 services 25176 4784 홈 페이지 접근 - 토큰 없음
+INFO 2025-06-09 02:21:03,294 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:21:03,295 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:21:03,295 services 25176 4784 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:21:03,295 services 25176 4784 액세스 토큰 없음
+INFO 2025-06-09 02:21:05,569 services 25176 4784 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:21:05,570 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:21:05,570 services 25176 4784 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:21:05,571 services 25176 4784 액세스 토큰 없음
+INFO 2025-06-09 02:21:05,647 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:21:05,648 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:21:05,649 services 25176 4784 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:21:05,649 services 25176 4784 액세스 토큰 없음
+INFO 2025-06-09 02:21:06,955 services 25176 4784 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:21:06,956 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:21:06,957 services 25176 4784 리프레시 토큰 존재: False
+INFO 2025-06-09 02:21:06,958 services 25176 4784 홈 페이지 접근 - 토큰 없음
+INFO 2025-06-09 02:21:07,016 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:21:07,017 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:21:07,017 services 25176 4784 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:21:07,018 services 25176 4784 액세스 토큰 없음
+INFO 2025-06-09 02:21:07,851 services 25176 4784 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:21:07,852 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:21:07,852 services 25176 4784 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:21:07,853 services 25176 4784 액세스 토큰 없음
+INFO 2025-06-09 02:21:07,968 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:21:07,969 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:21:07,970 services 25176 4784 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:21:07,971 services 25176 4784 액세스 토큰 없음
+INFO 2025-06-09 02:21:09,337 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:21:09,337 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:21:09,337 services 25176 4784 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:21:09,338 services 25176 4784 액세스 토큰 없음
+INFO 2025-06-09 02:21:11,503 services 25176 4784 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:21:11,503 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:21:11,504 services 25176 4784 리프레시 토큰 존재: False
+INFO 2025-06-09 02:21:11,505 services 25176 4784 홈 페이지 접근 - 토큰 없음
+INFO 2025-06-09 02:21:11,594 services 25176 4784 토큰 검증 시작 - Path: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-09 02:21:11,595 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:21:11,595 services 25176 4784 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:21:11,596 services 25176 4784 액세스 토큰 없음
+INFO 2025-06-09 02:21:23,691 services 25176 4784 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:21:23,692 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:21:23,692 services 25176 4784 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:21:23,693 services 25176 4784 액세스 토큰 없음
+INFO 2025-06-09 02:21:25,585 services 25176 4784 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:21:25,586 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:21:25,587 services 25176 4784 리프레시 토큰 존재: False
+INFO 2025-06-09 02:21:25,587 services 25176 4784 홈 페이지 접근 - 토큰 없음
+INFO 2025-06-09 02:21:28,405 services 25176 4784 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:21:28,406 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:21:28,407 services 25176 4784 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:21:28,407 services 25176 4784 액세스 토큰 없음
+INFO 2025-06-09 02:21:29,521 services 25176 4784 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:21:29,522 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:21:29,522 services 25176 4784 리프레시 토큰 존재: False
+INFO 2025-06-09 02:21:29,523 services 25176 4784 홈 페이지 접근 - 토큰 없음
+INFO 2025-06-09 02:21:31,887 services 25176 4784 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:21:31,887 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:21:31,888 services 25176 4784 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:21:31,889 services 25176 4784 액세스 토큰 없음
+INFO 2025-06-09 02:21:34,430 services 25176 4784 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:21:34,431 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:21:34,432 services 25176 4784 리프레시 토큰 존재: False
+INFO 2025-06-09 02:21:34,432 services 25176 4784 홈 페이지 접근 - 토큰 없음
+INFO 2025-06-09 02:21:40,669 services 25176 4784 토큰 검증 시작 - Path: /chatbot/
+INFO 2025-06-09 02:21:40,670 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:21:40,670 services 25176 4784 리프레시 토큰 존재: False
+WARNING 2025-06-09 02:21:40,671 services 25176 4784 액세스 토큰 없음
+INFO 2025-06-09 02:21:43,054 services 25176 4784 토큰 검증 시작 - Path: /
+INFO 2025-06-09 02:21:43,055 services 25176 4784 액세스 토큰 존재: False
+INFO 2025-06-09 02:21:43,055 services 25176 4784 리프레시 토큰 존재: False
+INFO 2025-06-09 02:21:43,056 services 25176 4784 홈 페이지 접근 - 토큰 없음
