@@ -21,7 +21,7 @@ class JWT_KEY(enum.Enum):
     RANDOM_OF_ACCESS_KEY = (
         enum.auto(),          # 내부 식별 ID (자동 증가 정수, 사용 X)
         settings.ACCESS_SECRET_KEY,  # 환경 변수에서 가져옴
-        datetime.timedelta(minutes=1),  # 30분으로 수정
+        datetime.timedelta(minutes=1),  
         'HS256',              # HMAC SHA256 해시 알고리즘
         'Access Token'     # 설명 (기술적 기능 없음)
     )
@@ -30,7 +30,7 @@ class JWT_KEY(enum.Enum):
     RANDOM_OF_REFRESH_KEY = (
         enum.auto(), 
         settings.REFRESH_SECRET_KEY,  # 환경 변수에서 가져옴
-        datetime.timedelta(days=7),  # 7일로 수정
+        datetime.timedelta(minutes=5),  
         'HS256', 
         'Refresh Token'
     )
@@ -88,8 +88,11 @@ def __decode_token(token, key):
         # payload에서 사용자 ID를 반환 (주체 식별)
         return payload['user_id']
 
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError) as e:
+        # JWT 관련 예외는 그대로 전파
+        raise e
     except Exception as e:
-        # 예외 발생 시 DRF 인증 실패 예외 발생시켜 401 응답 유도
+        # 기타 예외는 AuthenticationFailed로 변환
         raise AuthenticationFailed(e)
 
 

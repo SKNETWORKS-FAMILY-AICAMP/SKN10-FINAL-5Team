@@ -1,17 +1,28 @@
 import json
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from .service import get_rag_chain
-from rest_framework.views import APIView
+from User.services import verify_and_refresh_tokens
+from functools import wraps
 
-class ChatbotPageView(APIView):    
-    def get(self, request):
-        return render(request, 'chatbot/chatbot.html')
+def login_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        is_valid, response, user_id = verify_and_refresh_tokens(request)
+        if not is_valid:
+            return redirect('user:login')
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+@login_required
+def chatbot_page(request):
+    return render(request, 'chatbot/chatbot.html')
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@login_required
 def chat_message(request):
     """챗봇 메시지 처리 API"""
     try:

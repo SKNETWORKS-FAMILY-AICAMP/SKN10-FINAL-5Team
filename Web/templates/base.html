@@ -26,7 +26,7 @@
     <div class="flex items-center space-x-4">
       <a href="{% url 'home:home' %}" class="bg-cyan-400 text-white px-6 py-2 rounded-lg font-semibold hover:bg-cyan-500 transition-colors">홈</a>
       <a href="{% url 'chatbot:chatbot' %}" class="bg-sky-400 text-white px-6 py-2 rounded-lg font-semibold hover:bg-sky-500 transition-colors">챗봇</a>
-      {% if request.user.is_authenticated %}
+      {% if request.user %}
         <div class="relative">
           <button class="p-2 rounded-full hover:bg-gray-100">
             <span class="material-icons text-gray-600">notifications</span>
