@@ -1,13 +1,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     const messageInput = document.querySelector('input[placeholder="메시지 입력..."]');
     const sendButton = document.querySelector('.bg-blue-500');
-    const chatContainer = document.querySelector('.flex-grow.flex.flex-col.items-center.justify-center.p-6');
-    
-    // 사이드바 토글 기능 추가
+    const chatContainer = document.querySelector('.flex-grow.flex.flex-col.items-center.justify-center.p-6');    // 사이드바 토글 기능 추가
     const sidebarCloseBtn = document.getElementById('sidebar-close-btn');
     const sidebarOpenBtn = document.getElementById('sidebar-open-btn');
     const sidebar = document.querySelector('aside');
     const mainContainer = document.querySelector('main');
+    const newChatBtn = document.getElementById('new-chat-btn');
     
     let sidebarVisible = true;
     
@@ -15,12 +14,16 @@ document.addEventListener('DOMContentLoaded', function() {
     sidebarCloseBtn.addEventListener('click', function() {
         hideSidebar();
     });
-    
     // 사이드바 열기 버튼
     sidebarOpenBtn.addEventListener('click', function() {
         showSidebar();
     });
-    
+
+    // 새 채팅 버튼 - 세션 초기화
+    newChatBtn.addEventListener('click', function() {
+        resetChatSession();
+    });
+
     function hideSidebar() {
         sidebar.style.display = 'none';
         mainContainer.style.marginLeft = '0';
@@ -28,13 +31,59 @@ document.addEventListener('DOMContentLoaded', function() {
         sidebarOpenBtn.style.display = 'block';
         sidebarVisible = false;
     }
-    
+
     function showSidebar() {
         sidebar.style.display = 'flex';
         mainContainer.style.marginLeft = '-1rem';
         mainContainer.style.borderRadius = '1rem 0 0 1rem';
-        sidebarOpenBtn.style.display = 'none';
-        sidebarVisible = true;
+        sidebarOpenBtn.style.display = 'none';        sidebarVisible = true;
+    }
+
+    // 세션 초기화 함수
+    function resetChatSession() {
+        // 채팅 화면을 초기 상태로 되돌리기
+        chatContainer.innerHTML = `
+            <div class="text-center max-w-md">
+                <h2 class="text-xl font-semibold text-slate-800 mb-4">청년 정책 문의 챗봇 입니다! 무엇을 도와드릴까요?</h2>
+                <p class="text-slate-600 mb-8 text-sm">이런 질문을 자주 해요</p>
+                <div class="space-y-3">
+                    <button class="w-full flex items-center justify-between text-left bg-slate-50 hover:bg-slate-100 text-slate-700 py-3 px-4 rounded-lg text-sm transition-colors">
+                        <span>청년 지원금 신청 방법이 궁금해요.</span>
+                        <span class="material-icons text-slate-400 text-lg">arrow_forward_ios</span>
+                    </button>
+                    <button class="w-full flex items-center justify-between text-left bg-slate-50 hover:bg-slate-100 text-slate-700 py-3 px-4 rounded-lg text-sm transition-colors">
+                        <span>청년 창업 지원 정책을 알고 싶어요.</span>
+                        <span class="material-icons text-slate-400 text-lg">arrow_forward_ios</span>
+                    </button>
+                    <button class="w-full flex items-center justify-between text-left bg-slate-50 hover:bg-slate-100 text-slate-700 py-3 px-4 rounded-lg text-sm transition-colors">
+                        <span>제가 혜택 받을 수 있는 청년정책을 찾아주세요.</span>
+                        <span class="material-icons text-slate-400 text-lg">arrow_forward_ios</span>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // 미리 정의된 질문 버튼들에 이벤트 재등록
+        setupPresetButtons();
+
+        // 입력창 초기화
+        messageInput.value = '';
+
+        // 서버에 세션 초기화 요청 (선택사항)
+        fetch('/chatbot/api/reset-session/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('세션이 초기화되었습니다.');
+        })
+        .catch(error => {
+            console.error('세션 초기화 중 오류 발생:', error);
+        });
     }
 
     // 전송 버튼 클릭 이벤트
@@ -127,15 +176,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }    // 미리 정의된 질문 버튼들 이벤트 처리 함수
+    function setupPresetButtons() {
+        const presetButtons = document.querySelectorAll('.space-y-3 button');
+        presetButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const question = this.querySelector('span').textContent;
+                messageInput.value = question;
+                sendMessage();
+            });
+        });
     }
 
-    // 미리 정의된 질문 버튼들 이벤트 처리
-    const presetButtons = document.querySelectorAll('.space-y-3 button');
-    presetButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const question = this.querySelector('span').textContent;
-            messageInput.value = question;
-            sendMessage();
-        });
-    });
+    // 초기 로드 시 미리 정의된 질문 버튼들 이벤트 처리
+    setupPresetButtons();
 });
