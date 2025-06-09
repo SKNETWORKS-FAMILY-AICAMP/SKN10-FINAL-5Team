@@ -1,0 +1,19 @@
+<form id="chat-form">
+  <input type="text" id="user-msg" name="message" />
+  <button type="submit">질문</button>
+</form>
+<div id="chat-answer"></div>
+<script>
+document.getElementById('chat-form').onsubmit = async function(e){
+  e.preventDefault();
+  const msg = document.getElementById('user-msg').value;
+  const res = await fetch('/policies/chatbot/', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: 'message=' + encodeURIComponent(msg)
+  });
+  const data = await res.json();
+  document.getElementById('chat-answer').innerText = data.answer;
+}
+</script>
+
