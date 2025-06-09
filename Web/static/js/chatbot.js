@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', function() {
     const messageInput = document.querySelector('input[placeholder="메시지 입력..."]');
     const sendButton = document.querySelector('.bg-blue-500');
@@ -218,6 +217,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let modalContent = '';
         let title = '';
         let supportType = '';
+        let applyUrl = '';
 
         switch(policyId) {
             case 'youth-tomorrow-success-project':
@@ -232,6 +232,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <li style="margin-bottom: 8px;"><strong>신청 기간:</strong> 상시</li>
                     </ul>
                 `;
+                applyUrl = 'https://www.work.go.kr/youngTomorrowJob/index.do';
                 break;
             case 'youth-jeonse-loan':
                 title = '청년 전세임대주택';
@@ -245,6 +246,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <li style="margin-bottom: 8px;"><strong>신청 기간:</strong> 공고에 따라 상이</li>
                     </ul>
                 `;
+                applyUrl = 'https://apply.lh.or.kr/';
                 break;
             case 'youth-startup-academy':
                 title = '청년창업사관학교';
@@ -276,11 +278,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         </li>
                     </ul>
                 `;
+                applyUrl = 'https://www.k-startup.go.kr/';
                 break;
             default:
                 title = '정책 정보';
                 supportType = '';
                 modalContent = '<p>선택하신 정책에 대한 정보를 찾을 수 없습니다.</p>';
+                applyUrl = '#';
         }
 
         const modalHtml = `
@@ -293,7 +297,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         ${modalContent}
                     </div>
                     <div style="text-align: right; margin-top: 20px;">
-                        <button style="background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer;">신청하기</button>
+                        <button id="applyButton" style="background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer;">신청하기</button>
                     </div>
                 </div>
             </div>
@@ -304,6 +308,21 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('closeModalBtn').addEventListener('click', function() {
             document.getElementById('policyModal').remove();
         });
+
+        const applyButton = document.getElementById('applyButton');
+        if (applyButton) {
+            console.log('신청하기 버튼 찾음:', applyButton);
+            applyButton.addEventListener('click', function() {
+                if (applyUrl && applyUrl !== '#') {
+                    window.open(applyUrl, '_blank');
+                } else {
+                    console.warn('신청 URL이 정의되지 않았습니다.');
+                }
+                document.getElementById('policyModal').remove();
+            });
+        } else {
+            console.error('신청하기 버튼을 찾을 수 없습니다!');
+        }
     }
 
     setupPresetButtons();
