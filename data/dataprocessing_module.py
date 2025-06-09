@@ -47,6 +47,8 @@ def rename_columns_kor(df):
 # 사업기간 만료 정책 삭제 (사업기간종료일자가 오늘보다 이전인 정책 삭제제)
 # 신청기간 결측치 데이터 남겨두기
 # 날짜 구간에서 유효한 미래 기간만 추출
+
+# 날짜 구간을 찾아 시작날짜 마감날짜를 데이터타임으로 변환환
 def extract_dates(text):
     try:
         if isinstance(text, str):
@@ -78,12 +80,12 @@ def filter_valid_application_periods(df, period_col='신청기간', biz_end_col=
     # 신청시작일/마감일 추출
     df[['신청시작일', '신청마감일']] = df[period_col].apply(extract_dates)
 
-    # 사업기간 필터링
+    # 사업기간이 끝나면 제거
     if biz_end_col in df.columns:
         df[biz_end_col] = pd.to_datetime(df[biz_end_col], errors='coerce')
         df = df[(df[biz_end_col].isna()) | (df[biz_end_col] >= today)]
 
-    # 신청마감일이 존재하면서 이미 지난 경우만 제거
+    # 신청마감일이 지나면 제거
     df = df[(df['신청마감일'].isna()) | (df['신청마감일'] >= today)]
 
     return df
@@ -126,47 +128,34 @@ def remove_age_outliers(df: pd.DataFrame) -> pd.DataFrame:
 
 # ==================== 큰 카테고리 분류 ====================
 
-def classify_top_category_gpt(name, content, api_key):
-    client = OpenAI(api_key=api_key)
-    prompt = f"""
-다음은 청년 정책에 대한 정보입니다. 이 정책이 어떤 분야에 속하는지 '주거', '일자리(교육)', '기타' 중 하나로 분류하세요.
+def update_top_category_column(df, mid_col='정책중분류명', keyword_col='정책키워드명', top_col='정책대분류명'):
+    # 키워드 정의
+    job_keywords = ['일자리', '취업', '채용', '창업', '직업', '교육', '역량', '스킬', '훈련', '현장실습', '인턴']
+    housing_keywords = ['주거', '기숙사', '전세', '월세', '임대', '주택', '숙소', '거주']
 
-- 정책명: {name}
-- 정책내용: {content}
+    def classify(mid_category: str, keyword: str) -> str:
+        mid_text = str(mid_category).lower()
+        keyword_text = str(keyword).lower()
 
-응답 형식:
-분류: [주거 or 일자리(교육) or 기타]
-"""
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.0
-        )
-    except Exception:
-        try:
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.0
-            )
-        except Exception:
-            return "기타"
+        # 정책키워드명 우선 분류
+        if '공공임대주택' in keyword_text:
+            return '주거'
 
-    result = response.choices[0].message.content
-    match = re.search(r"분류:\s*(주거|일자리\(교육\)|기타)", result)
-    return match.group(1) if match else "기타"
+        # 중분류 키워드 분류
+        if any(kw in mid_text for kw in job_keywords):
+            return '일자리(교육)'
+        elif any(kw in mid_text for kw in housing_keywords):
+            return '주거'
+        else:
+            return '기타'
 
-def add_category_column(df, api_key, name_col='정책명', content_col='정책설명내용', new_col='정책대분류명', delay=0.3):
-    results = []
-    for _, row in tqdm(df.iterrows(), total=len(df)):
-        name = row[name_col]
-        content = row[content_col]
-        category = classify_top_category_gpt(name, content, api_key)
-        results.append(category)
-        time.sleep(delay)
-    df[new_col] = results
+    tqdm.pandas()
+    df[top_col] = df.progress_apply(
+        lambda row: classify(row[mid_col], row[keyword_col]),
+        axis=1
+    )
     return df
+
 
 # ==================== 세부분류 ====================
 
