@@ -68,6 +68,7 @@ def chat_message(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@login_required
 def reset_session(request):
     """챗봇 세션 초기화 API"""
     try:
