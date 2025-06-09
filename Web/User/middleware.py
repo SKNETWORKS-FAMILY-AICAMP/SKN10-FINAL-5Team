@@ -24,7 +24,27 @@ class JWTAuthenticationMiddleware:
         if request.path in public_urls:
             return self.get_response(request)
 
-        # 모든 페이지에서 토큰 체크 (홈 페이지 포함)
+        # 챗봇 페이지와 API에 대한 토큰 검증
+        if request.path.startswith('/chatbot/'):
+            try:
+                is_valid, response, user_id = verify_and_refresh_tokens(request)
+                
+                # 토큰이 갱신된 경우에만 응답 반환
+                if response:
+                    return response
+
+                if is_valid and user_id:
+                    try:
+                        request.user = User.objects.get(user_id=user_id)
+                    except User.DoesNotExist:
+                        return redirect('user:login')
+                else:
+                    return redirect('user:login')
+
+            except AuthenticationFailed:
+                return redirect('user:login')
+
+        # 다른 페이지에 대한 토큰 검증
         try:
             is_valid, response, user_id = verify_and_refresh_tokens(request)
             
