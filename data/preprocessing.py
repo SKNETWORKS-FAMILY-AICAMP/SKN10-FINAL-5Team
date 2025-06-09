@@ -1,10 +1,3 @@
-"""
-청년정책 데이터 전처리 스크립트
-- 코드 매핑 및 지역 정보 변환
-- 중복 카테고리 제거
-- 최종 데이터 저장
-"""
-
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
