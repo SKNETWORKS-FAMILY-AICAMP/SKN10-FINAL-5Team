@@ -76,7 +76,7 @@ def naver_login_callback(request):
         # 5. JWT 발급
         access_token, refresh_token = generate_tokens(user.user_id)
 
-        # 6. 기존 refreshToken 삭제 후 새로 저장(싱글 디바이스 정책 적용ㅍ)
+        # 6. 기존 refreshToken 삭제 후 새로 저장(싱글 디바이스 정책 적용)
         RefreshToken.objects.filter(user=user).delete()
 
         now = datetime.now(pytz.timezone("Asia/Seoul"))
