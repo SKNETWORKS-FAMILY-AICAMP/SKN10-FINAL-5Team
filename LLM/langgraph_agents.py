@@ -133,6 +133,7 @@ db_manager = DatabaseManager()
 # 공통 필터 노드
 def common_filter_node(state: AgentState) -> AgentState:
     user_profile = state["user_profile"]
+    # todo: user_profile 자체적으로 가져오는 방법 찾아보기.
     all_policies = state["all_policies"]
     
     filtered_policies = []
@@ -244,6 +245,7 @@ def enhanced_intent_classifier_node(state: AgentState) -> AgentState:
     housing_keywords = ["주거", "집", "임대", "전세", "월세", "무주택"]
     job_keywords = ["취업", "일자리", "직장", "훈련", "교육", "구직"]
     
+    # tood: llm이 판단하게 하기.
     housing_score = sum(1 for keyword in housing_keywords if keyword in last_message)
     job_score = sum(1 for keyword in job_keywords if keyword in last_message)
     

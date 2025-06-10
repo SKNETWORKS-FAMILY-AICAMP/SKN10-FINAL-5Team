@@ -92,6 +92,7 @@ def test_sample_policies():
         return False
 
 def create_sample_user_profiles():
+    # todo: 사용자 프로필 생성 방법 찾아보기. 정보 되묻는 에이전트.
     """다양한 샘플 사용자 프로필 생성"""
     profiles = {
         "서울_대학생": {
