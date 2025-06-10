@@ -9,7 +9,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .token import create_access_token
-
+from django.shortcuts import render, redirect
+from .models import User 
 from .token import JWT_KEY
 from .models import RefreshToken
 from .services import (
@@ -20,18 +21,15 @@ from .services import (
     decode_refresh_token,
 )
 
-from django.shortcuts import render, redirect
-from .models import User 
-
-
 # 로그인 화면 렌더링
+# 아무 인증 처리 없음 → public_urls 에 포함 → middleware 통과
 def login_view(request):
     return render(request, 'user/login.html')
 
 
-# 네이버 로그인 리다이렉트
+# 사용자를 네이버 인증 페이지로 리다이렉트.
 # 네이버 인증 URL 생성 후 사용자 브라우저를 그 주소로 리디렉션
-# 사용자는 네이버 로그인 → 로그인 승인 → 콜백 URL로 이동
+# 로그인 성공시 설정한 redirect_uri로 code + state 보내줌 -> naver_login_callback으로 돌아옴
 def naver_login_redirect(request):
     url = (
         f"https://nid.naver.com/oauth2.0/authorize?"
@@ -61,6 +59,7 @@ def naver_login_callback(request):
             "code": code,
             "state": state,
         }
+
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         token_response = requests.post(token_url, data=data, headers=headers).json()
         access_token = token_response.get("access_token")
@@ -77,7 +76,7 @@ def naver_login_callback(request):
         # 5. JWT 발급
         access_token, refresh_token = generate_tokens(user.user_id)
 
-        # 6. 기존 refreshToken 삭제 후 새로 저장
+        # 6. 기존 refreshToken 삭제 후 새로 저장(싱글 디바이스 정책 적용ㅍ)
         RefreshToken.objects.filter(user=user).delete()
 
         now = datetime.now(pytz.timezone("Asia/Seoul"))
@@ -103,9 +102,10 @@ def naver_login_callback(request):
 
 # ✅ 로그아웃
 def logout_view(request):
+    # POST 요청만 허용
     if request.method != 'POST':
         return JsonResponse({"error": "Method not allowed."}, status=405)
-        
+    
     refresh_token = request.COOKIES.get("refresh_token")  
 
     if not refresh_token:

@@ -21,7 +21,7 @@ class JWT_KEY(enum.Enum):
     RANDOM_OF_ACCESS_KEY = (
         enum.auto(),          # 내부 식별 ID (자동 증가 정수, 사용 X)
         settings.ACCESS_SECRET_KEY,  # 환경 변수에서 가져옴
-        datetime.timedelta(seconds=30),  
+        datetime.timedelta(seconds=30), 
         'HS256',              # HMAC SHA256 해시 알고리즘
         'Access Token'     # 설명 (기술적 기능 없음)
     )
@@ -88,8 +88,9 @@ def __decode_token(token, key):
         # payload에서 사용자 ID를 반환 (주체 식별)
         return payload['user_id']
 
+    # 토큰이 만료되었거나, 위조되어 유효하지 않은 경우
     except (jwt.ExpiredSignatureError, jwt.InvalidTokenError) as e:
-        # JWT 관련 예외는 그대로 전파
+        # JWT 관련 예외는 그대로 위쪽 서비스 레이어나 미들웨어에서 감지에서 처리하도록 유도
         raise e
     except Exception as e:
         # 기타 예외는 AuthenticationFailed로 변환

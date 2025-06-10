@@ -6,28 +6,14 @@ from django.views.decorators.http import require_http_methods
 from .service import get_rag_chain
 from User.services import verify_and_refresh_tokens
 from functools import wraps
+from User.models import User
 
 def login_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        is_valid, response, user_id = verify_and_refresh_tokens(request)
-        
-        # 토큰이 유효하지 않은 경우
-        if not is_valid:
-            # 리다이렉트 응답이 있는 경우 그대로 반환
-            if response:
-                return response
-            # 리다이렉트 응답이 없는 경우 로그인 페이지로 리다이렉트
-            response = redirect('user:login')
-            response.delete_cookie('access_token')
-            response.delete_cookie('refresh_token')
-            return response
-            
-        # 토큰이 갱신된 경우 응답 반환
-        if response:
-            return response
-            
-        # 토큰이 유효한 경우 원래 뷰 함수 실행
+        # 미들웨어에서 이미 검증된 request.user를 사용
+        if not request.user:
+            return redirect('user:login')
         return view_func(request, *args, **kwargs)
     return wrapper
 
@@ -126,4 +112,3 @@ def reset_session(request):
             'status': 'error',
             'message': '세션 초기화 중 오류가 발생했습니다.'
         }, status=500)
-
