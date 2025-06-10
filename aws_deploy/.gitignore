@@ -1,0 +1,22 @@
+# Terraform state files (민감 정보 포함)
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+
+# 환경 변수 파일 (실제 키 값들)
+.env
+
+# AWS 자격증명
+.aws/
+
+# 로그 파일
+*.log
+
+# Python 캐시
+__pycache__/
+*.pyc
+
+# 임시 파일
+.tmp/
+temp/ 

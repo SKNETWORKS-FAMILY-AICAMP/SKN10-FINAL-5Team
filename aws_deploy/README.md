@@ -169,6 +169,64 @@ curl http://youth-policy-api-alb-2064094151.ap-northeast-2.elb.amazonaws.com/hea
 - **Swagger UI**: `http://youth-policy-api-alb-2064094151.ap-northeast-2.elb.amazonaws.com/docs`
 - **ReDoc**: `http://youth-policy-api-alb-2064094151.ap-northeast-2.elb.amazonaws.com/redoc`
 
+## 🔄 Terraform 상태 관리 (중요!)
+
+### ⚠️ 테라폼 상태 파일 관리 주의사항
+
+테라폼 상태 파일(`terraform.tfstate`)은 **현재 인프라의 실제 상태**를 담고 있는 핵심 파일입니다. 이 파일을 잃어버리면 기존 인프라를 관리할 수 없게 됩니다.
+
+### 📦 상태 백업 및 복원 방법
+
+#### 1. 현재 상태 백업하기
+```bash
+# 현재 terraform.tfstate를 S3에 백업
+./terraform-backup.sh backup
+```
+
+#### 2. 새로운 환경에서 복원하기  
+```bash
+# 깃헙에서 코드 다운로드 후
+git clone [repository-url]
+cd aws_deploy
+
+# AWS 자격증명 설정
+aws configure
+
+# 백업에서 상태 복원
+./terraform-backup.sh restore
+
+# 상태 확인
+cd terraform && terraform plan
+```
+
+#### 3. 완전히 새로 시작하기 (기존 인프라 삭제)
+```bash
+# 기존 인프라 완전 제거 후 재구성
+./terraform-backup.sh rebuild
+```
+
+#### 4. 팀 협업을 위한 원격 상태 저장소 설정
+```bash
+# S3 기반 원격 상태 저장소 설정
+./terraform-backup.sh remote
+```
+
+### 🏗️ 깃헙에 올릴 파일 vs 제외할 파일
+
+#### ✅ 깃헙에 포함해야 할 파일들:
+- `terraform/main.tf` - 인프라 설정 코드
+- `terraform-backup.sh` - 백업/복원 스크립트  
+- `app.py`, `langgraph_agents.py` - 애플리케이션 코드
+- `Dockerfile`, `requirements.txt` - 컨테이너 설정
+- `deploy.sh` - 배포 스크립트
+- `.gitignore` - 제외 파일 목록
+
+#### ❌ 깃헙에서 제외해야 할 파일들:
+- `terraform/terraform.tfstate*` - 인프라 상태 (민감 정보 포함)
+- `terraform/.terraform/` - 테라폼 캐시
+- `.env` - 실제 API 키들
+- `.aws/` - AWS 자격증명
+
 ## 🎯 사용 가능한 API 엔드포인트
 
 ### 📋 기본 정보 엔드포인트
