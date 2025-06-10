@@ -27,14 +27,29 @@
     <div class="flex items-center space-x-4">
       <a href="{% url 'home:home' %}" class="bg-cyan-400 text-white px-6 py-2 rounded-lg font-semibold hover:bg-cyan-500 transition-colors">홈</a>
       <a href="{% url 'chatbot:chatbot' %}" class="bg-sky-400 text-white px-6 py-2 rounded-lg font-semibold hover:bg-sky-500 transition-colors">챗봇</a>
-      {% if request.user.is_authenticated %}
+      {% if user.is_authenticated %}
         <div class="relative">
           <button class="p-2 rounded-full hover:bg-gray-100">
             <span class="material-icons text-gray-600">notifications</span>
             <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
           </button>
         </div>
-        <a href="{% url 'user:logout' %}" class="bg-green-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-600 transition-colors">로그아웃</a>
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-full overflow-hidden">
+            {% if user.profile_img %}
+              <img src="{{ user.profile_img }}" alt="프로필 이미지" class="w-full h-full object-cover">
+            {% else %}
+              <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                <span class="material-icons text-gray-600">person</span>
+              </div>
+            {% endif %}
+          </div>
+          <span class="text-gray-700 font-medium">{{ user.user_nm }}</span>
+        </div>
+        <form id="logout-form" action="{% url 'user:logout' %}" method="post" class="inline">
+          {% csrf_token %}
+          <button type="submit" class="bg-green-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-600 transition-colors">로그아웃</button>
+        </form>
       {% else %}
         <a href="{% url 'user:login' %}" class="bg-gray-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-600 transition-colors">로그인</a>
       {% endif %}
