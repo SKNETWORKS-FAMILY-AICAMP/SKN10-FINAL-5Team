@@ -1,0 +1,32 @@
+# FastAPI and web framework
+fastapi
+uvicorn[standard]
+pydantic
+
+# Database
+psycopg2-binary
+sqlalchemy
+
+# LangChain and AI (compatible versions)
+langchain
+langchain-openai
+langchain-community
+langgraph
+
+# Vector store and embeddings
+faiss-cpu
+sentence-transformers
+
+# AWS
+boto3
+botocore
+
+# Utilities
+python-dotenv
+numpy
+pandas
+
+# Logging
+structlog
+openai
+tiktoken 
