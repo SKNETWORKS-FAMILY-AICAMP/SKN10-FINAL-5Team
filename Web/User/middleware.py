@@ -23,7 +23,8 @@ class JWTAuthenticationMiddleware:
             '/user/naver/login/',
             '/user/naver/callback/',
         ]
-
+        print('hello world')
+        
         # 뷰에서 항상 request.user를 안전하게 사용할 수 있도록 초기값 설정
         request.user = None
 
@@ -51,6 +52,7 @@ class JWTAuthenticationMiddleware:
             # 만약 response가 존재하면 → 그 응답을 그대로 클라이언트에 반환
             # 왜? → 새 access_token 재발급 시 redirect나 JsonResponse가 필요한 경우가 있기 때문.
             # ex: access_token 만료 후 → 새 access_token 발급 후 → redirect(chatbot 페이지 다시 요청) 하는 경우.
+            # 수정
             if response:
                 return response
 

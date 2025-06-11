@@ -20,6 +20,7 @@ def clear_refresh_token(refresh_token):
         RefreshToken.objects.filter(token=refresh_token).delete()
 
 
+
 # 공통 인증 실패 처리 → 쿠키 삭제 + DB 삭제 + 리다이렉트
 def handle_auth_failure(refresh_token):
     clear_refresh_token(refresh_token)
