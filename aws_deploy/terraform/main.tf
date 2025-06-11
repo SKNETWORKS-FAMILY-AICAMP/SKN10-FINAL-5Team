@@ -140,12 +140,23 @@ resource "aws_security_group" "rds" {
   name_prefix = "${var.project_name}-rds-"
   vpc_id      = aws_vpc.main.id
 
+  # ECS에서의 접근 허용 (기존)
   ingress {
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
     security_groups = [aws_security_group.ecs.id]
   }
+
+  # 임시 퍼블릭 접근용 - 특정 IP만 허용
+  # 주의: 사용 후 반드시 제거하세요!
+  # ingress {
+  #   from_port   = 5432
+  #   to_port     = 5432
+  #   protocol    = "tcp"
+  #   cidr_blocks = ["YOUR_IP_ADDRESS/32"]  # 본인 IP만 허용
+  #   description = "Temporary public access - REMOVE AFTER USE"
+  # }
 
   tags = {
     Name        = "${var.project_name}-rds-sg"
@@ -216,6 +227,9 @@ resource "aws_db_instance" "postgres" {
 
   vpc_security_group_ids = [aws_security_group.rds.id]
   db_subnet_group_name   = aws_db_subnet_group.main.name
+
+  # 임시 퍼블릭 설정 (필요 시 주석 해제)
+  # publicly_accessible = true
 
   backup_retention_period = 7
   backup_window          = "03:00-04:00"
