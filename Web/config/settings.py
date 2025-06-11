@@ -96,9 +96,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'servicedb',
-        'USER': 'admin',
-        'PASSWORD': 'admin1234',
-        'HOST': 'localhost',  # 또는 Docker 컨테이너 안에서 실행한다면 'db'
+        'USER': 'postgres',
+        'PASSWORD': 'postgres',
+        'HOST': 'youth-policy-api-postgres.czoqimai8z0n.ap-northeast-2.rds.amazonaws.com',  # 또는 Docker 컨테이너 안에서 실행한다면 'db'
         'PORT': '5432',
     }
 }
