@@ -39,28 +39,65 @@
     <div class="flex items-center mb-8">
         <h2 class="text-3xl font-bold text-gray-800">인기 청년 정책</h2>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
-            <h3 class="text-lg font-semibold text-gray-800 mb-2">청년내일채움공제</h3>
-            <p class="text-gray-600 text-sm mb-4">중소기업 취업 청년에게 2년간 300만원</p>
-            <span class="bg-blue-100 text-blue-700 text-xs font-medium px-3 py-1 rounded-full">취업지원</span>
+    <div class="relative">
+        <div class="overflow-hidden">
+            <div class="flex transition-transform duration-500 ease-in-out" id="policySlider">
+                {% for policy in popular_policies %}
+                <div class="w-full md:w-1/2 lg:w-1/4 flex-shrink-0 px-4">
+                    <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow h-full">
+                        <div class="flex flex-col h-full">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ policy.정책명 }}</h3>
+                            <p class="text-gray-600 text-sm mb-3">{{ policy.정책설명내용|truncatechars:100 }}</p>
+                            <span class="{{ policy.category_color.bg }} {{ policy.category_color.text }} text-xs font-medium px-3 py-1 rounded-full w-fit">{{ policy.정책중분류명 }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
-        <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
-            <h3 class="text-lg font-semibold text-gray-800 mb-2">청년 전세임대주택</h3>
-            <p class="text-gray-600 text-sm mb-4">만 19~39세 청년에게 시중 시세보다 저렴하게 제공</p>
-            <span class="bg-purple-100 text-purple-700 text-xs font-medium px-3 py-1 rounded-full">주거지원</span>
-        </div>
-        <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
-            <h3 class="text-lg font-semibold text-gray-800 mb-2">청년창업사관학교</h3>
-            <p class="text-gray-600 text-sm mb-4">예비창업자에게 9개월간 집중 교육과정 제공</p>
-            <span class="bg-yellow-100 text-yellow-700 text-xs font-medium px-3 py-1 rounded-full">창업지원</span>
-        </div>
-        <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
-            <h3 class="text-lg font-semibold text-gray-800 mb-2">청년 햇살론</h3>
-            <p class="text-gray-600 text-sm mb-4">만 34세 이하 청년에게 최대 1,200만원 대출</p>
-            <span class="bg-indigo-100 text-indigo-700 text-xs font-medium px-3 py-1 rounded-full">대출지원</span>
-        </div>
+        <button class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100" onclick="slidePrev()">
+            <span class="material-icons">chevron_left</span>
+        </button>
+        <button class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100" onclick="slideNext()">
+            <span class="material-icons">chevron_right</span>
+        </button>
     </div>
 </section>
+
+<script>
+let currentSlide = 0;
+const slider = document.getElementById('policySlider');
+const slides = slider.children;
+const totalSlides = slides.length;
+const slidesToShow = window.innerWidth < 768 ? 1 : window.innerWidth < 1024 ? 2 : 4;
+
+function updateSlider() {
+    const offset = currentSlide * -100;
+    slider.style.transform = `translateX(${offset}%)`;
+}
+
+function slideNext() {
+    if (currentSlide < totalSlides - slidesToShow) {
+        currentSlide++;
+        updateSlider();
+    }
+}
+
+function slidePrev() {
+    if (currentSlide > 0) {
+        currentSlide--;
+        updateSlider();
+    }
+}
+
+// 반응형 처리
+window.addEventListener('resize', () => {
+    const newSlidesToShow = window.innerWidth < 768 ? 1 : window.innerWidth < 1024 ? 2 : 4;
+    if (newSlidesToShow !== slidesToShow) {
+        currentSlide = 0;
+        updateSlider();
+    }
+});
+</script>
 {% endblock %}
 
