@@ -95,11 +95,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'servicedb',
-        'USER': 'admin',
-        'PASSWORD': 'admin1234',
-        'HOST': 'localhost',  # 또는 Docker 컨테이너 안에서 실행한다면 'db'
-        'PORT': '5432',
+        'NAME': os.getenv('DB_NAME', 'servicedb'),  # 환경변수에서 DB 이름을 가져오거나 기본값 사용
+        'USER': os.getenv('DB_USER', 'admin'),  # 환경변수에서 DB 사용자 이름을 가져오거나 기본값 사용
+        'PASSWORD': os.getenv('DB_PASSWORD', 'admin1234'),  # 환경변수에서 DB 비밀번호를 가져오거나 기본값 사용
+        'HOST': os.getenv("DB_HOST", "localhost"),  # 또는 Docker 컨테이너 안에서 실행한다면 'db'
+        'PORT': os.getenv("DB_PORT", "5432"),  # PostgreSQL의 기본 포트
     }
 }
 
