@@ -13,7 +13,8 @@ from langchain_core.prompts import ChatPromptTemplate
 load_dotenv()
 
 # CSV 데이터 로드
-csv_path = "/home/bbing/dev/project/SKN10-FINAL-5Team/data/청년정책_전처리완료_v2.csv"
+#csv_path = "/home/bbing/dev/project/SKN10-FINAL-5Team/data/청년정책_전처리완료_v2.csv"
+csv_path = "C:/dev/project/SKN10-FINAL-5Team/data/청년정책목록_전처리완료_2025-06-09.csv"
 try:
     df_policies = pd.read_csv(csv_path)
     print(f"✅ CSV 데이터 로드 완료: {len(df_policies)}개의 청년정책 데이터")
@@ -23,7 +24,8 @@ except Exception as e:
     df_policies = None
 
 # 벡터 DB 로드
-db_path = "/home/bbing/dev/project/SKN10-FINAL-5Team/data/vector_db_openai_large_combined"
+#db_path = "/home/bbing/dev/project/SKN10-FINAL-5Team/data/vector_db_openai_large_combined"
+db_path = "C:/dev/project/SKN10-FINAL-5Team/data/vector_db_openai_large_combined"
 
 embedding_model = OpenAIEmbeddings(model="text-embedding-3-large")
 vector_db = FAISS.load_local(
@@ -42,7 +44,7 @@ models = {
 }
 
 # 기본 LLM (하위 호환성을 위해)
-llm = models["GPT-3.5-turbo"]
+llm = models["GPT-4o-mini"]
 
 # 시스템 프롬프트 정의
 system_prompt = (
@@ -465,7 +467,8 @@ def answer_with_multiple_models_intelligent(user_question):
     return results
 
 # 사용자 질문
-user_question = "청년정책에서 일자리 정책 데이터 갯수를 말해줘"
+#user_question = "청년정책에서 일자리 정책 데이터 갯수를 말해줘"
+user_question = input("🧑 사용자 질문을 입력하세요: ")
 
 # 지능형 데이터 조회 및 여러 모델 답변 수행
 print("🧑 사용자 질문:")
