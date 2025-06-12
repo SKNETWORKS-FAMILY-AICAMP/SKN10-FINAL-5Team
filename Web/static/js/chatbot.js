@@ -124,11 +124,29 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             else if (data.status === 'token_refreshed') {
                 console.log('토큰 갱신 후 재요청 중...');
-                const originalMessage = messageInput.value;
-                setTimeout(() => {
-                    messageInput.value = originalMessage;
-                    sendMessage();
-                }, 100);
+                const originalMessage = message;
+                fetch('/chatbot/api/chat/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        message: originalMessage
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        displayMessage(data.answer, 'bot');
+                    } else {
+                        displayMessage(data.message || '오류가 발생했습니다.', 'bot');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    displayMessage('네트워크 오류가 발생했습니다. 다시 시도해주세요.', 'bot');
+                });
                 return;
             }
             else if (data.status === 'success') {
