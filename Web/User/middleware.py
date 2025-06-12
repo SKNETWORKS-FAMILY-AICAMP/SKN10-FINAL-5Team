@@ -13,10 +13,24 @@ class JWTAuthenticationMiddleware:
     # Django middleware는 __init__ 에서 get_response 받아서 저장 → 요청 후 처리를 위해 사용.
     # get_response 저장 → 마지막에 호출
     def __init__(self, get_response):
+        # view로 요청 전달할 때 사용되는 함수
         self.get_response = get_response
+
+    def _is_home_page(self, request):
+        return request.path == '/'
+
+    def _redirect_to_login(self, request):
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'status': 'redirect',
+                'redirect_url': '/user/login/'
+            }, status=401)
+        return redirect('user:login')
 
     # 미들웨어 본체 -> 모든 요청마다 실행
     def __call__(self, request):
+        print('미들웨어 사용됨')
+        
         # 공개 페이지 URL 목록
         # 인증 검사 제외 대상
         public_urls = [
@@ -24,12 +38,12 @@ class JWTAuthenticationMiddleware:
             '/user/naver/login/',
             '/user/naver/callback/',
         ]
-        print('hello world')
-        
+
         # 뷰에서 항상 request.user를 안전하게 사용할 수 있도록 초기값 설정
         request.user = None
 
         # 공개 페이지는 인증 체크를 하지 않음
+        # 토큰 검증 스킵하고 → view 실행
         if request.path in public_urls:
             return self.get_response(request)
 
@@ -48,6 +62,7 @@ class JWTAuthenticationMiddleware:
                 - None : 추출 실패  
 
             '''
+            # access_token + refresh_token 검증
             is_valid, response, user_id = verify_and_refresh_tokens(request)
 
             # 토큰 갱신이 필요한 경우 (새로운 액세스 토큰 발급)
@@ -55,36 +70,22 @@ class JWTAuthenticationMiddleware:
                 return response
 
             # 인증이 성공했는지 확인
+            # 정상 인증 성공 → request.user 설정
             if is_valid and user_id:
                 try:
                     request.user = User.objects.get(user_id=user_id)
                 except User.DoesNotExist:
-                    if request.path != '/':  # 홈 페이지가 아닌 경우에만 로그인으로 리다이렉트
-                        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                            return JsonResponse({
-                                'status': 'redirect',
-                                'redirect_url': '/user/login/'
-                            }, status=401)
-                        return redirect('user:login')
+                    if not self._is_home_page(request):
+                        return self._redirect_to_login(request)
                     
             # 만약 is_valid=False 이거나 user_id=None 인 경우 → 인증 실패
-            elif request.path != '/':  # 홈 페이지가 아닌 경우에만 로그인으로 리다이렉트
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({
-                        'status': 'redirect',
-                        'redirect_url': '/user/login/'
-                    }, status=401)
-                return redirect('user:login')
+            elif not self._is_home_page(request):
+                return self._redirect_to_login(request)
 
         # verify_and_refresh_tokens() 호출 중에 AuthenticationFailed 예외가 발생한 경우 → 강제 로그인 페이지로 이동.
         except AuthenticationFailed:
-            if request.path != '/':  # 홈 페이지가 아닌 경우에만 로그인으로 리다이렉트
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({
-                        'status': 'redirect',
-                        'redirect_url': '/user/login/'
-                    }, status=401)
-                return redirect('user:login')
+            if not self._is_home_page(request):
+                return self._redirect_to_login(request)
 
         # 정상 통과 시 → view로 요청 전달
         return self.get_response(request)
