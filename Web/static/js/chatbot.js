@@ -102,6 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             },
             body: JSON.stringify({
                 message: message
@@ -142,6 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
             loadingElement.remove();
             
             if (error.message === 'Unauthorized') {
+                console.log('인증 실패, 로그인 페이지로 이동합니다.');
                 window.location.href = '/user/login/';
                 return;
             }

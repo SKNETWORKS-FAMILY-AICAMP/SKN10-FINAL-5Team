@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import redirect
 from .services import verify_and_refresh_tokens
 from rest_framework.exceptions import AuthenticationFailed
+from django.http import HttpResponse, JsonResponse
 
 # User 모델 가져오기
 # 이후 request.user에 User 객체 할당시 사용
@@ -49,32 +50,40 @@ class JWTAuthenticationMiddleware:
             '''
             is_valid, response, user_id = verify_and_refresh_tokens(request)
 
-            # 만약 response가 존재하면 → 그 응답을 그대로 클라이언트에 반환
-            # 왜? → 새 access_token 재발급 시 redirect나 JsonResponse가 필요한 경우가 있기 때문.
-            # ex: access_token 만료 후 → 새 access_token 발급 후 → redirect(chatbot 페이지 다시 요청) 하는 경우.
-            # 수정
-            if response:
+            # 토큰 갱신이 필요한 경우 (새로운 액세스 토큰 발급)
+            if response and isinstance(response, (HttpResponse, JsonResponse)):
                 return response
 
-            # 인증이 성공했는지 확인.
-            # is_valid == True → 토큰 검증 성공 (Access Token 정상 or Refresh Token 으로 재발급 성공)
-            # user_id != None → 사용자 식별자 존재 (정상적인 토큰임)
+            # 인증이 성공했는지 확인
             if is_valid and user_id:
                 try:
-                    # user_id 를 기준으로 User 모델에서 사용자 조회.
                     request.user = User.objects.get(user_id=user_id)
-                # 만약 user_id로 User 객체를 못 찾으면 → 강제 로그인 페이지로 이동.   
                 except User.DoesNotExist:
                     if request.path != '/':  # 홈 페이지가 아닌 경우에만 로그인으로 리다이렉트
+                        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                            return JsonResponse({
+                                'status': 'redirect',
+                                'redirect_url': '/user/login/'
+                            }, status=401)
                         return redirect('user:login')
                     
-            # 만약 is_valid=False 이거나 user_id=None 인 경우 → 인증 실패.
+            # 만약 is_valid=False 이거나 user_id=None 인 경우 → 인증 실패
             elif request.path != '/':  # 홈 페이지가 아닌 경우에만 로그인으로 리다이렉트
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'status': 'redirect',
+                        'redirect_url': '/user/login/'
+                    }, status=401)
                 return redirect('user:login')
 
         # verify_and_refresh_tokens() 호출 중에 AuthenticationFailed 예외가 발생한 경우 → 강제 로그인 페이지로 이동.
         except AuthenticationFailed:
             if request.path != '/':  # 홈 페이지가 아닌 경우에만 로그인으로 리다이렉트
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'status': 'redirect',
+                        'redirect_url': '/user/login/'
+                    }, status=401)
                 return redirect('user:login')
 
         # 정상 통과 시 → view로 요청 전달

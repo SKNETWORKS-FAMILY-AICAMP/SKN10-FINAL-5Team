@@ -8,23 +8,12 @@ from User.services import verify_and_refresh_tokens
 from functools import wraps
 from User.models import User
 
-def login_required(view_func):
-    @wraps(view_func)
-    def wrapper(request, *args, **kwargs):
-        # 미들웨어에서 이미 검증된 request.user를 사용
-        if not request.user:
-            return redirect('user:login')
-        return view_func(request, *args, **kwargs)
-    return wrapper
-
-@login_required
 def chatbot_page(request):
     """챗봇 페이지 렌더링"""
     return render(request, 'chatbot/chatbot.html')
 
 @csrf_exempt
 @require_http_methods(["POST"])
-@login_required
 def chat_message(request):
     """챗봇 메시지 처리 API"""
     try:
@@ -89,7 +78,6 @@ def chat_message(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
-@login_required
 def reset_session(request):
     """챗봇 세션 초기화 API"""
     try:
