@@ -159,9 +159,19 @@ def verify_and_refresh_tokens(request):
             logger.info(f"새 액세스 토큰: {new_access_token[:20]}...")
 
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                # 원래 요청의 메서드와 데이터를 유지
+                original_method = request.method
+                original_data = request.body
+                original_content_type = request.content_type
+                
+                # 새로운 액세스 토큰으로 요청 헤더 설정
+                request.META['HTTP_AUTHORIZATION'] = f'Bearer {new_access_token}'
+                
+                # 원래 요청을 다시 처리
                 response = JsonResponse({
                     'status': 'token_refreshed',
-                    'message': '토큰이 갱신되었습니다.'
+                    'message': '토큰이 갱신되었습니다.',
+                    'retry_request': True
                 })
                 response.set_cookie('access_token', new_access_token, httponly=True, samesite='Lax')
                 return True, response, user_id
@@ -190,3 +200,4 @@ def verify_and_refresh_tokens(request):
     except jwt.InvalidTokenError as e:
         logger.error(f"액세스 토큰 유효하지 않음: {str(e)}")
         return handle_auth_failure(refresh_token, request)
+
