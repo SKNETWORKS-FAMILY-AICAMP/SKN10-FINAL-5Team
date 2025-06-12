@@ -98,11 +98,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const loadingElement = displayMessage('답변을 생성중입니다...', 'bot', true);
 
+        // AJAX 요청 = JS 코드가 fetch(), XMLHttpRequest 등으로 백엔드에 데이터 요청하는 방식.
+        // JS는 JSON 데이터를 기대하고 있었는데 → 갑자기 HTML 페이지가 와버림 (302 redirect → /user/login/ HTML)
+        // 결과적으로 fetch() 안에서 .json() 파싱 시도하다가 에러 발생함.
+        // AJAX 요청일 때는 redirect를 직접 주는 게 아니라 → JSON 응답으로 알려줌
         fetch('/chatbot/api/chat/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest' // AJAX 요청임을 명시
             },
             body: JSON.stringify({
                 message: message
@@ -116,7 +120,13 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             loadingElement.remove();
-
+            /**
+            JsonResponse({
+            'status': 'redirect',
+            'redirect_url': '/user/login/'
+            })
+            **/
+            // 브라우저 이동을 직접 명시적으로 처리
             if (data.status === 'redirect') {
                 console.log('리다이렉트 요청 감지, 로그인 페이지로 이동합니다.');
                 window.location.href = data.redirect_url;
@@ -233,6 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // 공통 js페이지로 분리
     function displayPolicyModal(policyId) {
         let modalContent = '';
         let title = '';

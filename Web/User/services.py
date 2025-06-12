@@ -21,20 +21,19 @@ def clear_refresh_token(refresh_token):
 
 # 공통 인증 실패 처리 → 쿠키 삭제 + DB 삭제 + 리다이렉트
 def handle_auth_failure(refresh_token, request=None):
+    
     clear_refresh_token(refresh_token)
     
+    # 일반 요청인 경우 리다이렉트
+    response = redirect('user:login')
+
     # AJAX 요청인 경우 JSON 응답 반환
     if request and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         response = JsonResponse({
             'status': 'redirect',
             'redirect_url': '/user/login/'
-        }, status=401)
-        response.delete_cookie('access_token')
-        response.delete_cookie('refresh_token')
-        return False, response, None
-    
-    # 일반 요청인 경우 리다이렉트
-    response = redirect('user:login')
+        }, status=401)    
+
     response.delete_cookie('access_token')
     response.delete_cookie('refresh_token')
     return False, response, None
@@ -112,39 +111,45 @@ def verify_and_refresh_tokens(request):
     if request.path == '/' and not access_token:
         logger.info("홈 페이지 접근 - 토큰 없음")
         return False, None, None
-
     # 1. 액세스 토큰 존재 확인
-    if not access_token:
+    elif not access_token:
         logger.warning("액세스 토큰 없음")
         return handle_auth_failure(refresh_token, request)
 
-    # 2. 액세스 토큰 만료 체크
+    # 2. 액세스 토큰 검증
     try:
         # 액세스 토큰이 유효한 경우
         user_id = verify_access_token(access_token)
         logger.info(f"액세스 토큰 유효 - User ID: {user_id}")
 
+        # User DB 확인
         if not User.objects.filter(user_id=user_id).exists():
             logger.warning(f"유저 존재하지 않음 - User ID: {user_id}")
             return handle_auth_failure(refresh_token, request)
 
+        # 정상 인증 성공 -> view로 정상 진행
         return True, None, user_id
 
+    # 3. 액세스 토큰 만료 시 처리
     except jwt.ExpiredSignatureError as e:
         logger.info(f"액세스 토큰 만료됨: {str(e)}")
 
+        # refresh_token 없으면 인증 실패 처리
         if not refresh_token:
             logger.warning("리프레시 토큰 없음")
             return handle_auth_failure(refresh_token, request)
 
         try:
+            # 리프레시 토큰 검증
             user_id = verify_refresh_token(refresh_token)
             logger.info(f"리프레시 토큰 유효 - User ID: {user_id}")
 
+            # User DB 확인
             if not User.objects.filter(user_id=user_id).exists():
                 logger.warning(f"유저 존재하지 않음 - User ID: {user_id} (refresh_token 검증 시)")
                 return handle_auth_failure(refresh_token, request)
             
+            # 리프레시 토큰 DB 확인
             refresh_token_obj = RefreshToken.objects.filter(
                 token=refresh_token,
                 user__user_id=user_id
@@ -154,15 +159,13 @@ def verify_and_refresh_tokens(request):
                 logger.warning(f"DB에 리프레시 토큰 없음 - User ID: {user_id}")
                 return handle_auth_failure(refresh_token, request)
 
+            # 새 액세스 토큰 발급
             new_access_token = create_access_token(user_id)
             logger.info(f"새 액세스 토큰 발급 완료 - User ID: {user_id}")
             logger.info(f"새 액세스 토큰: {new_access_token[:20]}...")
 
+            # AJAX 요청이면 token_refreshed JSON 응답 반환
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                # 원래 요청의 메서드와 데이터를 유지
-                original_method = request.method
-                original_data = request.body
-                original_content_type = request.content_type
                 
                 # 새로운 액세스 토큰으로 요청 헤더 설정
                 request.META['HTTP_AUTHORIZATION'] = f'Bearer {new_access_token}'
@@ -171,32 +174,23 @@ def verify_and_refresh_tokens(request):
                 response = JsonResponse({
                     'status': 'token_refreshed',
                     'message': '토큰이 갱신되었습니다.',
-                    'retry_request': True
+                    'retry_request': True # 재요청 로직 수행 가능
                 })
+
                 response.set_cookie('access_token', new_access_token, httponly=True, samesite='Lax')
                 return True, response, user_id
             
+            # 일반 요청이면 redirect로 새 토큰 적용
             response = redirect(request.path)
             response.set_cookie('access_token', new_access_token, httponly=True, samesite='Lax')
             return True, response, user_id
     
+        # refresh_token 만료 / 오류 시 처리
         except (jwt.ExpiredSignatureError, jwt.InvalidTokenError) as e:
             logger.error(f"리프레시 토큰 오류: {str(e)}")
-            # 리프레시 토큰이 만료되거나 유효하지 않은 경우
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                logger.info("AJAX 요청에서 리프레시 토큰 만료 감지")
-                response = JsonResponse({
-                    'status': 'redirect',
-                    'redirect_url': '/user/login/'
-                }, status=401)
-                response.delete_cookie('access_token')
-                response.delete_cookie('refresh_token')
-                clear_refresh_token(refresh_token)
-                logger.info("로그인 페이지로 리다이렉트 응답 전송")
-                return False, response, None
-            logger.info("일반 요청에서 리프레시 토큰 만료 감지")
             return handle_auth_failure(refresh_token, request)
 
+    # 4. 액세스 토큰이 유효하지 않은 경우
     except jwt.InvalidTokenError as e:
         logger.error(f"액세스 토큰 유효하지 않음: {str(e)}")
         return handle_auth_failure(refresh_token, request)
