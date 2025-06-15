@@ -32,13 +32,20 @@ function openPolicyModal(policyId) {
             modalCategorySpan.className = `text-sm font-medium px-3 py-1 rounded-full ${data.category_color.bg} ${data.category_color.text}`;
             
             const button = document.getElementById('modalPolicyButton');
-            if (data.정책URL) {
-                currentPolicyUrl = data.정책URL;
-                button.textContent = '정책 신청하기';
+            if (data.신청url주소) {
+                currentPolicyUrl = data.신청url주소;
+                button.textContent = '신청하기';
+                button.disabled = false;
+            } else if (data.참고url주소1) {
+                currentPolicyUrl = data.참고url주소1;
+                button.textContent = '이동하기';
+                button.disabled = false;
+            } else if (data.참고url주소2) {
+                currentPolicyUrl = data.참고url주소2;
+                button.textContent = '이동하기';
                 button.disabled = false;
             } else {
-                currentPolicyUrl = '';
-                button.textContent = '신청 링크 없음';
+                button.textContent = '신청하기';
                 button.disabled = true;
             }
         })
