@@ -81,6 +81,9 @@
         </div>
     </main>
 </div>
+
+{% include "components/policy_modal.html" %}
+
 {% endblock %}
 {% endblock %}
 
@@ -88,4 +91,5 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="{% static 'js/chatbot.js' %}"></script>
+    <script src="{% static 'js/policy_modal.js' %}"></script>
 {% endblock %}
