@@ -33,9 +33,12 @@ def home(request):
     # 현재 날짜 기준으로 신청 가능한 정책 중 조회수 상위 7개 가져오기
     today = timezone.now().date()
     popular_policies = PolicyRaw.objects.filter(
-        Q(신청종료일자__gte=today) | Q(신청종료일자__isnull=True),  # 신청 종료일이 오늘 이후이거나 없는 경우
-        신청시작일자__lte=today   # 신청 시작일이 오늘 이전인 것
-    ).order_by('-조회수')[:7]  # 조회수 내림차순 정렬 후 7개만 가져오기
+        ~Q(정책대분류명='기타'),    # 정책 대분류명이 '기타'가 아닌 경우
+        ~Q(정책중분류명='기타'),    # 정책 중분류명이 '기타'가 아닌 경우
+        신청시작일자__lte=today,    # 신청 시작일이 오늘 이전인 것
+    ).filter(
+        Q(신청종료일자__gte=today) | Q(신청종료일자__isnull=True)  # 신청 종료일이 오늘 이후이거나 없는 경우
+    ).order_by('-조회수')[:8]  # 조회수 내림차순 정렬 후 8개만 가져오기
 
     # 각 정책에 색상 정보 추가
     for policy in popular_policies:

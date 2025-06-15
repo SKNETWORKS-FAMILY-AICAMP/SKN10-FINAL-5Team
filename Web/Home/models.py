@@ -67,6 +67,3 @@ class PolicyRaw(models.Model):
         db_table = 'policy_raw'
         verbose_name = '정책 원본 데이터'
         verbose_name_plural = '정책 원본 데이터'
-    
-
-    

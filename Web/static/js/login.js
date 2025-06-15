@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const userName = urlParams.get('username') || '사용자님';
         const toastBody = loginSuccessToast.querySelector('.toast-body');
         if(toastBody) {
-             toastBody.innerText = `로그인 성공! ${userName} 안녕하세요!`;
+            toastBody.innerText = `로그인 성공! ${userName} 안녕하세요!`;
         }
         showLoginSuccessToastAndRedirect();
     }
