@@ -43,8 +43,8 @@ class JWTAuthenticationMiddleware:
         request.user = None
 
         # 공개 페이지는 인증 체크를 하지 않음
-        # 토큰 검증 스킵하고 → view 실행
-        if request.path in public_urls:
+        # '/api/policy/'로 시작하는 URL도 인증 검사 제외
+        if request.path in public_urls or request.path.startswith('/api/policy/'):
             return self.get_response(request)
 
         try:

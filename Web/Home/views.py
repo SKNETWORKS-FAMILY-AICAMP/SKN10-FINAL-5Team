@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from django.utils import timezone
 from django.db.models import Q
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from .models import PolicyRaw
 
 # 중분류명에 따른 색상 매핑
@@ -30,7 +32,7 @@ def get_category_color(category):
 
 # Create your views here.
 def home(request):
-    # 현재 날짜 기준으로 신청 가능한 정책 중 조회수 상위 7개 가져오기
+    # 현재 날짜 기준으로 신청 가능한 정책 중 조회수 상위 8개 가져오기
     today = timezone.now().date()
     popular_policies = PolicyRaw.objects.filter(
         ~Q(정책대분류명='기타'),    # 정책 대분류명이 '기타'가 아닌 경우
@@ -48,3 +50,26 @@ def home(request):
         'popular_policies': popular_policies
     }
     return render(request, 'home/home.html', context)
+
+@csrf_exempt
+def get_policy_detail(request, policy_id):
+    try:
+        policy = PolicyRaw.objects.get(정책번호=policy_id)
+        category_color = get_category_color(policy.정책중분류명)
+        data = {
+            '정책명': policy.정책명,
+            '정책중분류명': policy.정책중분류명,
+            '정책설명내용': policy.정책설명내용,
+            '정책신청방법내용': policy.정책신청방법내용,
+            '제출서류내용': policy.제출서류내용,
+            '조회수': policy.조회수,
+            '신청시작일자': policy.신청시작일자,
+            '신청종료일자': policy.신청종료일자,
+            '신청url주소': policy.신청url주소,
+            '참고url주소1': policy.참고url주소1,
+            '참고url주소2': policy.참고url주소2,
+            'category_color': category_color,
+        }
+        return JsonResponse(data)
+    except PolicyRaw.DoesNotExist:
+        return JsonResponse({'error': '정책을 찾을 수 없습니다.'}, status=404)
