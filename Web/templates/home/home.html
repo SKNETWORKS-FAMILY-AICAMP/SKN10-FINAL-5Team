@@ -77,7 +77,8 @@ function updateSlider() {
 }
 
 function slideNext() {
-    if (currentSlide < totalSlides - slidesToShow) {
+    const maxSlide = Math.ceil(totalSlides / slidesToShow) - 1;
+    if (currentSlide < maxSlide) {
         currentSlide++;
         updateSlider();
     }
@@ -100,4 +101,5 @@ window.addEventListener('resize', () => {
 });
 </script>
 {% endblock %}
+
 
