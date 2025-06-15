@@ -60,6 +60,7 @@ def get_policy_detail(request, policy_id):
             '정책명': policy.정책명,
             '정책중분류명': policy.정책중분류명,
             '정책설명내용': policy.정책설명내용,
+            '정책지원내용': policy.정책지원내용,
             '정책신청방법내용': policy.정책신청방법내용,
             '제출서류내용': policy.제출서류내용,
             '조회수': policy.조회수,
