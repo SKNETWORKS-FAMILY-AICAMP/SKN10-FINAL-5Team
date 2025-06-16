@@ -1,136 +1,91 @@
-{% extends 'base.html' %}
-
+{% extends "base.html" %}
 {% load static %}
-
-{% block title %}
-    챗봇 상담
-{% endblock %}
+{% block title %}챗봇 | 청년 정책 가이드{% endblock %}
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'css/chatbot.css' %}">
 {% endblock %}
 
-{% block content %}
-<div class="container-fluid h-100">
-    <div class="row h-100">
+{% block body_class %}bg-slate-100{% endblock %}
 
-        <!-- Sidebar -->
-        <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse" id="sidebarMenu">
-            <div class="d-flex flex-column flex-shrink-0 p-3 bg-light h-100">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <span class="fs-5 fw-semibold">채팅 기록</span>
-                    <div>
-                        <button class="btn btn-sm btn-outline-secondary me-1" id="searchHistoryBtn">
-                            <i class="fas fa-search"></i>
-                        </button>
-                        <button class="btn btn-sm btn-primary" id="newChatBtn">
-                            <i class="fas fa-plus"></i> 새 채팅
-                        </button>
-                    </div>
-                </div>
-                <ul class="nav nav-pills flex-column mb-auto" id="chatHistoryList">
-                    {# Chat history items will be loaded here by JS #}
-                    {# Example: #}
-                    {% comment %}
-                    <li class="nav-item">
-                        <a href="#" class="nav-link link-dark" aria-current="page">
-                            채팅 제목 1
-                            <div class="small">채팅 내용 요약...</div>
-                        </a>
-                    </li>
-                    {% endcomment %}
-                </ul>
-                <hr>
-                {# Optional: Add user info or settings link here #}
+{% block main_class %}w-full p-0{% endblock %}
+
+{% block main_container %}
+{% block content %}
+{% csrf_token %}
+<div class="flex bg-slate-100" style="height: calc(100vh - 80px);">
+    <aside class="w-72 bg-white p-4 border-r border-slate-200 flex flex-col">
+        <div class="flex items-center justify-end mb-6">
+            <button class="text-slate-500 hover:text-slate-700" id="sidebar-close-btn">
+                <span class="material-icons">menu_open</span>
+            </button>
+        </div>
+        <button id="new-chat-btn" class="w-full flex items-center justify-between bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 px-4 rounded-lg mb-4 text-sm font-medium">
+            새 채팅 버튼
+            <span class="material-icons text-base">add</span>
+        </button>
+        <div class="flex-grow overflow-y-auto space-y-2 pr-1">
+            <div class="p-3 rounded-lg hover:bg-slate-50 cursor-pointer">
+                <h3 class="font-semibold text-slate-800 text-sm">채팅 제목 3</h3>
+                <p class="text-xs text-slate-500">채팅 내용 3</p>
+                <p class="text-xs text-slate-400 mt-1">2025-05-19</p>
+            </div>
+            <div class="p-3 rounded-lg hover:bg-slate-50 cursor-pointer">
+                <h3 class="font-semibold text-slate-800 text-sm">채팅 제목 2</h3>
+                <p class="text-xs text-slate-500">채팅 내용 2</p>
+                <p class="text-xs text-slate-400 mt-1">2025-05-17</p>
+            </div>
+            <div class="p-3 rounded-lg hover:bg-slate-50 cursor-pointer">
+                <h3 class="font-semibold text-slate-800 text-sm">채팅 제목 1</h3>
+                <p class="text-xs text-slate-500">채팅 내용 1</p>
+                <p class="text-xs text-slate-400 mt-1">2025-05-15</p>
             </div>
         </div>
-
-        <!-- Sidebar toggle button for small screens -->
-        <button class="btn btn-outline-secondary d-md-none position-fixed m-2" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle sidebar" style="top: 56px; z-index: 1000;">
-            <i class="fas fa-bars"></i>
+    </aside>
+    
+    <main class="flex-1 flex flex-col bg-white shadow-lg rounded-l-xl ml-[-1rem] z-10 relative">
+        <!-- 사이드바 열기 버튼 (숨겨진 상태에서만 보임) -->
+        <button id="sidebar-open-btn" class="absolute top-4 left-4 text-slate-500 hover:text-slate-700 bg-white hover:bg-slate-50 p-2 rounded-lg shadow-md border border-slate-200 z-20 hidden transition-colors">
+            <span class="material-icons">menu</span>
         </button>
 
-        <!-- Main Chat Area -->
-        <main class="col-md-9 col-lg-10 ms-sm-auto px-md-4 h-100 d-flex flex-column">
-            <div class="flex-grow-1 overflow-auto p-3" id="chatWindow">
-                <!-- Initial Message / Chat bubbles will be loaded here -->
-
-                {# Initial Message Screen #}
-                <div id="initialMessage" class="text-center mt-5">
-                    <img src="{% static 'images/chatbot_icon.png' %}" alt="Chatbot Icon" height="80" class="mb-3">
-                    <h2>청년 정책 문의 챗봇입니다! 무엇을 도와드릴까요?</h2>
-                    <p>이런 질문을 자주 해요</p>
-                    <div id="suggestedQuestions" class="d-flex flex-column align-items-center">
-                        {# Suggested questions will be loaded here by JS or hardcoded #}
-                         <button class="btn btn-outline-secondary mt-2 suggested-question-btn" data-question="청년 지원금 신청 방법이 궁금해요">
-                            청년 지원금 신청 방법이 궁금해요 <i class="fas fa-arrow-right ms-2"></i>
-                         </button>
-                         <button class="btn btn-outline-secondary mt-2 suggested-question-btn" data-question="청년 창업 지원을 받고 싶어요">
-                            청년 창업 지원을 받고 싶어요 <i class="fas fa-arrow-right ms-2"></i>
-                         </button>
-                         <button class="btn btn-outline-secondary mt-2 suggested-question-btn" data-question="제가 혜택 받을 수 있는 청년정책을 찾아주세요">
-                            제가 혜택 받을 수 있는 청년정책을 찾아주세요 <i class="fas fa-arrow-right ms-2"></i>
-                         </button>
-                    </div>
-                </div>
-
-                {# Chat Bubbles Area #}
-                <div id="chatBubbles" class="d-flex flex-column">
-                    {# Chat messages will appear here #}
-                </div>
-
-            </div>
-
-            <!-- Message Input Area -->
-            <div class="mt-auto p-3 bg-light">
-                <div class="input-group">
-                    <textarea id="messageInput" class="form-control" placeholder="메시지 입력..." rows="1"></textarea>
-                    <button class="btn btn-primary" type="button" id="sendMessageBtn">
-                        <i class="fas fa-arrow-up"></i>
+        <div class="flex-grow flex flex-col items-center justify-center p-6">
+            <div class="text-center max-w-md">
+                <h2 class="text-xl font-semibold text-slate-800 mb-4">청년 정책 문의 챗봇 입니다! 무엇을 도와드릴까요?</h2>
+                <p class="text-slate-600 mb-8 text-sm">이런 질문을 자주 해요</p>
+                <div class="space-y-3">
+                    <button class="w-full flex items-center justify-between text-left bg-slate-50 hover:bg-slate-100 text-slate-700 py-3 px-4 rounded-lg text-sm transition-colors">
+                        <span>청년 지원금 신청 방법이 궁금해요.</span>
+                        <span class="material-icons text-slate-400 text-lg">arrow_forward_ios</span>
+                    </button>
+                    <button class="w-full flex items-center justify-between text-left bg-slate-50 hover:bg-slate-100 text-slate-700 py-3 px-4 rounded-lg text-sm transition-colors">
+                        <span>청년 창업 지원 정책을 알고 싶어요.</span>
+                        <span class="material-icons text-slate-400 text-lg">arrow_forward_ios</span>
+                    </button>
+                    <button class="w-full flex items-center justify-between text-left bg-slate-50 hover:bg-slate-100 text-slate-700 py-3 px-4 rounded-lg text-sm transition-colors">
+                        <span>제가 혜택 받을 수 있는 청년정책을 찾아주세요.</span>
+                        <span class="material-icons text-slate-400 text-lg">arrow_forward_ios</span>
                     </button>
                 </div>
             </div>
-        </main>
-
-        <!-- Chat History Search Modal -->
-        <div class="modal fade" id="searchHistoryModal" tabindex="-1" aria-labelledby="searchHistoryModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="searchHistoryModalLabel">채팅 기록 검색</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="input-group mb-3">
-                            <input type="text" class="form-control" placeholder="검색어 입력..." id="historySearchInput">
-                            <button class="btn btn-primary" type="button" id="performHistorySearchBtn">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
-                        <div id="historySearchResults">
-                            {# Search results will be displayed here by JS #}
-                            {# Example: #}
-                            {% comment %}
-                            <div class="list-group">
-                                <a href="#" class="list-group-item list-group-item-action flex-column align-items-start">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1">검색된 채팅 제목</h6>
-                                        <small>2023-01-01</small>
-                                    </div>
-                                    <p class="mb-1">검색어와 일치하는 내용 일부...</p>
-                                </a>
-                            </div>
-                            {% endcomment %}
-                        </div>
-                    </div>
+        </div>
+        <div class="bg-white p-4 border-t border-slate-200">
+            <div class="input-container">
+                <div class="flex items-center bg-slate-50 rounded-lg p-1">
+                    <input class="flex-grow bg-transparent p-3 text-sm text-slate-700 focus:outline-none placeholder-slate-400" placeholder="메시지 입력..." type="text"/>
+                    <button class="bg-blue-500 hover:bg-blue-600 text-white p-2.5 rounded-md ml-2 transition-colors">
+                        <span class="material-icons">arrow_upward</span>
+                    </button>
                 </div>
             </div>
         </div>
-
-    </div>
+    </main>
 </div>
+{% endblock %}
 {% endblock %}
 
 {% block extra_js %}
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="{% static 'js/chatbot.js' %}"></script>
 {% endblock %}

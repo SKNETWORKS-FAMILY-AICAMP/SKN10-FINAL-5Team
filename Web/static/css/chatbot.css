@@ -1,105 +1,113 @@
-/* Custom styles for chatbot page */
-
-body, html, .container-fluid, .row, main {
-    height: 100%;
-    overflow: hidden; /* Prevent scroll on body */
+body {
+    font-family: 'Noto Sans KR', sans-serif;
 }
 
-.sidebar {
-    width: 250px; /* Default sidebar width */
-    position: fixed;
-    top: 56px; /* Height of the fixed navbar */
-    bottom: 0;
-    left: 0;
-    z-index: 1000; /* Behind the navbar */
-    padding: 0;
-    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
-    transition: transform .3s ease-in-out;
+.material-icons {
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    display: inline-block;
+    line-height: 1;
+    text-transform: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    white-space: nowrap;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'liga';
 }
 
-/* Adjust main content margin when sidebar is open */
+/* 사이드바 토글 애니메이션 - 더 느리고 부드럽게 */
 main {
-    margin-left: 250px; /* Match sidebar width */
-    transition: margin-left .3s ease-in-out;
+    transition: margin-left 1s ease-in-out, border-radius 1s ease-in-out;
 }
 
-/* Styles for when sidebar is collapsed (optional, if adding toggle) */
-/*
-.sidebar.collapse {
-    transform: translateX(-100%);
-}
-main.sidebar-collapsed {
-    margin-left: 0;
-}
-*/
-
-#chatWindow {
-    flex-grow: 1;
-    overflow-y: auto; /* Enable scrolling for chat messages */
-    padding-bottom: 100px; /* Add padding for input area */
+aside {
+    transition: all 1s ease-in-out;
 }
 
-/* Chat message bubble styles */
-.chat-bubble {
-    max-width: 70%;
-    padding: 10px 15px;
-    border-radius: 15px;
-    margin-bottom: 10px;
-    word-break: break-word; /* Break long words */
+/* 사이드바 토글 버튼 애니메이션 */
+#sidebar-open-btn {
+    transition: all 1s ease-in-out;
 }
 
-.chat-bubble.user {
-    background-color: #007bff; /* User message color */
-    color: white;
-    align-self: flex-end;
-    border-bottom-right-radius: 5px;
+/* Markdown 스타일링 */
+.prose {
+    color: #374151;
+    max-width: none;
 }
 
-.chat-bubble.bot {
-    background-color: #e9ecef; /* Bot message color */
-    color: #212529;
-    align-self: flex-start;
-    border-bottom-left-radius: 5px;
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+    color: #111827;
+    font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
 }
 
-#chatBubbles {
-    display: flex;
-    flex-direction: column; /* Arrange bubbles vertically */
+.prose h1 { font-size: 1.25rem; }
+.prose h2 { font-size: 1.125rem; }
+.prose h3 { font-size: 1rem; }
+
+.prose p {
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
 }
 
-#messageInput {
-    resize: none; /* Disable textarea resize handle */
+.prose ul, .prose ol {
+    margin-bottom: 0.75rem;
+    padding-left: 1.25rem;
 }
 
-#suggestedQuestions .btn {
-    width: auto; /* Adjust width to content */
+.prose li {
+    margin-bottom: 0.25rem;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .sidebar {
-        transform: translateX(-100%); /* Hide sidebar by default on small screens */
-        width: 100%;
-        top: 56px;
-        bottom: 0;
-        left: 0;
-    }
+.prose strong {
+    font-weight: 600;
+    color: #111827;
+}
 
-    .sidebar.show {
-        transform: translateX(0%); /* Show sidebar when toggled */
-    }
+.prose em {
+    font-style: italic;
+}
 
-    main {
-        margin-left: 0; /* No margin on small screens */
-    }
+.prose code {
+    background-color: #f3f4f6;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+    font-family: 'Courier New', monospace;
+}
 
-    /* Adjust main content margin when sidebar is shown on small screens */
-    main.sidebar-visible-sm {
-         margin-left: 250px; /* Or sidebar width if desired */
-         /* This might require JS to add/remove this class */
-    }
+.prose pre {
+    background-color: #f3f4f6;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin-bottom: 0.75rem;
+}
 
-     #chatWindow {
-        padding-bottom: 120px; /* Adjust for input area height on small screens */
-    }
-} 
+.prose pre code {
+    background-color: transparent;
+    padding: 0;
+}
+
+.prose blockquote {
+    border-left: 4px solid #d1d5db;
+    padding-left: 1rem;
+    margin: 0.75rem 0;
+    font-style: italic;
+    color: #6b7280;
+}
+
+.prose a {
+    color: #3b82f6;
+    text-decoration: underline;
+}
+
+.prose a:hover {
+    color: #1d4ed8;
+}
