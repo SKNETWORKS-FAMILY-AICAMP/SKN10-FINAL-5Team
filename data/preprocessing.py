@@ -111,6 +111,36 @@ def transform_region_code_detailed(code_value, region_code_map):
         return code_value
 
 
+def transform_education_requirement(code_value):
+    """학력요건코드에서 쉼표로 분리된 항목이 3개 이상이면 '제한없음'으로 변환하는 함수"""
+    if pd.isna(code_value) or not isinstance(code_value, str):
+        return code_value
+    
+    # 쉼표로 분리하고 공백 제거
+    items = [item.strip() for item in code_value.split(',') if item.strip()]
+    
+    # 3개 이상이면 '제한없음'으로 변환
+    if len(items) >= 3:
+        return '제한없음'
+    
+    return code_value
+
+
+def transform_major_requirement(code_value):
+    """전공요건코드에서 쉼표로 분리된 항목이 4개 이상이면 '제한없음'으로 변환하는 함수"""
+    if pd.isna(code_value) or not isinstance(code_value, str):
+        return code_value
+    
+    # 쉼표로 분리하고 공백 제거
+    items = [item.strip() for item in code_value.split(',') if item.strip()]
+    
+    # 4개 이상이면 '제한없음'으로 변환
+    if len(items) >= 4:
+        return '제한없음'
+    
+    return code_value
+
+
 def remove_duplicate_categories(category_string):
     """쉼표로 분리된 카테고리 문자열에서 중복을 제거하는 함수"""
     if pd.isna(category_string) or not isinstance(category_string, str):
@@ -304,11 +334,16 @@ def main():
         ('정책전공요건코드', '전공조건코드'),
         ('정책학력요건코드', '자격학력코드'),
         ('정책취업요건코드', '취업상태코드'),
-        ('정책특화요건코드', '특수분야코드')
-    ]
+        ('정책특화요건코드', '특수분야코드')    ]
 
     for column_name, code_group_name in mapping_configs:
         df = apply_code_mapping(df, df_code, column_name, code_group_name)
+        
+    # 정책학력요건코드 변환 (3개 이상 항목이 있으면 '제한없음'으로 변환)
+    df['정책학력요건코드'] = df['정책학력요건코드'].apply(transform_education_requirement)
+
+    # 정책전공요건코드 변환 (4개 이상 항목이 있으면 '제한없음'으로 변환)
+    df['정책전공요건코드'] = df['정책전공요건코드'].apply(transform_major_requirement)
 
     # 지역 코드 매핑
     df_region['시군구_코드_법정동기준'] = df_region['시군구_코드_법정동기준'].astype(str)
