@@ -179,32 +179,6 @@ def convert_to_datetime(date_string):
     return None
 
 
-def string_to_date(date_string):
-    """YYYYMMDD 형식의 문자열을 date 객체로 변환"""
-    if pd.isna(date_string) or not isinstance(date_string, str):
-        return None
-    
-    if len(date_string) == 8 and date_string.isdigit():
-        try:
-            return datetime.strptime(date_string, '%Y%m%d').date()
-        except:
-            return None
-    return None
-
-
-def convert_business_date_to_datetime(date_string):
-    """YYYYMMDD 형식의 문자열을 datetime으로 변환"""
-    if pd.isna(date_string) or not isinstance(date_string, str):
-        return None
-    
-    if len(date_string) == 8 and date_string.isdigit():
-        try:
-            return pd.to_datetime(date_string, format='%Y%m%d')
-        except:
-            return None
-    return None
-
-
 def get_region_mappings():
     """지역 매핑 정보를 반환하는 함수"""
     regions = {
@@ -264,13 +238,11 @@ def redefine_mid_category_all(df, top_col='정책대분류명', mid_col='정책�
         # ✅ 주거: 정책키워드명 기반
         if top == '주거':
             if '대출' in keyword or '금리혜택' in keyword:
-                return '대출,이자, 전월세 등 금융지원'
+                return '대출, 이자, 전월세 등 금융지원'
             elif '공공임대주택' in keyword or '임대주택' in keyword:
-                return '임대주택, 기숙사'
-            elif any(kw in keyword for kw in ['보조금', '청년가장', '이사비', '중개비', '가전']):
-                return '이사비, 부동산 중개비, 가전 지원'
-            elif keyword == "" or '맞춤형상담서비스' in keyword:
-                return '그 외 질문'
+                return '임대주택, 기숙사 등 주거지원'
+            elif any(kw in keyword for kw in ['보조금', '청년가장', '이사비', '중개비']):
+                return '이사비, 부동산 중개비 등 보조금지원'
             else:
                 return '그 외 질문'
 
@@ -358,25 +330,6 @@ def main():
         if mask.sum() > 0:
             df.loc[mask, '정책거주지역코드'] = representative_name
 
-    # 중복 카테고리 제거
-    df['정책대분류명'] = df['정책대분류명'].apply(remove_duplicate_categories)
-
-    # 정책대분류명 재분류 (주거, 일자리, 교육, 기타)
-    df['정책대분류명'] = df['정책대분류명'].apply(reclassify_policy_category)
-
-    # 정책 분류 재조정: 교육 -> 일자리 재분류
-    education_to_job_filter = (
-        (df['정책대분류명'] == '교육') & 
-        (df['정책중분류명'].str.contains('미래역량강화|취업', na=False))
-    )
-    df.loc[education_to_job_filter, '정책대분류명'] = '일자리'
-
-    # 남은 교육 데이터를 기타로 분류
-    remaining_education_filter = df['정책대분류명'] == '교육'
-    df.loc[remaining_education_filter, '정책대분류명'] = '기타'
-
-    # 정책중분류명 재분류 
-    # df['정책중중분류명'] = df['정책중중분류명'].apply()
 
     # 신청기간 분리 및 변환
     split_results = df['신청기간'].apply(split_application_period)
@@ -393,35 +346,30 @@ def main():
             (df['지원대상최소연령'].between(40, 999, inclusive='both')) |
             (df['지원대상최대연령'].between(1, 17, inclusive='both')) |
             (df['지원대상최대연령'].between(40, 999, inclusive='both'))
-        ) |
-        (df['지원대상최소연령'].isna()) |
-        (df['지원대상최대연령'].isna())
+        )
     )
     df = df[youth_filter].copy()
 
     # 신청기간구분코드가 '마감'인 데이터 삭제
     expired_application_filter = df['신청기간구분코드'] != '마감'
-    df = df[expired_application_filter].copy()
-
-    # 만료된 정책 제거
-    today = datetime.now().date()
+    df = df[expired_application_filter].copy()    # 만료된 정책 제거
+    today = pd.Timestamp.now().normalize()  # 오늘 날짜를 pandas Timestamp로 변환 (시간은 00:00:00으로 설정)
 
     # 사업기간종료일자 필터링
-    business_end_dates = df['사업기간종료일자'].apply(string_to_date)
+    business_end_dates = df['사업기간종료일자'].apply(convert_to_datetime)
     business_period_filter = (
         (df['사업기간종료일자'].isna()) |
         (business_end_dates.isna()) |
-        (business_end_dates >= today)
-    )
+        (business_end_dates >= today)    )
 
     # 신청종료일자 필터링
     if df['신청종료일자'].dtype == 'datetime64[ns]':
         application_period_filter = (
             (df['신청종료일자'].isna()) |
-            (df['신청종료일자'].dt.date >= today)
+            (df['신청종료일자'] >= today)
         )
     else:
-        application_end_dates = df['신청종료일자'].apply(string_to_date)
+        application_end_dates = df['신청종료일자'].apply(convert_to_datetime)
         application_period_filter = (
             (df['신청종료일자'].isna()) |
             (application_end_dates.isna()) |
@@ -432,8 +380,8 @@ def main():
     df = df[active_policy_filter].copy()
 
     # 사업기간시작일자, 사업기간종료일자 datetime 변환
-    df['사업기간시작일자'] = df['사업기간시작일자'].apply(convert_business_date_to_datetime)
-    df['사업기간종료일자'] = df['사업기간종료일자'].apply(convert_business_date_to_datetime)
+    df['사업기간시작일자'] = df['사업기간시작일자'].apply(convert_to_datetime)
+    df['사업기간종료일자'] = df['사업기간종료일자'].apply(convert_to_datetime)
 
     # 불필요한 컬럼 제거
     columns_to_drop = [
@@ -449,8 +397,6 @@ def main():
     if existing_columns_to_drop:
         df = df.drop(columns=existing_columns_to_drop)
 
-    # 정책중분류명 재정의
-    df = redefine_mid_category_all(df)
 
     # 최종 데이터 저장
     today_str = datetime.now().strftime('%Y-%m-%d')
