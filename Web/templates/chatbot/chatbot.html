@@ -2,12 +2,16 @@
 {% load static %}
 {% block title %}챗봇 | 청년 정책 가이드{% endblock %}
 
-{% block body_class %}bg-slate-100{% endblock %}
+{% block body_class %}bg-slate-100 overflow-hidden{% endblock %}
 
 {% block main_class %}w-full p-0{% endblock %}
 
 {% block main_container %}
 {% block content %}
+<style>
+    body, html { overflow: hidden !important; }
+</style>
+
 {% csrf_token %}
 <div class="flex bg-slate-100" style="height: calc(100vh - 80px);">
     <aside class="w-72 bg-white p-4 border-r border-slate-200 flex flex-col">
@@ -25,22 +29,8 @@
             새 채팅 버튼
             <span class="material-icons text-base">add</span>
         </button>
-        <div class="flex-grow overflow-y-auto space-y-2 pr-1">
-            <div class="p-3 rounded-lg hover:bg-slate-50 cursor-pointer">
-                <h3 class="font-semibold text-slate-800 text-sm">채팅 제목 3</h3>
-                <p class="text-xs text-slate-500">채팅 내용 3</p>
-                <p class="text-xs text-slate-400 mt-1">2025-05-19</p>
-            </div>
-            <div class="p-3 rounded-lg hover:bg-slate-50 cursor-pointer">
-                <h3 class="font-semibold text-slate-800 text-sm">채팅 제목 2</h3>
-                <p class="text-xs text-slate-500">채팅 내용 2</p>
-                <p class="text-xs text-slate-400 mt-1">2025-05-17</p>
-            </div>
-            <div class="p-3 rounded-lg hover:bg-slate-50 cursor-pointer">
-                <h3 class="font-semibold text-slate-800 text-sm">채팅 제목 1</h3>
-                <p class="text-xs text-slate-500">채팅 내용 1</p>
-                <p class="text-xs text-slate-400 mt-1">2025-05-15</p>
-            </div>
+        <div class="flex-grow overflow-y-auto space-y-2 pr-1" id="session-list">
+            <!-- 세션 리스트가 여기에 동적으로 추가됩니다 -->
         </div>
     </aside>
     
@@ -50,25 +40,8 @@
             <span class="material-icons">menu</span>
         </button>
 
-        <div class="flex-grow flex flex-col items-center justify-center p-6">
-            <div class="text-center max-w-md">
-                <h2 class="text-xl font-semibold text-slate-800 mb-4">청년 정책 문의 챗봇 입니다! 무엇을 도와드릴까요?</h2>
-                <p class="text-slate-600 mb-8 text-sm">이런 질문을 자주 해요</p>
-                <div class="space-y-3">
-                    <button class="w-full flex items-center justify-between text-left bg-slate-50 hover:bg-slate-100 text-slate-700 py-3 px-4 rounded-lg text-sm transition-colors">
-                        <span>청년 지원금 신청 방법이 궁금해요.</span>
-                        <span class="material-icons text-slate-400 text-lg">arrow_forward_ios</span>
-                    </button>
-                    <button class="w-full flex items-center justify-between text-left bg-slate-50 hover:bg-slate-100 text-slate-700 py-3 px-4 rounded-lg text-sm transition-colors">
-                        <span>청년 창업 지원 정책을 알고 싶어요.</span>
-                        <span class="material-icons text-slate-400 text-lg">arrow_forward_ios</span>
-                    </button>
-                    <button class="w-full flex items-center justify-between text-left bg-slate-50 hover:bg-slate-100 text-slate-700 py-3 px-4 rounded-lg text-sm transition-colors">
-                        <span>제가 혜택 받을 수 있는 청년정책을 찾아주세요.</span>
-                        <span class="material-icons text-slate-400 text-lg">arrow_forward_ios</span>
-                    </button>
-                </div>
-            </div>
+        <div class="flex-grow flex flex-col p-6" id="chat-messages" style="height: calc(100vh - 180px); overflow-y: auto; max-height: calc(100vh - 180px);">
+            <!-- 채팅 메시지들이 여기에 동적으로 추가됩니다 -->
         </div>
         <div class="bg-white p-4 border-t border-slate-200">
             <div class="input-container">
