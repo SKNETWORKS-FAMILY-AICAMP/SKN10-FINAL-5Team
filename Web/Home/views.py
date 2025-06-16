@@ -2,35 +2,10 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.db.models import Q
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from .models import PolicyRaw
+from static.utils.category_colors import get_category_color
 
-# 중분류명에 따른 색상 매핑
-CATEGORY_COLORS = {
-    '건강': {'bg': 'bg-red-100', 'text': 'text-red-700'},
-    '창업': {'bg': 'bg-yellow-100', 'text': 'text-yellow-700'},
-    '취업 전후 지원': {'bg': 'bg-blue-100', 'text': 'text-blue-700'},
-    '대출,이자, 전월세 등 금융지원': {'bg': 'bg-indigo-100', 'text': 'text-indigo-700'},
-    '이사비, 부동산 중개비, 가전 지원': {'bg': 'bg-purple-100', 'text': 'text-purple-700'},
-    '권익보호': {'bg': 'bg-pink-100', 'text': 'text-pink-700'},
-    '문화활동': {'bg': 'bg-green-100', 'text': 'text-green-700'},
-    '청년참여': {'bg': 'bg-emerald-100', 'text': 'text-emerald-700'},
-    '취약계층 및 금융지원': {'bg': 'bg-cyan-100', 'text': 'text-cyan-700'},
-    '취약계층 및 금융지원,건강': {'bg': 'bg-cyan-100', 'text': 'text-cyan-700'},
-    '임대주택, 기숙사': {'bg': 'bg-violet-100', 'text': 'text-violet-700'},
-    '청년참여,정책인프라구축': {'bg': 'bg-emerald-100', 'text': 'text-emerald-700'},
-    '교육비지원': {'bg': 'bg-teal-100', 'text': 'text-teal-700'},
-    '예술인지원': {'bg': 'bg-orange-100', 'text': 'text-orange-700'},
-    '청년국제교류': {'bg': 'bg-sky-100', 'text': 'text-sky-700'},
-    '전문인력양성, 훈련': {'bg': 'bg-amber-100', 'text': 'text-amber-700'},
-    '정책인프라구축': {'bg': 'bg-lime-100', 'text': 'text-lime-700'},
-    '기타': {'bg': 'bg-gray-100', 'text': 'text-gray-700'},
-}
-
-def get_category_color(category):
-    return CATEGORY_COLORS.get(category, CATEGORY_COLORS['기타'])
-
-# Create your views here.
+# 메인 페이지 뷰 함수
 def home(request):
     # 현재 날짜 기준으로 신청 가능한 정책 중 조회수 상위 8개 가져오기
     today = timezone.now().date()
@@ -51,11 +26,14 @@ def home(request):
     }
     return render(request, 'home/home.html', context)
 
-@csrf_exempt
+# 정책 상세 정보를 JSON으로 반환하는 API 뷰 함수
 def get_policy_detail(request, policy_id):
     try:
+        # 해당 ID의 정책 존재 여부 확인
         policy = PolicyRaw.objects.get(정책번호=policy_id)
+        # 중분류명에 따른 색상 정보 추가
         category_color = get_category_color(policy.정책중분류명)
+        # 정책 상세 정보를 JSON 형식으로 반환
         data = {
             '정책명': policy.정책명,
             '정책중분류명': policy.정책중분류명,

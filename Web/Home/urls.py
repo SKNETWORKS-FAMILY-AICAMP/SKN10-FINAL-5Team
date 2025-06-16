@@ -9,3 +9,4 @@ urlpatterns = [
     path('', home, name='home'),
     path('api/policy/<int:policy_id>/', get_policy_detail, name='policy_detail'),
 ]
+
