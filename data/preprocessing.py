@@ -111,34 +111,99 @@ def transform_region_code_detailed(code_value, region_code_map):
         return code_value
 
 
-def transform_education_requirement(code_value):
-    """학력요건코드에서 쉼표로 분리된 항목이 3개 이상이면 '제한없음'으로 변환하는 함수"""
+def transform_requirement_code(code_value, threshold=4):
+    """
+    요건코드에서 쉼표로 분리된 항목이 임계값 이상이면 '제한없음'으로 변환하는 통합 함수
+    
+    Args:
+        code_value: 변환할 코드 값
+        threshold: 임계값 (기본값: 4)
+    
+    Returns:
+        변환된 코드 값 또는 '제한없음'
+    """
     if pd.isna(code_value) or not isinstance(code_value, str):
         return code_value
     
     # 쉼표로 분리하고 공백 제거
     items = [item.strip() for item in code_value.split(',') if item.strip()]
     
-    # 3개 이상이면 '제한없음'으로 변환
-    if len(items) >= 3:
+    # 임계값 이상이면 '제한없음'으로 변환
+    if len(items) >= threshold:
         return '제한없음'
     
     return code_value
 
 
-def transform_major_requirement(code_value):
-    """전공요건코드에서 쉼표로 분리된 항목이 4개 이상이면 '제한없음'으로 변환하는 함수"""
+def transform_employment_status(code_value):
+    """
+    정책취업요건코드에서 특정 취업 상태를 '기타'로 변환하는 함수
+    
+    Args:
+        code_value: 변환할 코드 값
+    
+    Returns:
+        변환된 코드 값
+    """
     if pd.isna(code_value) or not isinstance(code_value, str):
         return code_value
     
-    # 쉼표로 분리하고 공백 제거
-    items = [item.strip() for item in code_value.split(',') if item.strip()]
+    # 변환 대상 취업 상태 목록
+    target_statuses = ['프리랜서', '일용근로자', '단기근로자']
     
-    # 4개 이상이면 '제한없음'으로 변환
-    if len(items) >= 4:
-        return '제한없음'
+    # 쉼표로 분리된 경우 처리
+    if ',' in code_value:
+        items = [item.strip() for item in code_value.split(',') if item.strip()]
+        transformed_items = []
+        
+        for item in items:
+            if item in target_statuses:
+                transformed_items.append('기타')
+            else:
+                transformed_items.append(item)
+        
+        return ', '.join(transformed_items)
+    # 단일 값인 경우 처리
+    else:
+        if code_value.strip() in target_statuses:
+            return '기타'
+        return code_value
+
+
+def transform_education_status(code_value):
+    """
+    정책학력요건코드에서 '대학 재학', '석·박사' 외의 데이터를 '기타'로 변환하는 함수
     
-    return code_value
+    Args:
+        code_value: 변환할 코드 값
+    
+    Returns:
+        변환된 코드 값
+    """
+    if pd.isna(code_value) or not isinstance(code_value, str):
+        return code_value
+    
+    # 유지할 학력 상태 목록
+    keep_statuses = ['대학 재학', '석·박사']
+    
+    # 쉼표로 분리된 경우 처리
+    if ',' in code_value:
+        items = [item.strip() for item in code_value.split(',') if item.strip()]
+        transformed_items = []
+        
+        for item in items:
+            if item in keep_statuses:
+                transformed_items.append(item)
+            else:
+                transformed_items.append('기타')
+        
+        return ', '.join(transformed_items)
+    
+    # 단일 값인 경우 처리
+    else:
+        if code_value.strip() in keep_statuses:
+            return code_value
+        return '기타'
 
 
 def remove_duplicate_categories(category_string):
@@ -337,13 +402,18 @@ def main():
         ('정책특화요건코드', '특수분야코드')    ]
 
     for column_name, code_group_name in mapping_configs:
-        df = apply_code_mapping(df, df_code, column_name, code_group_name)
-        
-    # 정책학력요건코드 변환 (3개 이상 항목이 있으면 '제한없음'으로 변환)
-    df['정책학력요건코드'] = df['정책학력요건코드'].apply(transform_education_requirement)
+        df = apply_code_mapping(df, df_code, column_name, code_group_name)    # 정책학력요건코드 변환 (3개 이상 항목이 있으면 '제한없음'으로 변환)
+    df['정책학력요건코드'] = df['정책학력요건코드'].apply(lambda x: transform_requirement_code(x, threshold=3))
+    
+    # 정책학력요건코드에서 '대학 재학', '석·박사' 외의 데이터를 '기타'로 변환
+    df['정책학력요건코드'] = df['정책학력요건코드'].apply(transform_education_status)
 
     # 정책전공요건코드 변환 (4개 이상 항목이 있으면 '제한없음'으로 변환)
-    df['정책전공요건코드'] = df['정책전공요건코드'].apply(transform_major_requirement)
+    df['정책전공요건코드'] = df['정책전공요건코드'].apply(lambda x: transform_requirement_code(x, threshold=4))    # 정책취업요건코드 변환 (4개 이상 항목이 있으면 '제한없음'으로 변환)
+    df['정책취업요건코드'] = df['정책취업요건코드'].apply(lambda x: transform_requirement_code(x, threshold=4))
+    
+    # 정책취업요건코드에서 프리랜서, 일용근로자, 단기근로자를 '기타'로 변환
+    df['정책취업요건코드'] = df['정책취업요건코드'].apply(transform_employment_status)
 
     # 지역 코드 매핑
     df_region['시군구_코드_법정동기준'] = df_region['시군구_코드_법정동기준'].astype(str)

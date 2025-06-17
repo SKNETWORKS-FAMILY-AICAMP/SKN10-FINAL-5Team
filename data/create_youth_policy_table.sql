@@ -87,12 +87,26 @@ COMMENT ON COLUMN youth_policy.aply_end_date IS '신청종료일자';
 COMMENT ON COLUMN youth_policy.frst_reg_dt IS '최초등록일시';
 COMMENT ON COLUMN youth_policy.last_mdfcn_dt IS '최종수정일시';
 
+-- 지역 테이블
+CREATE TABLE youth_policy_region (
+    region_id SERIAL PRIMARY KEY,
+    region_name VARCHAR(100) NOT NULL,   -- 예: 서울특별시, 구로구
+    parent_id INT REFERENCES youth_policy_region(region_id)  -- NULL이면 최상위 (ex: 서울특별시)
+);
+
+-- 지역 테이블 코멘트 추가
+COMMENT ON TABLE youth_policy_region IS '정책 지역 정보';
+COMMENT ON COLUMN youth_policy_region.region_id IS '지역 ID (자동증가)';
+COMMENT ON COLUMN youth_policy_region.region_name IS '지역명';
+COMMENT ON COLUMN youth_policy_region.parent_id IS '상위 지역 ID (외래키, NULL이면 최상위 지역)';
+
 -- 정책 조건 테이블 생성 SQL (PostgreSQL)
 CREATE TABLE youth_policy_condition (
     condition_id SERIAL PRIMARY KEY,
     plcy_no VARCHAR(100) NOT NULL,
     condition_nm VARCHAR(100) NOT NULL,
     condition_cn TEXT,
+    region_id INT REFERENCES youth_policy_region(region_id),
     FOREIGN KEY (plcy_no) REFERENCES youth_policy(plcy_no) ON DELETE CASCADE
 );
 
@@ -102,4 +116,5 @@ COMMENT ON COLUMN youth_policy_condition.condition_id IS '조건 ID (자동증�
 COMMENT ON COLUMN youth_policy_condition.plcy_no IS '정책번호 (외래키)';
 COMMENT ON COLUMN youth_policy_condition.condition_nm IS '조건명';
 COMMENT ON COLUMN youth_policy_condition.condition_cn IS '조건내용';
+COMMENT ON COLUMN youth_policy_condition.region_id IS '지역 ID (외래키, youth_policy_region 테이블 참조)';
 
