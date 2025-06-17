@@ -12,7 +12,6 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import openai
 from dotenv import load_dotenv
-import numpy as np
 from datetime import datetime
 
 # 환경변수 로드
@@ -405,7 +404,7 @@ def main():
     
     # 테스트 질의들
     test_queries = [
-        "서울사는 28세 남성이 받을 수 있는 일자리 지원 정책이 있나요?",
+        "제가 부산광역시 부산진구에 거주하고 있는데 청년 우대 반값 중개수수료 사업 정책을 받을 수 있나요?",
     ]
     
     for query in test_queries:
