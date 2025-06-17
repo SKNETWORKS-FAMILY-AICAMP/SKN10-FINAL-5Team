@@ -38,47 +38,60 @@ def read_csv_data(file_path):
         logger.error(f"CSV 파일 읽기 실패: {e}")
         return None
 
-def insert_regions(conn, regions):
-    """지역 데이터 삽입"""
+def parse_region_hierarchy(region_string):
+    """지역명을 계층구조로 분해"""
+    # '경기도 수원시 장안구' -> ['경기도', '수원시', '장안구']
+    parts = [part.strip() for part in region_string.split() if part.strip()]
+    return parts
+
+def insert_region_hierarchy(conn, region_string):
+    """지역 계층구조 데이터 삽입 및 최하위 region_id 반환"""
     try:
         cursor = conn.cursor()
+        region_parts = parse_region_hierarchy(region_string)
         
-        # 기존 지역 데이터 조회
-        cursor.execute("SELECT region_name FROM youth_policy_region")
-        existing_regions = set(row[0] for row in cursor.fetchall())
-        # 중복되지 않는 지역만 필터링 (parent_id는 NULL로 설정)
-        new_regions = [(region, None) for region in regions if region not in existing_regions]
-        
-        if new_regions:
-            # 배치 삽입 (parent_id는 일단 NULL로 설정)
-            insert_query = """
-                INSERT INTO youth_policy_region (region_name, parent_id)
-                VALUES %s
-            """
-            execute_values(cursor, insert_query, new_regions)
-            conn.commit()
-            logger.info(f"{len(new_regions)}개 지역 데이터 삽입 완료")
-        else:
-            logger.info("삽입할 새로운 지역 데이터가 없습니다")
+        if not region_parts:
+            return None
             
+        parent_id = None
+        current_region_id = None
+        
+        # 계층별로 지역 데이터 삽입
+        for i, region_name in enumerate(region_parts):
+            # 상위 지역 이름을 포함한 전체 지역명 생성
+            full_region_name = ' '.join(region_parts[:i+1])
+            
+            # 기존 지역 확인 (전체 지역명으로 확인)
+            cursor.execute("""
+                SELECT region_id FROM youth_policy_region 
+                WHERE region_name = %s
+            """, (full_region_name,))
+            
+            result = cursor.fetchone()
+            
+            if result:
+                # 이미 존재하는 지역
+                current_region_id = result[0]
+            else:
+                # 새로운 지역 삽입 (전체 지역명으로 저장)
+                cursor.execute("""
+                    INSERT INTO youth_policy_region (region_name, parent_id)
+                    VALUES (%s, %s) RETURNING region_id
+                """, (full_region_name, parent_id))
+                current_region_id = cursor.fetchone()[0]
+                logger.info(f"새 지역 삽입: {full_region_name} (parent_id: {parent_id})")
+            
+            parent_id = current_region_id
+        
+        conn.commit()
         cursor.close()
+        return current_region_id  # 최하위 지역의 region_id 반환
         
     except Exception as e:
-        logger.error(f"지역 데이터 삽입 실패: {e}")
+        logger.error(f"지역 계층구조 삽입 실패: {e}")
         conn.rollback()
-
-
-def get_region_id(conn, region_name):
-    """지역명으로 region_id 조회"""
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT region_id FROM youth_policy_region WHERE region_name = %s", (region_name,))
-        result = cursor.fetchone()
-        cursor.close()
-        return result[0] if result else None
-    except Exception as e:
-        logger.error(f"지역 ID 조회 실패: {e}")
         return None
+
 
 
 def insert_conditions(conn, conditions):
@@ -117,21 +130,8 @@ def insert_conditions(conn, conditions):
 def process_conditions(conn, df):
     """조건 데이터 처리"""
     conditions = []
-    all_regions = set()
     
-    # 1단계: 모든 지역 정보 수집
-    for index, row in df.iterrows():
-        if pd.notna(row['정책거주지역코드']) and str(row['정책거주지역코드']).strip() != '전국':
-            regions = [region.strip() for region in str(row['정책거주지역코드']).split(',')]
-            for region in regions:
-                if region and region != '전국':
-                    all_regions.add(region)
-    
-    # 2단계: 지역 데이터 삽입
-    if all_regions:
-        insert_regions(conn, list(all_regions))
-    
-    # 3단계: 조건 데이터 생성
+    # 조건 데이터 생성
     for index, row in df.iterrows():
         plcy_no = row['정책번호']
         
@@ -139,13 +139,15 @@ def process_conditions(conn, df):
         if pd.notna(row['결혼상태코드']) and str(row['결혼상태코드']).strip() != '제한없음':
             conditions.append((plcy_no, '결혼상태', str(row['결혼상태코드']).strip(), None))
         
-        # 지역 조건 - 쉼표로 구분된 경우 각각 별도 조건으로 처리
+        # 지역 조건 - 계층구조로 처리
         if pd.notna(row['정책거주지역코드']) and str(row['정책거주지역코드']).strip() != '전국':
             regions = [region.strip() for region in str(row['정책거주지역코드']).split(',')]
             for region in regions:
                 if region and region != '전국':
-                    region_id = get_region_id(conn, region)
-                    conditions.append((plcy_no, '지역', region, region_id))
+                    # 지역 계층구조 삽입 및 최하위 region_id 획득
+                    region_id = insert_region_hierarchy(conn, region)
+                    if region_id:
+                        conditions.append((plcy_no, '지역', region, region_id))
         
         # 전공요건 조건 - 쉼표로 구분된 경우 각각 별도 조건으로 처리
         if pd.notna(row['정책전공요건코드']) and str(row['정책전공요건코드']).strip() != '제한없음':
@@ -160,13 +162,20 @@ def process_conditions(conn, df):
             for job in jobs:
                 if job and job != '기타':
                     conditions.append((plcy_no, '취업요건', job, None))
-        
         # 학력요건 조건 - 쉼표로 구분된 경우 각각 별도 조건으로 처리
         if pd.notna(row['정책학력요건코드']) and str(row['정책학력요건코드']).strip() != '제한없음':
             educations = [education.strip() for education in str(row['정책학력요건코드']).split(',')]
             for education in educations:
                 if education and education != '기타':
                     conditions.append((plcy_no, '학력요건', education, None))
+        
+        # 소득요건 조건 - 소득조건구분코드가 '기타' 또는 '연소득'일 때
+        if (pd.notna(row['소득조건구분코드']) and 
+            str(row['소득조건구분코드']).strip() in ['기타', '연소득'] and
+            pd.notna(row['소득기타내용'])):
+            income_content = str(row['소득기타내용']).strip()
+            if income_content:
+                conditions.append((plcy_no, '소득요건', income_content, None))
     
     logger.info(f"총 {len(conditions)}개 조건 데이터 생성")
     return conditions

@@ -288,7 +288,7 @@ class YouthPolicyDBInserter:
         except Exception as e:
             logger.error(f"실행 중 오류 발생: {e}")
             return False
-
+    
 def main():
     """메인 함수"""
     # CSV 파일 경로

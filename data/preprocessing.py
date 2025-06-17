@@ -137,7 +137,7 @@ def transform_requirement_code(code_value, threshold=4):
 
 def transform_employment_status(code_value):
     """
-    정책취업요건코드에서 특정 취업 상태를 '기타'로 변환하는 함수
+    정책취업요건코드에서 특정 취업 상태를 '비정규직'로 변환하는 함수
     
     Args:
         code_value: 변환할 코드 값
@@ -158,7 +158,7 @@ def transform_employment_status(code_value):
         
         for item in items:
             if item in target_statuses:
-                transformed_items.append('기타')
+                transformed_items.append('비정규직')
             else:
                 transformed_items.append(item)
         
@@ -166,45 +166,8 @@ def transform_employment_status(code_value):
     # 단일 값인 경우 처리
     else:
         if code_value.strip() in target_statuses:
-            return '기타'
+            return '비정규직'
         return code_value
-
-
-def transform_education_status(code_value):
-    """
-    정책학력요건코드에서 '대학 재학', '석·박사' 외의 데이터를 '기타'로 변환하는 함수
-    
-    Args:
-        code_value: 변환할 코드 값
-    
-    Returns:
-        변환된 코드 값
-    """
-    if pd.isna(code_value) or not isinstance(code_value, str):
-        return code_value
-    
-    # 유지할 학력 상태 목록
-    keep_statuses = ['대학 재학', '석·박사']
-    
-    # 쉼표로 분리된 경우 처리
-    if ',' in code_value:
-        items = [item.strip() for item in code_value.split(',') if item.strip()]
-        transformed_items = []
-        
-        for item in items:
-            if item in keep_statuses:
-                transformed_items.append(item)
-            else:
-                transformed_items.append('기타')
-        
-        return ', '.join(transformed_items)
-    
-    # 단일 값인 경우 처리
-    else:
-        if code_value.strip() in keep_statuses:
-            return code_value
-        return '기타'
-
 
 def remove_duplicate_categories(category_string):
     """쉼표로 분리된 카테고리 문자열에서 중복을 제거하는 함수"""
@@ -450,11 +413,10 @@ def main():
         ('정책특화요건코드', '특수분야코드')    ]
 
     for column_name, code_group_name in mapping_configs:
-        df = apply_code_mapping(df, df_code, column_name, code_group_name)    # 정책학력요건코드 변환 (3개 이상 항목이 있으면 '제한없음'으로 변환)
-    df['정책학력요건코드'] = df['정책학력요건코드'].apply(lambda x: transform_requirement_code(x, threshold=3))
+        df = apply_code_mapping(df, df_code, column_name, code_group_name)    
     
-    # 정책학력요건코드에서 '대학 재학', '석·박사' 외의 데이터를 '기타'로 변환
-    df['정책학력요건코드'] = df['정책학력요건코드'].apply(transform_education_status)
+    # 정책학력요건코드 변환 (3개 이상 항목이 있으면 '제한없음'으로 변환)
+    df['정책학력요건코드'] = df['정책학력요건코드'].apply(lambda x: transform_requirement_code(x, threshold=3))
 
     # 정책전공요건코드 변환 (4개 이상 항목이 있으면 '제한없음'으로 변환)
     df['정책전공요건코드'] = df['정책전공요건코드'].apply(lambda x: transform_requirement_code(x, threshold=4))    # 정책취업요건코드 변환 (4개 이상 항목이 있으면 '제한없음'으로 변환)
