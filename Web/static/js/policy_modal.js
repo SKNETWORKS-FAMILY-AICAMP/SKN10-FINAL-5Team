@@ -6,9 +6,13 @@ let currentPolicyUrl = '';
 function openPolicyModal(policyId) {
     console.log('Opening modal for policy:', policyId);
     
-    const modal = document.getElementById('policyModal');
-    modal.style.display = 'flex';
+    // 기존 모달 제거
+    const existingModal = document.getElementById('policyModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
     
+    // API 호출을 먼저 실행
     fetch(`/api/policy/${policyId}/`)
         .then(response => {
             // 응답 응답 객체를 JSON으로 파싱하고 디버깅 로그 남김
@@ -19,50 +23,129 @@ function openPolicyModal(policyId) {
             // JSON 파싱된 데이터를 받아 사용
             console.log('Policy data:', data);
             
-            document.getElementById('modalPolicyName').textContent = data.정책명;
-            document.getElementById('modalPolicyCategory').textContent = data.정책중분류명;
-            document.getElementById('modalPolicyDescription').textContent = data.정책설명내용;
-            document.getElementById('modalPolicySupport').textContent = data.정책지원내용;
-            document.getElementById('modalPolicyApplyMethod').textContent = data.정책신청방법내용;
-            document.getElementById('modalPolicyDocuments').textContent = data.제출서류내용;
-            document.getElementById('modalPolicyViews').textContent = data.조회수;
-            
-            const startDate = data.신청시작일자 ? new Date(data.신청시작일자).toLocaleDateString() : '';
-            const endDate = data.신청종료일자 ? new Date(data.신청종료일자).toLocaleDateString() : '';
-            document.getElementById('modalPolicyPeriod').textContent = `${startDate} ~ ${endDate}`;
-            
-            // 정책중분류명 태그에 색상 적용
-            const modalCategorySpan = document.getElementById('modalPolicyCategory');
-            modalCategorySpan.textContent = data.정책중분류명;
-            modalCategorySpan.className = `text-sm font-medium px-3 py-1 rounded-full ${data.category_color.bg} ${data.category_color.text}`;
-            
-            const button = document.getElementById('modalPolicyButton');
-            if (data.신청url주소) {
-                currentPolicyUrl = data.신청url주소;
-                button.textContent = '신청하기';
-                button.disabled = false;
-            } else if (data.참고url주소1) {
-                currentPolicyUrl = data.참고url주소1;
-                button.textContent = '이동하기';
-                button.disabled = false;
-            } else if (data.참고url주소2) {
-                currentPolicyUrl = data.참고url주소2;
-                button.textContent = '이동하기';
-                button.disabled = false;
-            } else {
-                button.textContent = '신청하기';
-                button.disabled = true;
-            }
+            // 지연 후 모달 생성 및 표시
+            setTimeout(() => {
+                // 새로운 모달 생성
+                const newModal = document.createElement('div');
+                newModal.id = 'policyModal';
+                newModal.className = 'fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50';
+                newModal.style.display = 'flex';
+                
+                newModal.innerHTML = `
+                    <div class="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto relative">
+                        <div class="flex justify-between items-start mb-6">
+                            <h2 id="modalPolicyName" class="text-2xl font-bold text-gray-800">${data.정책명}</h2>
+                            <button onclick="closePolicyModal()" class="text-gray-500 hover:text-gray-700 absolute top-4 right-4">
+                                <span class="material-icons">close</span>
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <span id="modalPolicyCategory" class="text-sm font-medium px-3 py-1 rounded-full ${data.category_color.bg} ${data.category_color.text}">${data.정책중분류명}</span>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-2">정책 설명</h3>
+                                <p id="modalPolicyDescription" class="text-gray-600 whitespace-pre-line">${data.정책설명내용}</p>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-2">지원 내용</h3>
+                                <p id="modalPolicySupport" class="text-gray-600 whitespace-pre-line">${data.정책지원내용}</p>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-2">신청 방법</h3>
+                                <p id="modalPolicyApplyMethod" class="text-gray-600 whitespace-pre-line">${data.정책신청방법내용}</p>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-2">제출 서류</h3>
+                                <p id="modalPolicyDocuments" class="text-gray-600 whitespace-pre-line">${data.제출서류내용}</p>
+                            </div>
+                            
+                            <div class="flex justify-between text-sm text-gray-500">
+                                <div>
+                                    <span>조회수: </span>
+                                    <span id="modalPolicyViews">${data.조회수}</span>
+                                </div>
+                                <div>
+                                    <span>신청기간: </span>
+                                    <span id="modalPolicyPeriod">${data.신청시작일자 ? new Date(data.신청시작일자).toLocaleDateString() : ''} ~ ${data.신청종료일자 ? new Date(data.신청종료일자).toLocaleDateString() : ''}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-end mt-6">
+                                <button id="modalPolicyButton" onclick="handlePolicyButtonClick()" 
+                                        class="px-6 py-2 ${data.신청url주소 || data.참고url주소1 || data.참고url주소2 ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-400 text-white cursor-not-allowed'} rounded-lg transition-colors" 
+                                        ${!(data.신청url주소 || data.참고url주소1 || data.참고url주소2) ? 'disabled' : ''}>
+                                    ${data.신청url주소 ? '신청하기' : data.참고url주소1 || data.참고url주소2 ? '이동하기' : '신청하기'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // 새 모달을 body에 추가
+                document.body.appendChild(newModal);
+                
+                // URL 설정
+                if (data.신청url주소) {
+                    currentPolicyUrl = data.신청url주소;
+                } else if (data.참고url주소1) {
+                    currentPolicyUrl = data.참고url주소1;
+                } else if (data.참고url주소2) {
+                    currentPolicyUrl = data.참고url주소2;
+                } else {
+                    currentPolicyUrl = '';
+                }
+                
+            }, 50); // 300ms 지연 후 모달 표시
         })
         .catch(error => {
             console.error('Error fetching policy details:', error);
+            // 에러 발생 시에도 지연 후 모달 표시
+            setTimeout(() => {
+                const newModal = document.createElement('div');
+                newModal.id = 'policyModal';
+                newModal.className = 'fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50';
+                newModal.style.display = 'flex';
+                
+                newModal.innerHTML = `
+                    <div class="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto relative">
+                        <div class="flex justify-between items-start mb-6">
+                            <h2 id="modalPolicyName" class="text-2xl font-bold text-gray-800">오류 발생</h2>
+                            <button onclick="closePolicyModal()" class="text-gray-500 hover:text-gray-700 absolute top-4 right-4">
+                                <span class="material-icons">close</span>
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <p class="text-gray-600">정책 정보를 불러오는 중 오류가 발생했습니다.</p>
+                            </div>
+                            
+                            <div class="flex justify-end mt-6">
+                                <button onclick="closePolicyModal()" class="px-6 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed" disabled>
+                                    닫기
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(newModal);
+            }, 50);
         });
 }
 
 // 모달 숨김, 상태 초기화
 function closePolicyModal() {
     const modal = document.getElementById('policyModal');
-    modal.style.display = 'none';
+    if (modal) {
+        modal.remove();
+    }
     currentPolicyUrl = '';
 }
 
