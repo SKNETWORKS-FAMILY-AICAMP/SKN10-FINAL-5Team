@@ -85,6 +85,12 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
+            // 토큰 재발급 후 재요청 처리
+            if (data.status === 'token_refreshed') {
+                console.log('토큰이 갱신되었습니다. 새 세션 생성을 다시 요청합니다.');
+                resetChatSession(); // 재귀적으로 다시 호출
+                return;
+            }
             console.log('새 세션이 생성되었습니다.');
         })
         .catch(error => {
@@ -280,6 +286,13 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('받은 데이터:', data);
             if (!data) return;
             
+            // 토큰 재발급 후 재요청 처리
+            if (data.status === 'token_refreshed') {
+                console.log('토큰이 갱신되었습니다. 세션 목록을 다시 요청합니다.');
+                loadSessionList(); // 재귀적으로 다시 호출
+                return;
+            }
+            
             const listContainer = document.getElementById('session-list');
             if (!listContainer) {
                 console.error('세션 리스트 컨테이너를 찾을 수 없습니다.');
@@ -333,6 +346,13 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             if (!data) return;
+            
+            // 토큰 재발급 후 재요청 처리
+            if (data.status === 'token_refreshed') {
+                console.log('토큰이 갱신되었습니다. 세션 상세 정보를 다시 요청합니다.');
+                loadSessionDetail(sessionId); // 재귀적으로 다시 호출
+                return;
+            }
             
             const chatContainer = document.getElementById('chat-messages');
             if (!chatContainer) {

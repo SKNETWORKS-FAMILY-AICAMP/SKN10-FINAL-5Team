@@ -10,7 +10,7 @@ function updateSlider() {
 }
 
 function slideNext() {
-    const maxSlide = Math.ceil(totalSlides / slidesToShow) - 1;
+    const maxSlide = Math.max(0, Math.ceil(totalSlides / slidesToShow) - 1);
     if (currentSlide < maxSlide) {
         currentSlide++;
         updateSlider();
