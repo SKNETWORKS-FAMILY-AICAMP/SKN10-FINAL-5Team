@@ -111,63 +111,63 @@ def transform_region_code_detailed(code_value, region_code_map):
         return code_value
 
 
-def transform_requirement_code(code_value, threshold=4):
-    """
-    요건코드에서 쉼표로 분리된 항목이 임계값 이상이면 '제한없음'으로 변환하는 통합 함수
+# def transform_requirement_code(code_value, threshold=4):
+#     """
+#     요건코드에서 쉼표로 분리된 항목이 임계값 이상이면 '제한없음'으로 변환하는 통합 함수
     
-    Args:
-        code_value: 변환할 코드 값
-        threshold: 임계값 (기본값: 4)
+#     Args:
+#         code_value: 변환할 코드 값
+#         threshold: 임계값 (기본값: 4)
     
-    Returns:
-        변환된 코드 값 또는 '제한없음'
-    """
-    if pd.isna(code_value) or not isinstance(code_value, str):
-        return code_value
+#     Returns:
+#         변환된 코드 값 또는 '제한없음'
+#     """
+#     if pd.isna(code_value) or not isinstance(code_value, str):
+#         return code_value
     
-    # 쉼표로 분리하고 공백 제거
-    items = [item.strip() for item in code_value.split(',') if item.strip()]
+#     # 쉼표로 분리하고 공백 제거
+#     items = [item.strip() for item in code_value.split(',') if item.strip()]
     
-    # 임계값 이상이면 '제한없음'으로 변환
-    if len(items) >= threshold:
-        return '제한없음'
+#     # 임계값 이상이면 '제한없음'으로 변환
+#     if len(items) >= threshold:
+#         return '제한없음'
     
-    return code_value
+#     return code_value
 
 
-def transform_employment_status(code_value):
-    """
-    정책취업요건코드에서 특정 취업 상태를 '비정규직'로 변환하는 함수
+# def transform_employment_status(code_value):
+#     """
+#     정책취업요건코드에서 특정 취업 상태를 '비정규직'로 변환하는 함수
     
-    Args:
-        code_value: 변환할 코드 값
+#     Args:
+#         code_value: 변환할 코드 값
     
-    Returns:
-        변환된 코드 값
-    """
-    if pd.isna(code_value) or not isinstance(code_value, str):
-        return code_value
+#     Returns:
+#         변환된 코드 값
+#     """
+#     if pd.isna(code_value) or not isinstance(code_value, str):
+#         return code_value
     
-    # 변환 대상 취업 상태 목록
-    target_statuses = ['프리랜서', '일용근로자', '단기근로자']
+#     # 변환 대상 취업 상태 목록
+#     target_statuses = ['프리랜서', '일용근로자', '단기근로자']
     
-    # 쉼표로 분리된 경우 처리
-    if ',' in code_value:
-        items = [item.strip() for item in code_value.split(',') if item.strip()]
-        transformed_items = []
+#     # 쉼표로 분리된 경우 처리
+#     if ',' in code_value:
+#         items = [item.strip() for item in code_value.split(',') if item.strip()]
+#         transformed_items = []
         
-        for item in items:
-            if item in target_statuses:
-                transformed_items.append('비정규직')
-            else:
-                transformed_items.append(item)
+#         for item in items:
+#             if item in target_statuses:
+#                 transformed_items.append('비정규직')
+#             else:
+#                 transformed_items.append(item)
         
-        return ', '.join(transformed_items)
-    # 단일 값인 경우 처리
-    else:
-        if code_value.strip() in target_statuses:
-            return '비정규직'
-        return code_value
+#         return ', '.join(transformed_items)
+#     # 단일 값인 경우 처리
+#     else:
+#         if code_value.strip() in target_statuses:
+#             return '비정규직'
+#         return code_value
 
 def remove_duplicate_categories(category_string):
     """쉼표로 분리된 카테고리 문자열에서 중복을 제거하는 함수"""
@@ -246,14 +246,10 @@ def get_region_mappings():
         'gwangju_region': "광주 동구, 광주 서구, 광주 남구, 광주 북구, 광주 광산구",
         'daegu_region': "대구 중구, 대구 동구, 대구 서구, 대구 남구, 대구 북구, 대구 수성구, 대구 달서구, 대구 달성군, 대구광역시 군위군",
         'daejeon_region': "대전 동구, 대전 중구, 대전 서구, 대전 유성구, 대전 대덕구",
-        'changwon_region': "경상남도 창원시 의창구, 경상남도 창원시 성산구, 경상남도 창원시 마산합포구, 경상남도 창원시 마산회원구, 경상남도 창원시 진해구",
         'ulsan_region': "울산 중구, 울산 남구, 울산 동구, 울산 북구, 울산 울주군",
         'incheon_region': "인천 중구, 인천 동구, 인천 미추홀구, 인천 연수구, 인천 남동구, 인천 부평구, 인천 계양구, 인천 서구, 인천 강화군, 인천 옹진군",
         'jeonnam_region': "전라남도 목포시, 전라남도 여수시, 전라남도 순천시, 전라남도 나주시, 전라남도 광양시, 전라남도 담양군, 전라남도 곡성군, 전라남도 구례군, 전라남도 고흥군, 전라남도 보성군, 전라남도 화순군, 전라남도 장흥군, 전라남도 강진군, 전라남도 해남군, 전라남도 영암군, 전라남도 무안군, 전라남도 함평군, 전라남도 영광군, 전라남도 장성군, 전라남도 완도군, 전라남도 진도군, 전라남도 신안군",
         'gangwon_region': "강원특별자치도 춘천시, 강원특별자치도 원주시, 강원특별자치도 강릉시, 강원특별자치도 동해시, 강원특별자치도 태백시, 강원특별자치도 속초시, 강원특별자치도 삼척시, 강원특별자치도 홍천군, 강원특별자치도 횡성군, 강원특별자치도 영월군, 강원특별자치도 평창군, 강원특별자치도 정선군, 강원특별자치도 철원군, 강원특별자치도 화천군, 강원특별자치도 양구군, 강원특별자치도 인제군, 강원특별자치도 고성군, 강원특별자치도 양양군",
-        'bucheon_region': "경기도 부천시 원미구, 경기도 부천시 소사구, 경기도 부천시 오정구",
-        'cheongju_region': "충청북도 청주시 상당구, 충청북도 청주시 서원구, 충청북도 청주시 흥덕구, 충청북도 청주시 청원구",
-        'yongin_region': "경기도 용인시 처인구, 경기도 용인시 기흥구, 경기도 용인시 수지구",
         'chungbuk_region': "충청북도 청주시 상당구, 충청북도 청주시 서원구, 충청북도 청주시 흥덕구, 충청북도 청주시 청원구, 충청북도 충주시, 충청북도 제천시, 충청북도 보은군, 충청북도 옥천군, 충청북도 영동군, 충청북도 증평군, 충청북도 진천군, 충청북도 괴산군, 충청북도 음성군, 충청북도 단양군",
         'jeonbuk_region': "전북특별자치도 전주시 완산구, 전북특별자치도 전주시 덕진구, 전북특별자치도 군산시, 전북특별자치도 익산시, 전북특별자치도 정읍시, 전북특별자치도 남원시, 전북특별자치도 김제시, 전북특별자치도 완주군, 전북특별자치도 진안군, 전북특별자치도 무주군, 전북특별자치도 장수군, 전북특별자치도 임실군, 전북특별자치도 순창군, 전북특별자치도 고창군, 전북특별자치도 부안군",
         'gyeonggi_region': "경기도 수원시 장안구, 경기도 수원시 권선구, 경기도 수원시 팔달구, 경기도 수원시 영통구, 경기도 성남시 수정구, 경기도 성남시 중원구, 경기도 성남시 분당구, 경기도 의정부시, 경기도 안양시 만안구, 경기도 안양시 동안구, 경기도 부천시 원미구 , 경기도 부천시 소사구 , 경기도 부천시 오정구 , 경기도 광명시, 경기도 평택시, 경기도 동두천시, 경기도 안산시 상록구, 경기도 안산시 단원구, 경기도 고양시 덕양구, 경기도 고양시 일산동구, 경기도 고양시 일산서구, 경기도 과천시, 경기도 구리시, 경기도 남양주시, 경기도 오산시, 경기도 시흥시, 경기도 군포시, 경기도 의왕시, 경기도 하남시, 경기도 용인시 처인구, 경기도 용인시 기흥구, 경기도 용인시 수지구, 경기도 파주시, 경기도 이천시, 경기도 안성시, 경기도 김포시, 경기도 화성시, 경기도 광주시, 경기도 양주시, 경기도 포천시, 경기도 여주시, 경기도 연천군, 경기도 가평군, 경기도 양평군",
@@ -270,14 +266,10 @@ def get_region_mappings():
         regions['gwangju_region']: '광주광역시',
         regions['daegu_region']: '대구광역시',
         regions['daejeon_region']: '대전광역시',
-        regions['changwon_region']: '경상남도 창원시',
         regions['ulsan_region']: '울산광역시',
         regions['incheon_region']: '인천광역시',
         regions['jeonnam_region']: '전라남도',
         regions['gangwon_region']: '강원특별자치도',
-        regions['bucheon_region']: '경기도 부천시',
-        regions['cheongju_region']: '충청북도 청주시',
-        regions['yongin_region']: '경기도 용인시',
         regions['chungbuk_region']: '충청북도',
         regions['jeonbuk_region']: '전북특별자치도',
         regions['gyeonggi_region']: '경기도',
@@ -328,58 +320,58 @@ def redefine_mid_category_all(df, top_col='정책대분류명', mid_col='정책�
     df[mid_col] = df.apply(lambda row: classify(row[top_col], row[mid_col], row[keyword_col]), axis=1)
     return df
 
-def standardize_metropolitan_city_names(region_value):
-    """
-    정책거주지역코드에서 광역시 이름을 정식 명칭으로 변경하는 함수
-    예: '서울 구로구' -> '서울특별시 구로구'
+# def standardize_metropolitan_city_names(region_value):
+#     """
+#     정책거주지역코드에서 광역시 이름을 정식 명칭으로 변경하는 함수
+#     예: '서울 구로구' -> '서울특별시 구로구'
     
-    Args:
-        region_value: 지역 코드 값
+#     Args:
+#         region_value: 지역 코드 값
     
-    Returns:
-        변환된 지역 코드 값
-    """
-    if pd.isna(region_value) or not isinstance(region_value, str):
-        return region_value
+#     Returns:
+#         변환된 지역 코드 값
+#     """
+#     if pd.isna(region_value) or not isinstance(region_value, str):
+#         return region_value
     
-    # 광역시 매핑 딕셔너리
-    city_mapping = {
-        '서울': '서울특별시',
-        '부산': '부산광역시',
-        '대구': '대구광역시',
-        '울산': '울산광역시',
-        '광주': '광주광역시',
-        '대전': '대전광역시',
-        '인천': '인천광역시',
-        '제주': '제주특별자치도',
-    }
+#     # 광역시 매핑 딕셔너리
+#     city_mapping = {
+#         '서울': '서울특별시',
+#         '부산': '부산광역시',
+#         '대구': '대구광역시',
+#         '울산': '울산광역시',
+#         '광주': '광주광역시',
+#         '대전': '대전광역시',
+#         '인천': '인천광역시',
+#         '제주': '제주특별자치도',
+#     }
     
-    # 쉼표로 분리된 경우 처리
-    if ',' in region_value:
-        regions = region_value.split(',')
-        transformed_regions = []
+#     # 쉼표로 분리된 경우 처리
+#     if ',' in region_value:
+#         regions = region_value.split(',')
+#         transformed_regions = []
         
-        for region in regions:
-            region = region.strip()
-            transformed_region = region
+#         for region in regions:
+#             region = region.strip()
+#             transformed_region = region
             
-            # 각 광역시에 대해 변환 수행
-            for short_name, full_name in city_mapping.items():
-                if region.startswith(short_name + ' '):
-                    transformed_region = region.replace(short_name + ' ', full_name + ' ', 1)
-                    break
+#             # 각 광역시에 대해 변환 수행
+#             for short_name, full_name in city_mapping.items():
+#                 if region.startswith(short_name + ' '):
+#                     transformed_region = region.replace(short_name + ' ', full_name + ' ', 1)
+#                     break
             
-            transformed_regions.append(transformed_region)
+#             transformed_regions.append(transformed_region)
         
-        return ', '.join(transformed_regions)
+#         return ', '.join(transformed_regions)
     
-    # 단일 값인 경우 처리
-    else:
-        for short_name, full_name in city_mapping.items():
-            if region_value.startswith(short_name + ' '):
-                return region_value.replace(short_name + ' ', full_name + ' ', 1)
+#     # 단일 값인 경우 처리
+#     else:
+#         for short_name, full_name in city_mapping.items():
+#             if region_value.startswith(short_name + ' '):
+#                 return region_value.replace(short_name + ' ', full_name + ' ', 1)
         
-        return region_value
+#         return region_value
 
 def main():
     """메인 실행 함수"""
@@ -415,15 +407,15 @@ def main():
     for column_name, code_group_name in mapping_configs:
         df = apply_code_mapping(df, df_code, column_name, code_group_name)    
     
-    # 정책학력요건코드 변환 (3개 이상 항목이 있으면 '제한없음'으로 변환)
-    df['정책학력요건코드'] = df['정책학력요건코드'].apply(lambda x: transform_requirement_code(x, threshold=3))
+    # # 정책학력요건코드 변환 (3개 이상 항목이 있으면 '제한없음'으로 변환)
+    # df['정책학력요건코드'] = df['정책학력요건코드'].apply(lambda x: transform_requirement_code(x, threshold=3))
 
-    # 정책전공요건코드 변환 (4개 이상 항목이 있으면 '제한없음'으로 변환)
-    df['정책전공요건코드'] = df['정책전공요건코드'].apply(lambda x: transform_requirement_code(x, threshold=4))    # 정책취업요건코드 변환 (4개 이상 항목이 있으면 '제한없음'으로 변환)
-    df['정책취업요건코드'] = df['정책취업요건코드'].apply(lambda x: transform_requirement_code(x, threshold=4))
+    # # 정책전공요건코드 변환 (4개 이상 항목이 있으면 '제한없음'으로 변환)
+    # df['정책전공요건코드'] = df['정책전공요건코드'].apply(lambda x: transform_requirement_code(x, threshold=4))    # 정책취업요건코드 변환 (4개 이상 항목이 있으면 '제한없음'으로 변환)
+    # df['정책취업요건코드'] = df['정책취업요건코드'].apply(lambda x: transform_requirement_code(x, threshold=4))
     
-    # 정책취업요건코드에서 프리랜서, 일용근로자, 단기근로자를 '기타'로 변환
-    df['정책취업요건코드'] = df['정책취업요건코드'].apply(transform_employment_status)
+    # # 정책취업요건코드에서 프리랜서, 일용근로자, 단기근로자를 '기타'로 변환
+    # df['정책취업요건코드'] = df['정책취업요건코드'].apply(transform_employment_status)
 
     # 지역 코드 매핑
     df_region['시군구_코드_법정동기준'] = df_region['시군구_코드_법정동기준'].astype(str)
@@ -445,8 +437,8 @@ def main():
         if mask.sum() > 0:
             df.loc[mask, '정책거주지역코드'] = representative_name
 
-    # 광역시 이름 정식 명칭으로 변경 (예: '서울 구로구' -> '서울특별시 구로구')
-    df['정책거주지역코드'] = df['정책거주지역코드'].apply(standardize_metropolitan_city_names)
+    # # 광역시 이름 정식 명칭으로 변경 (예: '서울 구로구' -> '서울특별시 구로구')
+    # df['정책거주지역코드'] = df['정책거주지역코드'].apply(standardize_metropolitan_city_names)
 
     # 중복 카테고리 제거
     df['정책대분류명'] = df['정책대분류명'].apply(remove_duplicate_categories)
