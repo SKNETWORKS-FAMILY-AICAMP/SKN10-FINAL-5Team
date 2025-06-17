@@ -12,14 +12,13 @@ from datetime import datetime
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 
-
+# 챗봇 페이지 렌더링
 def chatbot_view(request):
-    """챗봇 페이지 렌더링"""
     return render(request, 'chatbot/chatbot.html')
 
-
+# 현재 로그인한 사용자의 챗봇 세션 리스트 반환
 def session_list(request):
-    """현재 로그인한 사용자의 챗봇 세션 리스트 반환"""
+    # 디버깅
     print("현재 사용자:", request.user)
     print("인증 여부:", request.user.is_authenticated)
     
@@ -35,13 +34,12 @@ def session_list(request):
             'name': session.session_nm,
             'created_at': local_time.strftime('%Y-%m-%d %H:%M')
         })
-    
     print("반환할 데이터:", session_list)
+
     return JsonResponse({'sessions': session_list})
 
-
+# 특정 세션의 메시지 리스트 반환
 def session_detail(request, session_id):
-    """특정 세션의 메시지 리스트 반환"""
     try:
         session = ChatSession.objects.get(session_id=session_id, user=request.user)
         messages = Message.objects.filter(session=session).order_by('create_dt', 'msg_id')
@@ -73,15 +71,19 @@ def session_detail(request, session_id):
             'message': '세션 상세 정보를 불러오는데 실패했습니다.'
         }, status=500)
 
+# 메시지 전송 및 응답 처리
 @csrf_exempt
 def send_message(request):
     if request.method == 'POST':
         try:
+            # 클라이언트에서 전달된 JSON 문자열을 Python 딕셔너리로 변환
             data = json.loads(request.body)
+            # 메시지 내용 추출
             message = data.get('message', '').strip()
+            # 세션 ID 추출
             session_id = data.get('session_id')
             
-            # message가 비어있으면 세션 생성 및 메시지 저장을 하지 않음
+            # 메시지가 비어있으면 세션 생성 및 메시지 저장을 하지 않음
             if not message:
                 return JsonResponse({'error': '메시지가 비어있습니다. 세션이 생성되지 않았습니다.'}, status=400)
             
@@ -140,28 +142,3 @@ def send_message(request):
             return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': '잘못된 요청입니다.'}, status=400)
-
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def reset_session(request):
-    """챗봇 세션 초기화 API"""
-    try:
-        # 새로운 세션 생성
-        new_session = ChatSession.objects.create(
-            user=request.user,
-            session_nm=f"새로운 대화 {datetime.now().strftime('%Y-%m-%d %H:%M')}"
-        )
-        
-        return JsonResponse({
-            'status': 'success',
-            'message': '새로운 세션이 생성되었습니다.',
-            'session_id': new_session.session_id
-        })
-        
-    except Exception as e:
-        print(f"세션 초기화 오류: {e}")
-        return JsonResponse({
-            'status': 'error',
-            'message': '세션 초기화 중 오류가 발생했습니다.'
-        }, status=500)

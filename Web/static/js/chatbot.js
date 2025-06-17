@@ -78,6 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
             },
             body: JSON.stringify({ message: '', session_id: currentSessionId })
@@ -233,10 +234,6 @@ document.addEventListener('DOMContentLoaded', function() {
         messagesContainer.appendChild(wrapper);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
         
-        if (sender === 'bot' && message.includes('policy-card')) {
-            setTimeout(setupPolicyCardButtons, 0);
-        }
-        
         return wrapper;
     }
 
@@ -255,130 +252,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 sendMessage();
             });
         });
-    }
-
-    function setupPolicyCardButtons() {
-        const policyCardButtons = document.querySelectorAll('.policy-card');
-        policyCardButtons.forEach(button => {
-            button.addEventListener('click', function(event) {
-                event.preventDefault();
-                const policyId = this.dataset.policyId;
-                displayPolicyModal(policyId);
-            });
-        });
-    }
-
-    // 공통 js페이지로 분리
-    function displayPolicyModal(policyId) {
-        let modalContent = '';
-        let title = '';
-        let supportType = '';
-        let applyUrl = '';
-
-        switch(policyId) {
-            case 'youth-tomorrow-success-project':
-                title = '청년내일채움공제';
-                supportType = '취업지원';
-                modalContent = `
-                    <p style="margin-bottom: 10px;">청년내일채움공제 상세 정보입니다.</p>
-                    <ul style="list-style-type: disc; padding-left: 20px; line-height: 1.6;">
-                        <li style="margin-bottom: 8px;"><strong>정책 지원 내용:</strong> 중소기업 취업 청년에게 2년간 장기근속과 목돈 마련을 지원합니다.</li>
-                        <li style="margin-bottom: 8px;"><strong>정책 신청 방법:</strong> 청년내일채움공제 홈페이지에서 신청</li>
-                        <li style="margin-bottom: 8px;"><strong>제출 서류 내용:</strong> 근로계약서, 재직증명서 등</li>
-                        <li style="margin-bottom: 8px;"><strong>신청 기간:</strong> 상시</li>
-                    </ul>
-                `;
-                applyUrl = 'https://www.work.go.kr/youngTomorrowJob/index.do';
-                break;
-            case 'youth-jeonse-loan':
-                title = '청년 전세임대주택';
-                supportType = '주거지원';
-                modalContent = `
-                    <p style="margin-bottom: 10px;">청년 전세임대주택 상세 정보입니다.</p>
-                    <ul style="list-style-type: disc; padding-left: 20px; line-height: 1.6;">
-                        <li style="margin-bottom: 8px;"><strong>정책 지원 내용:</strong> 만 19~39세 청년에게 시중 시세보다 저렴한 전세임대주택을 지원합니다.</li>
-                        <li style="margin-bottom: 8px;"><strong>정책 신청 방법:</strong> LH 청약센터 홈페이지에서 신청</li>
-                        <li style="margin-bottom: 8px;"><strong>제출 서류 내용:</strong> 주민등록등본, 가족관계증명서 등</li>
-                        <li style="margin-bottom: 8px;"><strong>신청 기간:</strong> 공고에 따라 상이</li>
-                    </ul>
-                `;
-                applyUrl = 'https://apply.lh.or.kr/';
-                break;
-            case 'youth-startup-academy':
-                title = '청년창업사관학교';
-                supportType = '창업지원';
-                modalContent = `
-                    <p style="margin-bottom: 10px;">유망 창업아이템 및 혁신기술을 보유한 우수 창업자를 발굴하여 성공적인 창업사업화 지원</p>
-                    <ul style="list-style-type: disc; padding-left: 20px; line-height: 1.6;">
-                        <li style="margin-bottom: 8px;"><strong>정책 지원 내용</strong>
-                            <ul style="list-style-type: circle; padding-left: 20px; margin-top: 5px; line-height: 1.6;">
-                                <li style="margin-bottom: 4px;">입교 후 창업 사업화 신청과제 사업 수행지원(정부지원금, 창업 인프라, 교육 및 코칭, 기술지원, 사업화지원, 투자지원 등)</li>
-                                <li style="margin-bottom: 4px;">사업화 지원 : 입교 후 창업 사업화 신청과제 사업 수행 지원</li>
-                            </ul>
-                        </li>
-                        <li style="margin-bottom: 8px;"><strong>정책신청방법내용</strong>
-                            <ul style="list-style-type: circle; padding-left: 20px; margin-top: 5px; line-height: 1.6;">
-                                <li style="margin-bottom: 4px;">K-스타트업 홈페이지(www.k-startup.go.kr)에서 온라인 접수</li>
-                            </ul>
-                        </li>
-                        <li style="margin-bottom: 8px;"><strong>제출 서류 내용</strong>
-                            <ul style="list-style-type: circle; padding-left: 20px; margin-top: 5px; line-height: 1.6;">
-                                <li style="margin-bottom: 4px;">2024년 창업성공패키지 지원사업 신청서 1부</li>
-                                <li style="margin-bottom: 4px;">개인 및 기업 (신용)정보 수집·이용·제공·조회 동의서 1부</li>
-                            </ul>
-                        </li>
-                        <li style="margin-bottom: 8px;"><strong>신청 기간</strong>
-                            <ul style="list-style-type: circle; padding-left: 20px; margin-top: 5px; line-height: 1.6;">
-                                <li style="margin-bottom: 4px;">20240115 ~ 20240205</li>
-                            </ul>
-                        </li>
-                    </ul>
-                `;
-                applyUrl = 'https://www.k-startup.go.kr/';
-                break;
-            default:
-                title = '정책 정보';
-                supportType = '';
-                modalContent = '<p>선택하신 정책에 대한 정보를 찾을 수 없습니다.</p>';
-                applyUrl = '#';
-        }
-
-        const modalHtml = `
-            <div id="policyModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;">
-                <div style="background-color: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%; box-shadow: 0 4px 8px rgba(0,0,0,0.2); position: relative;">
-                    <button id="closeModalBtn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
-                    <h2 style="font-size: 24px; color: #333; margin-bottom: 10px;">${title}</h2>
-                    ${supportType ? `<span style="background-color: #e6f7ed; color: #52c41a; padding: 5px 10px; border-radius: 4px; font-size: 12px; margin-bottom: 20px; display: inline-block;">${supportType}</span>` : ''}
-                    <div style="margin-top: 20px; max-height: 400px; overflow-y: auto;">
-                        ${modalContent}
-                    </div>
-                    <div style="text-align: right; margin-top: 20px;">
-                        <button id="applyButton" style="background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer;">신청하기</button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-        document.getElementById('closeModalBtn').addEventListener('click', function() {
-            document.getElementById('policyModal').remove();
-        });
-
-        const applyButton = document.getElementById('applyButton');
-        if (applyButton) {
-            console.log('신청하기 버튼 찾음:', applyButton);
-            applyButton.addEventListener('click', function() {
-                if (applyUrl && applyUrl !== '#') {
-                    window.open(applyUrl, '_blank');
-                } else {
-                    console.warn('신청 URL이 정의되지 않았습니다.');
-                }
-                document.getElementById('policyModal').remove();
-            });
-        } else {
-            console.error('신청하기 버튼을 찾을 수 없습니다!');
-        }
     }
 
     // 세션 리스트 불러오기
