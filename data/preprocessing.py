@@ -365,10 +365,58 @@ def redefine_mid_category_all(df, top_col='정책대분류명', mid_col='정책�
     df[mid_col] = df.apply(lambda row: classify(row[top_col], row[mid_col], row[keyword_col]), axis=1)
     return df
 
-
-
-
-
+def standardize_metropolitan_city_names(region_value):
+    """
+    정책거주지역코드에서 광역시 이름을 정식 명칭으로 변경하는 함수
+    예: '서울 구로구' -> '서울특별시 구로구'
+    
+    Args:
+        region_value: 지역 코드 값
+    
+    Returns:
+        변환된 지역 코드 값
+    """
+    if pd.isna(region_value) or not isinstance(region_value, str):
+        return region_value
+    
+    # 광역시 매핑 딕셔너리
+    city_mapping = {
+        '서울': '서울특별시',
+        '부산': '부산광역시',
+        '대구': '대구광역시',
+        '울산': '울산광역시',
+        '광주': '광주광역시',
+        '대전': '대전광역시',
+        '인천': '인천광역시',
+        '제주': '제주특별자치도',
+    }
+    
+    # 쉼표로 분리된 경우 처리
+    if ',' in region_value:
+        regions = region_value.split(',')
+        transformed_regions = []
+        
+        for region in regions:
+            region = region.strip()
+            transformed_region = region
+            
+            # 각 광역시에 대해 변환 수행
+            for short_name, full_name in city_mapping.items():
+                if region.startswith(short_name + ' '):
+                    transformed_region = region.replace(short_name + ' ', full_name + ' ', 1)
+                    break
+            
+            transformed_regions.append(transformed_region)
+        
+        return ', '.join(transformed_regions)
+    
+    # 단일 값인 경우 처리
+    else:
+        for short_name, full_name in city_mapping.items():
+            if region_value.startswith(short_name + ' '):
+                return region_value.replace(short_name + ' ', full_name + ' ', 1)
+        
+        return region_value
 
 def main():
     """메인 실행 함수"""
@@ -427,9 +475,7 @@ def main():
     unique_region_df = filtered_df_region2.drop_duplicates(subset=['법정동코드_5자리'])
     region_code_map_detailed = unique_region_df.set_index('법정동코드_5자리')['법정동명'].to_dict()
 
-    df['정책거주지역코드'] = df['정책거주지역코드'].apply(lambda x: transform_region_code_detailed(x, region_code_map_detailed))
-
-    # 지역 코드 통합 변경
+    df['정책거주지역코드'] = df['정책거주지역코드'].apply(lambda x: transform_region_code_detailed(x, region_code_map_detailed))    # 지역 코드 통합 변경
     region_mapping = get_region_mappings()
 
     for region_string, representative_name in region_mapping.items():
@@ -437,10 +483,13 @@ def main():
         if mask.sum() > 0:
             df.loc[mask, '정책거주지역코드'] = representative_name
 
+    # 광역시 이름 정식 명칭으로 변경 (예: '서울 구로구' -> '서울특별시 구로구')
+    df['정책거주지역코드'] = df['정책거주지역코드'].apply(standardize_metropolitan_city_names)
+
     # 중복 카테고리 제거
     df['정책대분류명'] = df['정책대분류명'].apply(remove_duplicate_categories)
 
-    # 정책대분류명 재분류 (주거, 일자리, 교육, 기타)
+    # 정책대분류명 재분류 (주거, 일자리, 기타)
     df['정책대분류명'] = df['정책대분류명'].apply(reclassify_policy_category)
 
     # 정책 분류 재조정: 교육 -> 일자리 재분류
