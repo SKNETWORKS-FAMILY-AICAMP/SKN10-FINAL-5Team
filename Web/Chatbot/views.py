@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.db.models import Max
 from .service import get_rag_chain
 from User.services import verify_and_refresh_tokens
 from functools import wraps
@@ -18,17 +19,22 @@ def chatbot_view(request):
 
 # 현재 로그인한 사용자의 챗봇 세션 리스트 반환
 def session_list(request):
-    # 디버깅
+
     print("현재 사용자:", request.user)
     print("인증 여부:", request.user.is_authenticated)
     
-    sessions = ChatSession.objects.filter(user=request.user).order_by('-create_dt')
+    # 마지막 메시지의 생성일자를 기준으로 세션을 정렬
+    sessions = ChatSession.objects.filter(user=request.user).annotate(
+        last_message_time=Max('message__create_dt')
+    ).order_by('-last_message_time', '-create_dt')
+    
     print("조회된 세션 수:", sessions.count())
     
     session_list = []
     for session in sessions:
-        # create_dt를 한국 시간으로 변환
-        local_time = timezone.localtime(session.create_dt)
+        # 마지막 메시지 시간이 있으면 그것을 사용, 없으면 세션 생성 시간 사용
+        display_time = session.last_message_time if session.last_message_time else session.create_dt
+        local_time = timezone.localtime(display_time)
         session_list.append({
             'id': session.session_id,
             'name': session.session_nm,
