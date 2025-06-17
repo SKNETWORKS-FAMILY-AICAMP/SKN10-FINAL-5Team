@@ -1,17 +1,17 @@
 """
-청년정책 CSV 데이터를 PostgreSQL DB에 삽입하는 스크립트 (임베딩 포함)
+청년정책 CSV 데이터를 PostgreSQL 통합 테이블에 삽입하는 스크립트 (임베딩 포함)
+- policies: 모든 정책 정보를 포함하는 통합 테이블
+- policy_embeddings: 정책 임베딩 벡터 테이블
 작성일: 2025-06-18
 """
 
 import pandas as pd
 import psycopg2
 from psycopg2.extras import execute_values
-import numpy as np
-from datetime import datetime
 import logging
 import openai
 import time
-from typing import List, Optional
+from typing import List
 import os
 from dotenv import load_dotenv
 
@@ -240,11 +240,12 @@ class YouthPolicyDataInserter:
         return embeddings
     
     def insert_policies(self, df):
-        """정책 기본 정보 삽입"""
+        """통합 정책 테이블에 모든 정보 삽입"""
         policies_data = []
         
         for _, row in df.iterrows():
             policy_data = (
+                # 기본 정책 정보
                 row['정책번호'],
                 row['정책명'],
                 row['정책설명내용'],
@@ -257,7 +258,39 @@ class YouthPolicyDataInserter:
                 row['최초등록일시'],
                 row['최종수정일시'],
                 row['신청시작일자'],
-                row['신청종료일자']
+                row['신청종료일자'],
+                
+                # 정책 조건 정보
+                int(row['지원대상최소연령']) if pd.notna(row['지원대상최소연령']) else None,
+                int(row['지원대상최대연령']) if pd.notna(row['지원대상최대연령']) else None,
+                row['결혼상태코드'],
+                row['정책전공요건코드'],
+                row['정책취업요건코드'],
+                row['정책학력요건코드'],
+                row['정책거주지역코드'],
+                row['소득조건구분코드'],
+                row['소득기타내용'],
+                row['추가신청자격조건내용'],
+                row['참여제안대상내용'],
+                
+                # 정책 메타데이터 정보
+                row['정책대분류명'],
+                row['정책중분류명'],
+                row['정책제공방법코드'],
+                row['정책키워드명'],
+                row['주관기관코드명'],
+                row['운영기관코드명'],
+                row['신청기간구분코드'],
+                row['사업기간구분코드'],
+                row['사업기간시작일자'],
+                row['사업기간종료일자'],
+                row['사업기간기타내용'],
+                row['정책특화요건코드'],
+                
+                # 정책 URL 정보
+                row['신청URL주소'],
+                row['참고URL주소1'],
+                row['참고URL주소2']
             )
             policies_data.append(policy_data)
         
@@ -265,7 +298,14 @@ class YouthPolicyDataInserter:
         INSERT INTO policies (
             plcy_no, plcy_nm, plcy_expln_cn, plcy_sprt_cn, plcy_aply_mthd_cn,
             srng_mthd_cn, sbmsn_dcmnt_cn, etc_mttr_cn, inq_cnt, frst_reg_dt,
-            last_mdfcn_dt, aply_bgng_ymd, aply_end_ymd
+            last_mdfcn_dt, aply_bgng_ymd, aply_end_ymd,
+            sprt_trgt_min_age, sprt_trgt_max_age, mrg_stts_cd, plcy_major_cd,
+            job_cd, school_cd, zip_cd, earn_cnd_se_cd, earn_etc_cn,
+            add_aply_qlfcc_cn, ptcp_prp_trgt_cn,
+            lclsf_nm, mclsf_nm, plcy_pvsn_mthd_cd, plcy_kywd_nm,
+            sprvsn_inst_cd_nm, oper_inst_cd_nm, aply_prd_se_cd, biz_prd_se_cd,
+            biz_prd_bgng_ymd, biz_prd_end_ymd, biz_prd_etc_cn, s_biz_cd,
+            aply_url_addr, ref_url_addr1, ref_url_addr2
         ) VALUES %s
         ON CONFLICT (plcy_no) DO UPDATE SET
             plcy_nm = EXCLUDED.plcy_nm,
@@ -280,113 +320,17 @@ class YouthPolicyDataInserter:
             last_mdfcn_dt = EXCLUDED.last_mdfcn_dt,
             aply_bgng_ymd = EXCLUDED.aply_bgng_ymd,
             aply_end_ymd = EXCLUDED.aply_end_ymd,
-            updated_at = CURRENT_TIMESTAMP
-        """
-        
-        execute_values(self.cursor, query, policies_data)
-        self.conn.commit()
-        logger.info(f"정책 테이블에 {len(policies_data)}개 레코드 삽입 완료")
-    
-    def insert_policy_conditions(self, df):
-        """정책 조건 정보 삽입"""
-        conditions_data = []
-        condition_details_data = []
-        
-        for _, row in df.iterrows():
-            # 조건 기본 정보
-            condition_data = (
-                row['정책번호'],
-                int(row['지원대상최소연령']) if pd.notna(row['지원대상최소연령']) else None,
-                int(row['지원대상최대연령']) if pd.notna(row['지원대상최대연령']) else None,
-                row['결혼상태코드'],
-                row['정책전공요건코드'],
-                row['정책취업요건코드'],
-                row['정책학력요건코드'],
-                row['정책거주지역코드'],
-                row['소득조건구분코드']
-            )
-            conditions_data.append(condition_data)
-        
-        # 조건 테이블 삽입 (RETURNING 사용을 위해 개별 처리)
-        condition_ids = []
-        for condition_data in conditions_data:
-            query = """
-            INSERT INTO policy_conditions (
-                plcy_no, sprt_trgt_min_age, sprt_trgt_max_age, mrg_stts_cd,
-                plcy_major_cd, job_cd, school_cd, zip_cd, earn_cnd_se_cd
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (plcy_no) DO UPDATE SET
-                sprt_trgt_min_age = EXCLUDED.sprt_trgt_min_age,
-                sprt_trgt_max_age = EXCLUDED.sprt_trgt_max_age,
-                mrg_stts_cd = EXCLUDED.mrg_stts_cd,
-                plcy_major_cd = EXCLUDED.plcy_major_cd,
-                job_cd = EXCLUDED.job_cd,
-                school_cd = EXCLUDED.school_cd,
-                zip_cd = EXCLUDED.zip_cd,
-                earn_cnd_se_cd = EXCLUDED.earn_cnd_se_cd,
-                updated_at = CURRENT_TIMESTAMP
-            RETURNING condition_id
-            """
-            
-            self.cursor.execute(query, condition_data)
-            condition_id = self.cursor.fetchone()[0]
-            condition_ids.append(condition_id)
-        
-        # 조건 상세 정보
-        for i, row in df.iterrows():
-            detail_data = (
-                condition_ids[i],
-                row['소득기타내용'],
-                row['추가신청자격조건내용'],
-                row['참여제안대상내용']
-            )
-            condition_details_data.append(detail_data)
-        
-        # 조건 상세 테이블 삽입
-        detail_query = """
-        INSERT INTO policy_condition_details (
-            condition_id, earn_etc_cn, add_aply_qlfcc_cn, ptcp_prp_trgt_cn
-        ) VALUES %s
-        ON CONFLICT (condition_id) DO UPDATE SET
+            sprt_trgt_min_age = EXCLUDED.sprt_trgt_min_age,
+            sprt_trgt_max_age = EXCLUDED.sprt_trgt_max_age,
+            mrg_stts_cd = EXCLUDED.mrg_stts_cd,
+            plcy_major_cd = EXCLUDED.plcy_major_cd,
+            job_cd = EXCLUDED.job_cd,
+            school_cd = EXCLUDED.school_cd,
+            zip_cd = EXCLUDED.zip_cd,
+            earn_cnd_se_cd = EXCLUDED.earn_cnd_se_cd,
             earn_etc_cn = EXCLUDED.earn_etc_cn,
             add_aply_qlfcc_cn = EXCLUDED.add_aply_qlfcc_cn,
             ptcp_prp_trgt_cn = EXCLUDED.ptcp_prp_trgt_cn,
-            updated_at = CURRENT_TIMESTAMP
-        """
-        
-        execute_values(self.cursor, detail_query, condition_details_data)
-        self.conn.commit()
-        logger.info(f"정책 조건 테이블에 {len(conditions_data)}개 레코드 삽입 완료")
-        logger.info(f"정책 조건 상세 테이블에 {len(condition_details_data)}개 레코드 삽입 완료")
-    
-    def insert_policy_metadata(self, df):
-        """정책 메타데이터 삽입"""
-        metadata_data = []
-        for _, row in df.iterrows():
-            metadata = (
-                row['정책번호'],
-                row['정책대분류명'],
-                row['정책중분류명'],
-                row['정책제공방법코드'],
-                row['정책키워드명'],
-                row['주관기관코드명'],
-                row['운영기관코드명'],
-                row['신청기간구분코드'],
-                row['사업기간구분코드'],
-                row['사업기간시작일자'],
-                row['사업기간종료일자'],
-                row['사업기간기타내용'],
-                row['정책특화요건코드']
-            )
-            metadata_data.append(metadata)
-        
-        query = """
-        INSERT INTO policy_metadata (
-            plcy_no, lclsf_nm, mclsf_nm, plcy_pvsn_mthd_cd, plcy_kywd_nm,
-            sprvsn_inst_cd_nm, oper_inst_cd_nm, aply_prd_se_cd, biz_prd_se_cd,
-            biz_prd_bgng_ymd, biz_prd_end_ymd, biz_prd_etc_cn, s_biz_cd
-        ) VALUES %s
-        ON CONFLICT (plcy_no) DO UPDATE SET
             lclsf_nm = EXCLUDED.lclsf_nm,
             mclsf_nm = EXCLUDED.mclsf_nm,
             plcy_pvsn_mthd_cd = EXCLUDED.plcy_pvsn_mthd_cd,
@@ -399,40 +343,15 @@ class YouthPolicyDataInserter:
             biz_prd_end_ymd = EXCLUDED.biz_prd_end_ymd,
             biz_prd_etc_cn = EXCLUDED.biz_prd_etc_cn,
             s_biz_cd = EXCLUDED.s_biz_cd,
-            updated_at = CURRENT_TIMESTAMP
-        """
-        
-        execute_values(self.cursor, query, metadata_data)
-        self.conn.commit()
-        logger.info(f"정책 메타데이터 테이블에 {len(metadata_data)}개 레코드 삽입 완료")
-    
-    def insert_policy_urls(self, df):
-        """정책 URL 정보 삽입"""
-        url_data = []
-        
-        for _, row in df.iterrows():
-            url_info = (
-                row['정책번호'],
-                row['신청URL주소'],
-                row['참고URL주소1'],
-                row['참고URL주소2']
-            )
-            url_data.append(url_info)
-        
-        query = """
-        INSERT INTO policy_urls (
-            plcy_no, aply_url_addr, ref_url_addr1, ref_url_addr2
-        ) VALUES %s
-        ON CONFLICT (plcy_no) DO UPDATE SET
             aply_url_addr = EXCLUDED.aply_url_addr,
             ref_url_addr1 = EXCLUDED.ref_url_addr1,
             ref_url_addr2 = EXCLUDED.ref_url_addr2,
             updated_at = CURRENT_TIMESTAMP
         """
         
-        execute_values(self.cursor, query, url_data)
+        execute_values(self.cursor, query, policies_data)
         self.conn.commit()
-        logger.info(f"정책 URL 테이블에 {len(url_data)}개 레코드 삽입 완료")
+        logger.info(f"통합 정책 테이블에 {len(policies_data)}개 레코드 삽입 완료")
     
     def insert_policy_embeddings(self, df):
         """정책 임베딩 정보 삽입"""
@@ -485,19 +404,11 @@ class YouthPolicyDataInserter:
             # DB 연결
             self.connect_db()
             
-            # 각 테이블에 데이터 삽입
-            logger.info("정책 기본 정보 삽입 시작")
+            # 통합 정책 테이블에 데이터 삽입
+            logger.info("통합 정책 테이블 데이터 삽입 시작")
             self.insert_policies(df)
             
-            logger.info("정책 조건 정보 삽입 시작")
-            self.insert_policy_conditions(df)
-            
-            logger.info("정책 메타데이터 삽입 시작")
-            self.insert_policy_metadata(df)
-            
-            logger.info("정책 URL 정보 삽입 시작")
-            self.insert_policy_urls(df)
-            
+            # 임베딩 테이블에 데이터 삽입 (선택사항)
             if include_embeddings:
                 logger.info("정책 임베딩 정보 삽입 시작")
                 self.insert_policy_embeddings(df)
@@ -523,7 +434,7 @@ def main():
     }
     
     # CSV 파일 경로
-    csv_file_path = '/home/bbing/dev/project/SKN10-FINAL-5Team/data/청년정책목록_전처리완료_2025-06-17.csv'
+    csv_file_path = '../청년정책목록_전처리완료_2025-06-17.csv'
     
     # OpenAI API 키 (환경변수에서 자동 로드)
     openai_api_key = os.getenv('OPENAI_API_KEY')
