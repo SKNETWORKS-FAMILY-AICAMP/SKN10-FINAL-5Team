@@ -1,0 +1,10 @@
+{
+  "Variables": {
+    "DB_HOST": "youth-policy-api-postgres.czoqimai8z0n.ap-northeast-2.rds.amazonaws.com",
+    "DB_PORT": "5432",
+    "DB_NAME": "postgres",
+    "DB_USER": "postgres",
+    "DB_PASSWORD": "postgres",
+    "S3_BUCKET_NAME": "youth-policy-data-bucket"
+  }
+} 

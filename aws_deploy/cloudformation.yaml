@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Youth Policy Data Processing Pipeline'
+
+Parameters:
+  DBHost:
+    Type: String
+    Description: PostgreSQL RDS host
+  DBPort:
+    Type: String
+    Default: '5432'
+    Description: PostgreSQL RDS port
+  DBName:
+    Type: String
+    Description: PostgreSQL database name
+  DBUser:
+    Type: String
+    Description: PostgreSQL database user
+  DBPassword:
+    Type: String
+    NoEcho: true
+    Description: PostgreSQL database password
+
+Resources:
+  # Lambda function for data processing
+  DataProcessingFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: youth-policy-data-processor
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          # Lambda function code will be deployed via GitHub Actions
+      Runtime: python3.9
+      Timeout: 300
+      MemorySize: 512
+      Environment:
+        Variables:
+          DB_HOST: !Ref DBHost
+          DB_PORT: !Ref DBPort
+          DB_NAME: !Ref DBName
+          DB_USER: !Ref DBUser
+          DB_PASSWORD: !Ref DBPassword
+          S3_BUCKET_NAME: youth-policy-data-bucket
+
+  # IAM Role for Lambda
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource: 
+                  - arn:aws:s3:::youth-policy-data-bucket/raw/*
+                  - arn:aws:s3:::youth-policy-data-bucket/processed/*
+
+
+
+  # Lambda Permission for S3
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref DataProcessingFunction
+      Principal: s3.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
+      SourceArn: arn:aws:s3:::youth-policy-data-bucket
+
+Outputs:
+  LambdaFunctionName:
+    Description: Name of the Lambda function
+    Value: !Ref DataProcessingFunction 
