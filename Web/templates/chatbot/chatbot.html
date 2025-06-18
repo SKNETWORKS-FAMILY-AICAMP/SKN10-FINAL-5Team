@@ -18,19 +18,20 @@
 <div class="flex bg-slate-100" style="height: calc(100vh - 80px);">
     <aside class="w-72 bg-white p-4 border-r border-slate-200 flex flex-col">
         <div class="flex items-center justify-between mb-6 px-2">
-            <!-- 검색 아이콘 버튼 (왼쪽) -->
-            <button id="chat-search-btn" class="p-2 rounded-full hover:bg-slate-100">
-                <span class="material-icons text-slate-400 cursor-pointer">search</span>
-            </button>
+            <!-- 검색과 새 채팅 버튼 그룹 (왼쪽) -->
+            <div class="flex items-center space-x-2">
+                <button id="chat-search-btn" class="p-1.5 hover:bg-slate-100 border border-slate-300 bg-white rounded">
+                    <span class="material-icons text-slate-400 cursor-pointer text-lg">search</span>
+                </button>
+                <button id="new-chat-btn" class="p-1.5 hover:bg-slate-100 border border-slate-300 bg-white rounded">
+                    <span class="material-icons text-slate-400 cursor-pointer text-lg">add</span>
+                </button>
+            </div>
             <!-- 사이드바 닫기 버튼 (오른쪽) -->
             <button class="text-slate-500 hover:text-slate-700" id="sidebar-close-btn">
                 <span class="material-icons">menu_open</span>
             </button>
         </div>
-        <button id="new-chat-btn" class="w-full flex items-center justify-between bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 px-4 rounded-lg mb-4 text-sm font-medium">
-            새 채팅 버튼
-            <span class="material-icons text-base">add</span>
-        </button>
         <div class="flex-grow overflow-y-auto space-y-2 pr-1" id="session-list">
             <!-- 세션 리스트가 여기에 동적으로 추가됩니다 -->
         </div>
@@ -57,6 +58,50 @@
         </div>
     </main>
 </div>
+
+<!-- 검색 모달창 -->
+<div id="search-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col">
+            <!-- 모달 헤더 -->
+            <div class="flex items-center justify-between p-6 border-b border-slate-200">
+                <h2 class="text-xl font-semibold text-slate-800">채팅 기록 검색</h2>
+                <button id="search-modal-close" class="text-slate-400 hover:text-slate-600">
+                    <span class="material-icons text-2xl">close</span>
+                </button>
+            </div>
+            
+            <!-- 검색 입력 영역 -->
+            <div class="p-6 border-b border-slate-200">
+                <div class="relative">
+                    <input 
+                        id="search-input" 
+                        type="text" 
+                        placeholder="채팅 제목이나 내용을 검색하세요..." 
+                        class="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                    <span class="absolute left-3 top-1/2 transform -translate-y-1/2 material-icons text-slate-400">search</span>
+                </div>
+            </div>
+            
+            <!-- 검색 결과 영역 -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <div id="search-results" class="space-y-4">
+                    <!-- 검색 결과가 여기에 동적으로 추가됩니다 -->
+                </div>
+                <div id="search-loading" class="hidden text-center py-8">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                    <p class="mt-2 text-slate-600">검색 중...</p>
+                </div>
+                <div id="search-empty" class="hidden text-center py-8">
+                    <span class="material-icons text-4xl text-slate-300 mb-2">search_off</span>
+                    <p class="text-slate-600">검색 결과가 없습니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% endblock %}

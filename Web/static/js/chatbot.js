@@ -17,10 +17,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // 새 채팅 버튼 요소 선택
     const newChatBtn = document.getElementById('new-chat-btn');
     
+    // 검색 모달 관련 요소들
+    const searchBtn = document.getElementById('chat-search-btn');
+    const searchModal = document.getElementById('search-modal');
+    const searchModalClose = document.getElementById('search-modal-close');
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+    const searchLoading = document.getElementById('search-loading');
+    const searchEmpty = document.getElementById('search-empty');
+    
     // 사이드바 표시 상태를 추적하는 변수
     let sidebarVisible = true;
     // 현재 활성화된 세션 ID를 저장하는 변수
     let currentSessionId = null;
+    // 검색 디바운스 타이머
+    let searchDebounceTimer = null;
     
     // 사이드바 닫기 버튼 클릭 이벤트 리스너
     sidebarCloseBtn.addEventListener('click', function() {
@@ -40,6 +51,38 @@ document.addEventListener('DOMContentLoaded', function() {
         resetChatSession();
         // 세션 리스트를 다시 로드
         loadSessionList();
+    });
+
+    // 검색 모달 열기 버튼 클릭 이벤트 리스너
+    searchBtn.addEventListener('click', function() {
+        showSearchModal();
+    });
+
+    // 검색 모달 닫기 버튼 클릭 이벤트 리스너
+    searchModalClose.addEventListener('click', function() {
+        hideSearchModal();
+    });
+
+    // 모달 외부 클릭 시 모달 닫기
+    searchModal.addEventListener('click', function(e) {
+        if (e.target === searchModal) {
+            hideSearchModal();
+        }
+    });
+
+    // 검색 입력 필드 이벤트 리스너
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        // 디바운스 처리
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => {
+            if (query.length >= 1) {
+                performSearch(query);
+            } else {
+                clearSearchResults();
+            }
+        }, 300);
     });
 
     // 사이드바를 숨기는 함수
@@ -128,6 +171,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             console.log('새 세션이 생성되었습니다.');
+            
+            // 새 세션 생성 후 사이드바 리스트 업데이트
+            loadSessionList();
         })
         .catch(error => {
             console.error('세션 생성 중 오류 발생:', error);
@@ -218,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         // 메시지가 있으면 각 메시지를 화면에 표시
                         if (data.messages) {
                             data.messages.forEach(msg => {
-                                displayMessage(msg.content, msg.sender, false, msg.created_at);
+                                displayMessage(msg.content, msg.sender, false, msg.created_at, msg.id);
                             });
                         }
                         // 세션 리스트 새로고침
@@ -243,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 메시지가 있으면 각 메시지를 화면에 표시
                 if (data.messages) {
                     data.messages.forEach(msg => {
-                        displayMessage(msg.content, msg.sender, false, msg.created_at);
+                        displayMessage(msg.content, msg.sender, false, msg.created_at, msg.id);
                     });
                 }
                 // 세션 리스트 새로고침
@@ -275,7 +321,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 메시지를 화면에 표시하는 함수
-    function displayMessage(message, sender, isLoading = false, createdAt = null) {
+    function displayMessage(message, sender, isLoading = false, createdAt = null, messageId = null) {
         // 채팅 메시지 컨테이너 요소 선택
         const messagesContainer = document.getElementById('chat-messages');
         // 채팅 컨테이너가 없으면 에러 로그 출력 후 함수 종료
@@ -288,6 +334,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const wrapper = document.createElement('div');
         // 사용자 메시지인 경우 오른쪽 정렬, 봇 메시지인 경우 왼쪽 정렬
         wrapper.className = `flex mb-4 w-full ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+        
+        // 메시지 ID가 있으면 data 속성으로 저장
+        if (messageId) {
+            wrapper.setAttribute('data-message-id', messageId);
+        }
         
         // 메시지 카드 div 요소 생성
         const card = document.createElement('div');
@@ -393,13 +444,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 data.sessions.forEach(session => {
                     // 세션 div 요소 생성
                     const div = document.createElement('div');
-                    // 세션 div에 CSS 클래스 설정
-                    div.className = 'p-3 rounded-lg hover:bg-slate-50 cursor-pointer';
-                    // 세션 정보를 포함한 HTML 설정
-                    div.innerHTML = `
-                        <h3 class="font-semibold text-slate-800 text-sm">${session.name}</h3>
-                        <p class="text-xs text-slate-400 mt-1">${session.created_at}</p>
-                    `;
+                    
+                    // 현재 활성화된 세션인지 확인
+                    const isActiveSession = currentSessionId === session.id;
+                    
+                    // 현재 세션인 경우 강조 스타일 적용
+                    if (isActiveSession) {
+                        div.className = 'p-3 rounded-lg bg-blue-50 border-l-4 border-blue-500 cursor-pointer relative';
+                        div.innerHTML = `
+                            <h3 class="font-semibold text-blue-800 text-sm">${session.name}</h3>
+                            <p class="text-xs text-blue-600 mt-1">${session.created_at}</p>
+                        `;
+                    } else {
+                        div.className = 'p-3 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors';
+                        div.innerHTML = `
+                            <h3 class="font-semibold text-slate-800 text-sm">${session.name}</h3>
+                            <p class="text-xs text-slate-400 mt-1">${session.created_at}</p>
+                        `;
+                    }
+                    
                     // 세션 클릭 시 해당 세션의 상세 정보를 불러오는 이벤트 리스너 추가
                     div.addEventListener('click', () => loadSessionDetail(session.id));
                     // 세션 리스트 컨테이너에 세션 div 추가
@@ -469,7 +532,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.messages && data.messages.length > 0) {
                 // 각 메시지를 화면에 표시
                 data.messages.forEach(msg => {
-                    displayMessage(msg.content, msg.sender, false, msg.created_at);
+                    displayMessage(msg.content, msg.sender, false, msg.created_at, msg.id);
                 });
                 // 스크롤을 항상 아래로 이동
                 chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -477,12 +540,203 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 메시지가 없을 때 표시할 메시지
                 chatContainer.innerHTML = '<p class="text-center text-slate-500 text-sm py-4">대화 내용이 없습니다.</p>';
             }
+            
+            // 사이드바 세션 리스트 업데이트 (현재 세션 강조 표시)
+            loadSessionList();
         })
         .catch(error => {
             console.error('세션 상세 정보 로드 중 오류:', error);
             // 채팅 메시지 컨테이너 요소 선택
             const chatContainer = document.getElementById('chat-messages');
             // 채팅 컨테이너가 있으면 에러 메시지 표시
+            if (chatContainer) {
+                chatContainer.innerHTML = '<p class="text-center text-red-500 text-sm py-4">대화 내용을 불러오는데 실패했습니다.</p>';
+            }
+        });
+    }
+
+    // 검색 모달을 표시하는 함수
+    function showSearchModal() {
+        searchModal.classList.remove('hidden');
+        searchInput.focus();
+        clearSearchResults();
+    }
+
+    // 검색 모달을 숨기는 함수
+    function hideSearchModal() {
+        searchModal.classList.add('hidden');
+        searchInput.value = '';
+        clearSearchResults();
+    }
+
+    // 검색 결과를 초기화하는 함수
+    function clearSearchResults() {
+        searchResults.innerHTML = '';
+        searchLoading.classList.add('hidden');
+        searchEmpty.classList.add('hidden');
+    }
+
+    // 검색을 수행하는 함수
+    function performSearch(query) {
+        clearSearchResults();
+        searchLoading.classList.remove('hidden');
+
+        // 서버에 검색 요청
+        fetch('/chatbot/api/search/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ query: query })
+        })
+        .then(response => {
+            if (response.status === 401) {
+                throw new Error('Unauthorized');
+            }
+            return response.json();
+        })
+        .then(data => {
+            searchLoading.classList.add('hidden');
+            
+            if (data.status === 'token_refreshed') {
+                console.log('토큰이 갱신되었습니다. 검색을 다시 요청합니다.');
+                performSearch(query);
+                return;
+            }
+            
+            if (data.status === 'success' && data.results && data.results.length > 0) {
+                displaySearchResults(data.results);
+            } else {
+                searchEmpty.classList.remove('hidden');
+            }
+        })
+        .catch(error => {
+            console.error('검색 중 오류 발생:', error);
+            searchLoading.classList.add('hidden');
+            if (error.message === 'Unauthorized') {
+                window.location.href = '/user/login/';
+                return;
+            }
+            searchEmpty.classList.remove('hidden');
+        });
+    }
+
+    // 검색 결과를 화면에 표시하는 함수
+    function displaySearchResults(results) {
+        searchResults.innerHTML = '';
+        
+        results.forEach(result => {
+            const resultItem = document.createElement('div');
+            resultItem.className = 'bg-slate-50 rounded-lg p-4 hover:bg-slate-100 cursor-pointer transition-colors';
+            
+            resultItem.innerHTML = `
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-slate-800 text-sm mb-1">${escapeHtml(result.session_name)}</h3>
+                        <p class="text-xs text-slate-500 mb-2">${result.session_date}</p>
+                        <div class="bg-white rounded p-3 border-l-4 border-blue-500">
+                            <p class="text-sm text-slate-700 leading-relaxed">${highlightSearchTerm(result.message_content, result.search_term)}</p>
+                        </div>
+                    </div>
+                    <span class="material-icons text-slate-400 ml-2">arrow_forward_ios</span>
+                </div>
+            `;
+            
+            resultItem.addEventListener('click', () => {
+                loadSessionWithScroll(result.session_id, result.message_id);
+                hideSearchModal();
+            });
+            
+            searchResults.appendChild(resultItem);
+        });
+    }
+
+    // 검색어를 하이라이트하는 함수
+    function highlightSearchTerm(content, searchTerm) {
+        if (!searchTerm) return escapeHtml(content);
+        
+        const regex = new RegExp(`(${escapeRegex(searchTerm)})`, 'gi');
+        return escapeHtml(content).replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>');
+    }
+
+    // 정규식 특수 문자를 이스케이프하는 함수
+    function escapeRegex(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // 특정 메시지로 스크롤하여 세션을 로드하는 함수
+    function loadSessionWithScroll(sessionId, messageId) {
+        currentSessionId = sessionId;
+        
+        fetch(`/chatbot/api/sessions/${sessionId}/`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(res => {
+            if (res.status === 401) {
+                window.location.href = '/user/login/';
+                return;
+            }
+            if (!res.ok) {
+                throw new Error('세션 상세 정보를 불러오는데 실패했습니다.');
+            }
+            return res.json();
+        })
+        .then(data => {
+            if (!data) return;
+            
+            if (data.status === 'token_refreshed') {
+                console.log('토큰이 갱신되었습니다. 세션 상세 정보를 다시 요청합니다.');
+                loadSessionWithScroll(sessionId, messageId);
+                return;
+            }
+            
+            const chatContainer = document.getElementById('chat-messages');
+            if (!chatContainer) {
+                console.error('채팅 컨테이너를 찾을 수 없습니다.');
+                return;
+            }
+            
+            chatContainer.innerHTML = '';
+            
+            if (data.messages && data.messages.length > 0) {
+                data.messages.forEach((msg, index) => {
+                    displayMessage(msg.content, msg.sender, false, msg.created_at, msg.id);
+                });
+                
+                // 타겟 메시지를 찾아서 스크롤
+                setTimeout(() => {
+                    const targetMessageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+                    
+                    if (targetMessageElement) {
+                        targetMessageElement.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'center' 
+                        });
+                        
+                        // 하이라이트 효과 추가
+                        targetMessageElement.style.backgroundColor = '#fef3c7';
+                        setTimeout(() => {
+                            targetMessageElement.style.backgroundColor = '';
+                        }, 2000);
+                    } else {
+                        chatContainer.scrollTop = chatContainer.scrollHeight;
+                    }
+                }, 100);
+            } else {
+                chatContainer.innerHTML = '<p class="text-center text-slate-500 text-sm py-4">대화 내용이 없습니다.</p>';
+            }
+            
+            // 사이드바 세션 리스트 업데이트 (현재 세션 강조 표시)
+            loadSessionList();
+        })
+        .catch(error => {
+            console.error('세션 상세 정보 로드 중 오류:', error);
+            const chatContainer = document.getElementById('chat-messages');
             if (chatContainer) {
                 chatContainer.innerHTML = '<p class="text-center text-red-500 text-sm py-4">대화 내용을 불러오는데 실패했습니다.</p>';
             }

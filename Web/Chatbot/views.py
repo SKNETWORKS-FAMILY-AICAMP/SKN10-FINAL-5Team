@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.db.models import Max
+from django.db.models import Max, Q
 from .service import get_rag_chain
 from User.services import verify_and_refresh_tokens
 from functools import wraps
@@ -55,6 +55,7 @@ def session_detail(request, session_id):
             # create_dt를 한국 시간으로 변환
             local_time = timezone.localtime(message.create_dt)
             message_list.append({
+                'id': message.msg_id,
                 'sender': message.sender,
                 'content': message.content,
                 'created_at': local_time.strftime('%Y-%m-%d %H:%M')
@@ -76,6 +77,102 @@ def session_detail(request, session_id):
             'status': 'error',
             'message': '세션 상세 정보를 불러오는데 실패했습니다.'
         }, status=500)
+
+# 채팅 기록 검색 API
+@csrf_exempt
+def search_chat_history(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            query = data.get('query', '').strip()
+            
+            if not query:
+                return JsonResponse({
+                    'status': 'success',
+                    'results': []
+                })
+            
+            # 현재 사용자의 세션들에서 검색
+            # 세션 제목과 메시지 내용에서 검색
+            sessions = ChatSession.objects.filter(
+                user=request.user
+            ).filter(
+                Q(session_nm__icontains=query) |  # 세션 제목에서 검색
+                Q(message__content__icontains=query)  # 메시지 내용에서 검색
+            ).distinct()
+            
+            results = []
+            for session in sessions:
+                # 해당 세션에서 검색어가 포함된 메시지들 찾기
+                matching_messages = Message.objects.filter(
+                    session=session,
+                    content__icontains=query
+                ).order_by('create_dt')
+                
+                for message in matching_messages:
+                    # 메시지 내용에서 검색어 주변 텍스트 추출 (최대 100자)
+                    content = message.content
+                    query_index = content.lower().find(query.lower())
+                    
+                    if query_index != -1:
+                        # 검색어 주변 50자씩 추출
+                        start = max(0, query_index - 50)
+                        end = min(len(content), query_index + len(query) + 50)
+                        
+                        # 문장 단위로 자르기
+                        if start > 0:
+                            start = content.find(' ', start) + 1
+                        if end < len(content):
+                            end = content.rfind(' ', start, end)
+                            if end == -1:
+                                end = len(content)
+                        
+                        excerpt = content[start:end].strip()
+                        if len(excerpt) > 100:
+                            excerpt = excerpt[:97] + '...'
+                        
+                        # 세션의 마지막 메시지 시간 가져오기
+                        last_message_time = Message.objects.filter(session=session).aggregate(
+                            Max('create_dt')
+                        )['create_dt__max']
+                        
+                        local_time = timezone.localtime(last_message_time) if last_message_time else timezone.localtime(session.create_dt)
+                        
+                        results.append({
+                            'session_id': session.session_id,
+                            'session_name': session.session_nm,
+                            'session_date': local_time.strftime('%Y-%m-%d %H:%M'),
+                            'message_id': message.msg_id,
+                            'message_content': excerpt,
+                            'search_term': query
+                        })
+            
+            # 결과를 세션별로 그룹화하고 최신 순으로 정렬
+            unique_results = []
+            seen_combinations = set()
+            
+            for result in results:
+                key = (result['session_id'], result['message_id'])
+                if key not in seen_combinations:
+                    seen_combinations.add(key)
+                    unique_results.append(result)
+            
+            # 세션 날짜 기준으로 내림차순 정렬
+            unique_results.sort(key=lambda x: x['session_date'], reverse=True)
+            
+            return JsonResponse({
+                'status': 'success',
+                'results': unique_results[:20]  # 최대 20개 결과만 반환
+            })
+            
+        except Exception as e:
+            print(f"검색 중 오류 발생: {e}")
+            return JsonResponse({
+                'status': 'error',
+                'message': '검색 중 오류가 발생했습니다.'
+            }, status=500)
+    
+    return JsonResponse({'error': '잘못된 요청입니다.'}, status=400)
 
 # 메시지 전송 및 응답 처리
 @csrf_exempt
@@ -132,11 +229,13 @@ def send_message(request):
                 'session_id': session.session_id,
                 'messages': [
                     {
+                        'id': user_message.msg_id,
                         'sender': 'user',
                         'content': message,
                         'created_at': timezone.localtime(user_message.create_dt).strftime('%Y-%m-%d %H:%M')
                     },
                     {
+                        'id': bot_message.msg_id,
                         'sender': 'chatbot',
                         'content': bot_response,
                         'created_at': timezone.localtime(bot_message.create_dt).strftime('%Y-%m-%d %H:%M')
