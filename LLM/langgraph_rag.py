@@ -21,8 +21,19 @@ from langgraph.graph import StateGraph, START, END
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 from pydantic import BaseModel, Field
 
+# LangSmith imports
+from langsmith import Client, traceable
+from langsmith.wrappers import wrap_openai
+
 # 환경변수 로드
 load_dotenv()
+
+# LangSmith 설정
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_PROJECT"] = os.getenv("LANGSMITH_PROJECT", "youth-policy-rag")
+if not os.getenv("LANGSMITH_API_KEY"):
+    print("Warning: LANGSMITH_API_KEY가 설정되지 않았습니다. LangSmith 추적이 비활성화됩니다.")
+    os.environ["LANGCHAIN_TRACING_V2"] = "false"
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -82,14 +93,26 @@ class YouthPolicyLangGraphRAG:
         if not openai.api_key:
             raise ValueError("OpenAI API 키가 설정되지 않았습니다.")
         
+        # LangSmith 클라이언트 초기화
+        self.langsmith_client = None
+        if os.getenv("LANGSMITH_API_KEY") and os.environ.get("LANGCHAIN_TRACING_V2") == "true":
+            try:
+                self.langsmith_client = Client()
+                # OpenAI 클라이언트를 LangSmith로 래핑
+                self.wrapped_openai = wrap_openai(openai)
+                logger.info("LangSmith 추적이 활성화되었습니다.")
+            except Exception as e:
+                logger.warning(f"LangSmith 초기화 실패: {e}")
+                self.wrapped_openai = openai
+        else:
+            self.wrapped_openai = openai
+            logger.info("LangSmith 추적이 비활성화되었습니다.")
+        
         # RAG 설정
-        self.top_k = int(os.getenv('TOP_K', 5))
+        self.top_k = int(os.getenv('TOP_K', 10))
         self.similarity_threshold = float(os.getenv('SIMILARITY_THRESHOLD', 0.7))
         self.embedding_model = os.getenv('EMBEDDING_MODEL', 'text-embedding-3-large')
         self.confidence_threshold = 0.7  # 분류 신뢰도 임계값
-        
-        # LLM 설정 (구조화된 출력용)
-        self.classifier_llm = openai
         
         # 그래프 빌드
         self.graph = self._build_graph()
@@ -128,6 +151,7 @@ class YouthPolicyLangGraphRAG:
         
         return builder.compile()
     
+    @traceable
     def _classify_query_node(self, state: GraphState) -> GraphState:
         """질의 분류 노드"""
         try:
@@ -169,14 +193,13 @@ class YouthPolicyLangGraphRAG:
             
             user_prompt = f"다음 질문을 분류하고 JSON 형식으로 결과를 제공해주세요: {state['query']}"
             
-            response = openai.chat.completions.create(
-                model="gpt-4o",
+            response = self.wrapped_openai.chat.completions.create(
+                model="o3-mini",
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
                 response_format={"type": "json_object"},
-                temperature=0.1
             )
             
             # JSON 응답 파싱
@@ -226,12 +249,13 @@ class YouthPolicyLangGraphRAG:
             logger.info(f"질의 거부: {classification.category} (신뢰도: {classification.confidence})")
             return "reject"
     
+    @traceable
     def _generate_embedding_node(self, state: GraphState) -> GraphState:
         """임베딩 생성 노드"""
         try:
             logger.info("임베딩 생성 시작")
             
-            response = openai.embeddings.create(
+            response = self.wrapped_openai.embeddings.create(
                 input=state["query"],
                 model=self.embedding_model
             )
@@ -251,6 +275,7 @@ class YouthPolicyLangGraphRAG:
                 "error": f"임베딩 생성 실패: {str(e)}"
             }
     
+    @traceable
     def _search_policies_node(self, state: GraphState) -> GraphState:
         """정책 검색 노드"""
         try:
@@ -322,7 +347,7 @@ class YouthPolicyLangGraphRAG:
                     AND (
                         {base_filter}
                         AND (
-                            p.mclsf_nm = '창업 지원'
+                            p.mclsf_nm = '창업'
                         )
                     )
                     """
@@ -437,6 +462,27 @@ class YouthPolicyLangGraphRAG:
             
             logger.info(f"정책 검색 완료: {len(policies)}개 정책 발견")
             
+            # 검색된 정책들의 기본 정보 로그 출력
+            if policies:
+                logger.info("=" * 80)
+                logger.info("검색된 정책 목록:")
+                logger.info("=" * 80)
+                for i, policy in enumerate(policies, 1):
+                    logger.info(f"{i}. 정책명: {policy.get('plcy_nm', 'N/A')}")
+                    logger.info(f"   정책번호: {policy.get('plcy_no', 'N/A')}")
+                    logger.info(f"   분류: {policy.get('lclsf_nm', 'N/A')} > {policy.get('mclsf_nm', 'N/A')}")
+                    logger.info(f"   유사도: {policy.get('similarity_score', 0):.4f}")
+                    logger.info(f"   주관기관: {policy.get('sprvsn_inst_cd_nm', 'N/A')}")
+                    logger.info(f"   운영기관: {policy.get('oper_inst_cd_nm', 'N/A')}")
+                    if policy.get('plcy_expln_cn'):
+                        # 정책 설명이 길 경우 100자로 제한
+                        description = policy.get('plcy_expln_cn', '')
+                        if len(description) > 100:
+                            description = description[:100] + "..."
+                        logger.info(f"   설명: {description}")
+                    logger.info("-" * 40)
+                logger.info("=" * 80)
+            
             return {
                 **state,
                 "policies": policies,
@@ -522,6 +568,7 @@ class YouthPolicyLangGraphRAG:
         
         return json.dumps(formatted_policies, ensure_ascii=False, indent=2)
     
+    @traceable
     def _generate_response_node(self, state: GraphState) -> GraphState:
         """최종 답변 생성 노드"""
         try:
@@ -544,8 +591,7 @@ class YouthPolicyLangGraphRAG:
 
 답변 시 다음 사항을 고려해주세요:
 1. 정책번호와 정책명을 명확히 포함하세요.
-
-제공된 정책 정보에 없는 내용은 추측하지 말고, 정확한 정보만을 바탕으로 답변해주세요.
+2. 제공된 정책 정보에 없는 내용은 추측하지 말고, 정확한 정보만을 바탕으로 답변해주세요.
 """
                 
                 user_prompt = f"""
@@ -557,7 +603,7 @@ class YouthPolicyLangGraphRAG:
 위 정책 정보를 바탕으로 사용자의 질문에 대해 상세하고 도움이 되는 답변을 제공해주세요.
 """
                 
-                response_obj = openai.chat.completions.create(
+                response_obj = self.wrapped_openai.chat.completions.create(
                     model="gpt-4o",
                     messages=[
                         {"role": "system", "content": system_prompt},
@@ -619,6 +665,7 @@ class YouthPolicyLangGraphRAG:
             "final_response": response
         }
     
+    @traceable
     def query(self, user_query: str) -> Dict[str, Any]:
         """
         전체 RAG 파이프라인 실행
@@ -681,35 +728,33 @@ def main():
     
     # 테스트 질의들
     test_queries = [
-        # 주거 관련 - 금융지원 (승인되어야 함)
-        "제가 부산광역시 부산진구에 자취하고 있는데 제가 받을 수 있는 월세지원 사업이 있나요?",
-        "전세자금 대출을 받고 싶은데 어떤 정책이 있나요?",
-        "임차보증금 대출 이자 지원 받을 수 있나요?",
+        # 주거 관련 - 금융지원
+        "제가 부산광역시 부산진구에 자취하고 있는데 월세가 부담스러워요",
+        "전세 대출 이자 지원 받을 수 있는 정책이 있나요?",
         
-        # 주거 관련 - 보조금지원 (승인되어야 함)
-        "부동산 중개수수료 지원 정책이 있나요?",
-        "이사비용 지원받을 수 있는 정책이 있나요?",
+        # 주거 관련 - 보조금지원
+        "제가 다음달에 서울로 이사를 가요. 받을 수 있는 혜택이 있나요?",
+        "부동산 알아보는게 너무 힘들어요.",
         
-        # 주거 관련 - 주거지원 (승인되어야 함)
+        # 주거 관련 - 주거지원
         "청년 임대주택에 입주하고 싶은데 어떤 조건이 있나요?",
-        "대학생인데 학교 근처 기숙사가 필요해요",
+        "이제 대학 신입생인데 서울에 기숙사가 필요해요",
         
-        # 일자리 관련 - 창업 (승인되어야 함)
-        "창업을 하고 싶은데 도움을 받을 수 있는 정책이 있나요?",
-        "창업자금 지원 정책이 있나요?",
+        # 일자리 관련 - 창업
+        "창업 관련 컨퍼런스가 있나요?",
+        "창업자인데 투자받기가 너무 힘들어요",
         
-        # 일자리 관련 - 훈련 (승인되어야 함)  
+        # 일자리 관련 - 훈련
         "청년농업인이 되고 싶은데, 관련 직업 훈련이나 기술 교육이 있나요?",
         "자격증 취득 지원 정책이 있나요?",
         
-        # 일자리 관련 - 취업지원 (승인되어야 함)
-        "면접 정장 대여 지원 정책이 있나요?",
-        "인턴십 프로그램이나 취업 후 정착 지원이 있나요?",
+        # 일자리 관련 - 취업지원
+        "면접 보러 가야 하는데 입고 갈 정장이 없어요",
+        "자기소개서 컨설팅을 받고 싶어요",
         
         # 기타 (거부되어야 함)
-        "교육비 지원 정책이 있나요?",
         "건강검진을 받고 싶은데 지원 정책이 있나요?",
-        "오늘 날씨가 어떤가요?",
+        "부천시 윈미구민이 받을 수 있는 정책이 있나요?"
     ]
     
     for i, query in enumerate(test_queries, 1):
