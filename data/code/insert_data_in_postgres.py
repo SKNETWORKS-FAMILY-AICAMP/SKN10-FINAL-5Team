@@ -156,12 +156,13 @@ class YouthPolicyDataInserter:
         
         if pd.notna(row['정책취업요건코드']):
             text_parts.append(f"취업요건: {row['정책취업요건코드']}")
-        
         if pd.notna(row['정책학력요건코드']):
             text_parts.append(f"학력요건: {row['정책학력요건코드']}")
         
         if pd.notna(row['정책거주지역코드']):
-            text_parts.append(f"거주지역: {row['정책거주지역코드']}")
+            regions = [region.strip() for region in str(row['정책거주지역코드']).split(',')]
+            if regions:
+                text_parts.append(f"거주지역: {', '.join(regions)}")
         
         if pd.notna(row['소득조건구분코드']):
             text_parts.append(f"소득조건: {row['소득조건구분코드']}")
@@ -347,7 +348,7 @@ class YouthPolicyDataInserter:
             ref_url_addr2 = EXCLUDED.ref_url_addr2,
             updated_at = CURRENT_TIMESTAMP
         WHERE EXCLUDED.last_mdfcn_dt > policies.last_mdfcn_dt 
-           OR policies.last_mdfcn_dt IS NULL
+            OR policies.last_mdfcn_dt IS NULL
         """
         
         # 업데이트된 정책번호들을 저장할 임시 테이블 생성
@@ -444,28 +445,30 @@ class YouthPolicyDataInserter:
             policy_no = row['정책번호']
             
             # 결혼상태 조건 (제한없음 제외)
-            if pd.notna(row['결혼상태코드']) and row['결혼상태코드'] != '제한없음':
-                conditions_data.append((policy_no, 'marriage_status', row['결혼상태코드']))
+            if pd.notna(row['결혼상태코드']):
+                conditions_data.append((policy_no, 'mrg_stts_cd', row['결혼상태코드']))
             
             # 전공 조건 (제한없음 제외)
-            if pd.notna(row['정책전공요건코드']) and row['정책전공요건코드'] != '제한없음':
-                conditions_data.append((policy_no, 'major_requirement', row['정책전공요건코드']))
+            if pd.notna(row['정책전공요건코드']):
+                conditions_data.append((policy_no, 'plcy_major_cd', row['정책전공요건코드']))
             
             # 취업 조건 (제한없음 제외)
-            if pd.notna(row['정책취업요건코드']) and row['정책취업요건코드'] != '제한없음':
-                conditions_data.append((policy_no, 'job_requirement', row['정책취업요건코드']))
+            if pd.notna(row['정책취업요건코드']):
+                conditions_data.append((policy_no, 'job_cd', row['정책취업요건코드']))
             
             # 학력 조건 (제한없음 제외)
-            if pd.notna(row['정책학력요건코드']) and row['정책학력요건코드'] != '제한없음':
-                conditions_data.append((policy_no, 'education_requirement', row['정책학력요건코드']))
-            
-            # 거주지역 조건 (전국 제외)
-            if pd.notna(row['정책거주지역코드']) and row['정책거주지역코드'] != '전국':
-                conditions_data.append((policy_no, 'region_requirement', row['정책거주지역코드']))
+            if pd.notna(row['정책학력요건코드']):
+                conditions_data.append((policy_no, 'school_cd', row['정책학력요건코드']))
+            # 거주지역 조건 (전국 제외, 콤마로 분리된 지역은 각각 별도 레코드로 생성)
+            if pd.notna(row['정책거주지역코드']):
+                regions = [region.strip() for region in str(row['정책거주지역코드']).split(',')]
+                for region in regions:
+                    if region:  # 빈 문자열이 아닌 경우만 추가
+                        conditions_data.append((policy_no, 'zip_cd', region))
             # 소득 조건 (무관이 아닌 경우 소득기타내용을 데이터로 사용)
-            if pd.notna(row['소득조건구분코드']) and row['소득조건구분코드'] != '무관':
+            if pd.notna(row['소득조건구분코드']):
                 income_desc = row['소득기타내용'] if pd.notna(row['소득기타내용']) else row['소득조건구분코드']
-                conditions_data.append((policy_no, 'income_requirement', income_desc))
+                conditions_data.append((policy_no, 'earn_etc_cn', income_desc))
             # 추가 자격 조건 (추가신청자격조건내용과 참여제안대상내용 통합)
             additional_conditions = []
             if pd.notna(row['추가신청자격조건내용']):
@@ -507,9 +510,9 @@ class YouthPolicyDataInserter:
             self.insert_policy_conditions(df)
             
             # 임베딩 테이블에 데이터 삽입 (업데이트된 정책만)
-            if include_embeddings:
-                logger.info("정책 임베딩 정보 삽입 시작")
-                self.insert_policy_embeddings(df, updated_policy_numbers)
+            # if include_embeddings:
+            #     logger.info("정책 임베딩 정보 삽입 시작")
+            #     self.insert_policy_embeddings(df, updated_policy_numbers)
             
             logger.info("모든 데이터 삽입 완료")
             

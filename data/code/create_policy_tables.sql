@@ -2,7 +2,7 @@
 -- 작성일: 2025-06-18
 
 -- pgvector 확장 설치 (임베딩 테이블용)
-CREATE EXTENSION IF NOT EXISTS vector;
+-- CREATE EXTENSION IF NOT EXISTS vector;
 
 -- 1. 정책 테이블 (통합 메인 테이블)
 CREATE TABLE policies (
@@ -59,21 +59,21 @@ CREATE TABLE policies (
 );
 
 -- 2. 정책 임베딩 테이블
-CREATE TABLE policy_embeddings (
-    plcy_no VARCHAR(50) NOT NULL,
-    embedding VECTOR(3072),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (plcy_no),
-    FOREIGN KEY (plcy_no) REFERENCES policies(plcy_no) ON DELETE CASCADE
-);
+-- CREATE TABLE policy_embeddings (
+--     plcy_no VARCHAR(50) NOT NULL,
+--     embedding VECTOR(3072),
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     PRIMARY KEY (plcy_no),
+--     FOREIGN KEY (plcy_no) REFERENCES policies(plcy_no) ON DELETE CASCADE
+-- );
 
 -- 3. 정책 조건 정보 테이블
 CREATE TABLE policy_conditions (
     condition_id SERIAL PRIMARY KEY,
     plcy_no VARCHAR(50) NOT NULL,
-    condition_type VARCHAR(50) NOT NULL, -- 조건 유형 (예: 'age', 'income', 'education' 등)
-    condition_desc TEXT NOT NULL, -- 조건 값 (예: '18-25', '대졸 이상' 등)
+    condition_type VARCHAR(50) NOT NULL, -- 조건 유형 (예: 'mrg_stts_cd', 'plcy_major_cd', 'job_cd', 'school_cd', 'zip_cd', 'earn_cnd_se_cd', 'earn_etc_cn', 'add_aply_qlfcc_cn', 'ptcp_prp_trgt_cn')
+    condition_desc TEXT NOT NULL, -- 조건 값
     FOREIGN KEY (plcy_no) REFERENCES policies(plcy_no) ON DELETE CASCADE
 );
 
@@ -85,7 +85,7 @@ CREATE INDEX idx_policies_classification ON policies(lclsf_nm, mclsf_nm);
 
 -- 테이블 코멘트
 COMMENT ON TABLE policies IS '정책 통합 정보 테이블';
-COMMENT ON TABLE policy_embeddings IS '정책 임베딩 벡터 테이블';
+-- COMMENT ON TABLE policy_embeddings IS '정책 임베딩 벡터 테이블';
 COMMENT ON TABLE policy_conditions IS '정책 조건 정보 테이블';
 
 -- 컬럼 코멘트
@@ -138,8 +138,8 @@ COMMENT ON COLUMN policies.ref_url_addr1 IS '참고URL주소1';
 COMMENT ON COLUMN policies.ref_url_addr2 IS '참고URL주소2';
 
 -- policy_embeddings 테이블
-COMMENT ON COLUMN policy_embeddings.plcy_no IS '정책번호';
-COMMENT ON COLUMN policy_embeddings.embedding IS '정책 임베딩 (3072차원)';
+-- COMMENT ON COLUMN policy_embeddings.plcy_no IS '정책번호';
+-- COMMENT ON COLUMN policy_embeddings.embedding IS '정책 임베딩 (3072차원)';
 
 -- policy_conditions 테이블
 COMMENT ON COLUMN policy_conditions.condition_id IS '조건 ID';

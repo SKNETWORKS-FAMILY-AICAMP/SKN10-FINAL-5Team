@@ -135,39 +135,39 @@ def transform_region_code_detailed(code_value, region_code_map):
 #     return code_value
 
 
-# def transform_employment_status(code_value):
-#     """
-#     정책취업요건코드에서 특정 취업 상태를 '비정규직'로 변환하는 함수
+def transform_employment_status(code_value):
+    """
+    정책취업요건코드에서 특정 취업 상태를 '비정규직'로 변환하는 함수
     
-#     Args:
-#         code_value: 변환할 코드 값
+    Args:
+        code_value: 변환할 코드 값
     
-#     Returns:
-#         변환된 코드 값
-#     """
-#     if pd.isna(code_value) or not isinstance(code_value, str):
-#         return code_value
+    Returns:
+        변환된 코드 값
+    """
+    if pd.isna(code_value) or not isinstance(code_value, str):
+        return code_value
     
-#     # 변환 대상 취업 상태 목록
-#     target_statuses = ['프리랜서', '일용근로자', '단기근로자']
+    # 변환 대상 취업 상태 목록
+    target_statuses = ['프리랜서', '일용근로자', '단기근로자']
     
-#     # 쉼표로 분리된 경우 처리
-#     if ',' in code_value:
-#         items = [item.strip() for item in code_value.split(',') if item.strip()]
-#         transformed_items = []
+    # 쉼표로 분리된 경우 처리
+    if ',' in code_value:
+        items = [item.strip() for item in code_value.split(',') if item.strip()]
+        transformed_items = []
         
-#         for item in items:
-#             if item in target_statuses:
-#                 transformed_items.append('비정규직')
-#             else:
-#                 transformed_items.append(item)
+        for item in items:
+            if item in target_statuses:
+                transformed_items.append('비정규직')
+            else:
+                transformed_items.append(item)
         
-#         return ', '.join(transformed_items)
-#     # 단일 값인 경우 처리
-#     else:
-#         if code_value.strip() in target_statuses:
-#             return '비정규직'
-#         return code_value
+        return ', '.join(transformed_items)
+    # 단일 값인 경우 처리
+    else:
+        if code_value.strip() in target_statuses:
+            return '비정규직'
+        return code_value
 
 def remove_duplicate_categories(category_string):
     """쉼표로 분리된 카테고리 문자열에서 중복을 제거하는 함수"""
@@ -376,10 +376,10 @@ def redefine_mid_category_all(df, top_col='정책대분류명', mid_col='정책�
 def main():
     """메인 실행 함수"""
     # 데이터 로딩
-    df = pd.read_csv('청년정책목록_전체.csv', encoding='utf-8')
-    df_code = pd.read_csv('청년정책_전체코드매핑.csv', encoding='utf-8')
-    df_region = pd.read_excel("법정동 기준 시군구 단위.xlsx", sheet_name="통합 버전")
-    df_region2 = pd.read_csv("법정동코드 전체자료.txt", encoding='cp949', sep='\t')
+    df = pd.read_csv('../청년정책목록_전체.csv', encoding='utf-8')
+    df_code = pd.read_csv('../청년정책_전체코드매핑.csv', encoding='utf-8')
+    df_region = pd.read_excel("../법정동 기준 시군구 단위.xlsx", sheet_name="통합 버전")
+    df_region2 = pd.read_csv("../법정동코드 전체자료.txt", encoding='cp949', sep='\t')
 
     # 컬럼명 영어 -> 한글
     col = ['정책번호', '기본계획차수', '기본계획정책방향번호', '기본계획중점과제번호', '기본계획과제번호', '제공기관그룹코드', '정책제공방법코드', '정책승인상태코드', '정책명', '정책키워드명',
