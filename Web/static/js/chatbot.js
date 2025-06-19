@@ -1,9 +1,9 @@
 // DOM이 완전히 로드된 후 실행되는 이벤트 리스너
 document.addEventListener('DOMContentLoaded', function() {
-    // 메시지 입력 필드 요소 선택
-    const messageInput = document.querySelector('input[placeholder="메시지 입력..."]');
+    // 메시지 입력 필드 요소 선택 (textarea로 변경)
+    const messageInput = document.querySelector('textarea[placeholder="메시지 입력..."]');
     // 전송 버튼 요소 선택
-    const sendButton = document.querySelector('.bg-blue-500');
+    const sendButton = document.getElementById('send-btn');
     // 채팅 컨테이너 요소 선택
     const chatContainer = document.querySelector('.flex-grow.flex.flex-col.items-center.justify-center.p-6');
     // 사이드바 닫기 버튼 요소 선택
@@ -93,6 +93,30 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 2000);
         }
     });
+
+    // textarea 자동 높이 조절 및 스크롤 처리 + 버튼 활성/비활성
+    messageInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+        if (this.scrollHeight > 120) {
+            this.style.overflowY = 'auto';
+            this.style.height = '120px';
+        } else {
+            this.style.overflowY = 'hidden';
+        }
+        // 버튼 활성/비활성 처리
+        if (this.value.trim().length === 0) {
+            sendButton.disabled = true;
+            sendButton.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            sendButton.disabled = false;
+            sendButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    });
+
+    // 페이지 로드시 버튼 비활성화
+    sendButton.disabled = true;
+    sendButton.classList.add('opacity-50', 'cursor-not-allowed');
 
     // 사이드바를 숨기는 함수
     function hideSidebar() {
@@ -196,7 +220,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 메시지 입력 필드에서 Enter 키 입력 이벤트 리스너
     messageInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault(); // 기본 줄바꿈 동작 막기
             sendMessage();
         }
     });
