@@ -34,7 +34,7 @@ function openPolicyModal(policyId) {
                 newModal.innerHTML = `
                     <div class="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto relative">
                         <div class="flex justify-between items-start mb-6">
-                            <h2 id="modalPolicyName" class="text-2xl font-bold text-gray-800">${data.정책명}</h2>
+                            <h2 id="modalPolicyName" class="text-2xl font-bold text-gray-800">${data.plcy_nm}</h2>
                             <button onclick="closePolicyModal()" class="text-gray-500 hover:text-gray-700 absolute top-4 right-4">
                                 <span class="material-icons">close</span>
                             </button>
@@ -42,45 +42,45 @@ function openPolicyModal(policyId) {
                         
                         <div class="space-y-6">
                             <div>
-                                <span id="modalPolicyCategory" class="text-sm font-medium px-3 py-1 rounded-full ${data.category_color.bg} ${data.category_color.text}">${data.정책중분류명}</span>
+                                <span id="modalPolicyCategory" class="text-sm font-medium px-3 py-1 rounded-full ${data.category_color.bg} ${data.category_color.text}">${data.mclsf_nm}</span>
                             </div>
                             
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-800 mb-2">정책 설명</h3>
-                                <p id="modalPolicyDescription" class="text-gray-600 whitespace-pre-line">${data.정책설명내용}</p>
+                                <p id="modalPolicyDescription" class="text-gray-600 whitespace-pre-line">${data.plcy_expln_cn}</p>
                             </div>
                             
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-800 mb-2">지원 내용</h3>
-                                <p id="modalPolicySupport" class="text-gray-600 whitespace-pre-line">${data.정책지원내용}</p>
+                                <p id="modalPolicySupport" class="text-gray-600 whitespace-pre-line">${data.plcy_sprt_cn}</p>
                             </div>
                             
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-800 mb-2">신청 방법</h3>
-                                <p id="modalPolicyApplyMethod" class="text-gray-600 whitespace-pre-line">${data.정책신청방법내용}</p>
+                                <p id="modalPolicyApplyMethod" class="text-gray-600 whitespace-pre-line">${data.plcy_aply_mthd_cn}</p>
                             </div>
                             
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-800 mb-2">제출 서류</h3>
-                                <p id="modalPolicyDocuments" class="text-gray-600 whitespace-pre-line">${data.제출서류내용}</p>
+                                <p id="modalPolicyDocuments" class="text-gray-600 whitespace-pre-line">${data.sbmsn_dcmnt_cn}</p>
                             </div>
                             
                             <div class="flex justify-between text-sm text-gray-500">
                                 <div>
                                     <span>조회수: </span>
-                                    <span id="modalPolicyViews">${data.조회수}</span>
+                                    <span id="modalPolicyViews">${data.inq_cnt}</span>
                                 </div>
                                 <div>
                                     <span>신청기간: </span>
-                                    <span id="modalPolicyPeriod">${data.신청시작일자 ? new Date(data.신청시작일자).toLocaleDateString() : ''} ~ ${data.신청종료일자 ? new Date(data.신청종료일자).toLocaleDateString() : ''}</span>
+                                    <span id="modalPolicyPeriod">${data.aply_bgng_ymd ? new Date(data.aply_bgng_ymd).toLocaleDateString() : ''} ~ ${data.aply_end_ymd ? new Date(data.aply_end_ymd).toLocaleDateString() : ''}</span>
                                 </div>
                             </div>
                             
                             <div class="flex justify-end mt-6">
                                 <button id="modalPolicyButton" onclick="handlePolicyButtonClick()" 
-                                        class="px-6 py-2 ${data.신청url주소 || data.참고url주소1 || data.참고url주소2 ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-400 text-white cursor-not-allowed'} rounded-lg transition-colors" 
-                                        ${!(data.신청url주소 || data.참고url주소1 || data.참고url주소2) ? 'disabled' : ''}>
-                                    ${data.신청url주소 ? '신청하기' : data.참고url주소1 || data.참고url주소2 ? '이동하기' : '신청하기'}
+                                        class="px-6 py-2 ${data.aply_url_addr || data.ref_url_addr1 || data.ref_url_addr2 ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-400 text-white cursor-not-allowed'} rounded-lg transition-colors" 
+                                        ${!(data.aply_url_addr || data.ref_url_addr1 || data.ref_url_addr2) ? 'disabled' : ''}>
+                                    ${data.aply_url_addr ? '신청하기' : data.ref_url_addr1 || data.ref_url_addr2 ? '이동하기' : '신청하기'}
                                 </button>
                             </div>
                         </div>
@@ -91,12 +91,12 @@ function openPolicyModal(policyId) {
                 document.body.appendChild(newModal);
                 
                 // URL 설정
-                if (data.신청url주소) {
-                    currentPolicyUrl = data.신청url주소;
-                } else if (data.참고url주소1) {
-                    currentPolicyUrl = data.참고url주소1;
-                } else if (data.참고url주소2) {
-                    currentPolicyUrl = data.참고url주소2;
+                if (data.aply_url_addr) {
+                    currentPolicyUrl = data.aply_url_addr;
+                } else if (data.ref_url_addr1) {
+                    currentPolicyUrl = data.ref_url_addr1;
+                } else if (data.ref_url_addr2) {
+                    currentPolicyUrl = data.ref_url_addr2;
                 } else {
                     currentPolicyUrl = '';
                 }

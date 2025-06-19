@@ -46,11 +46,11 @@
                 {% for policy in popular_policies %}
                 <div class="w-full md:w-1/2 lg:w-1/4 flex-shrink-0 px-4">
                     <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow h-full cursor-pointer" 
-                        onclick="openPolicyModal('{{ policy.정책번호 }}')">
+                        onclick="openPolicyModal('{{ policy.plcy_no }}')">
                         <div class="flex flex-col h-full">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ policy.정책명 }}</h3>
-                            <p class="text-gray-600 text-sm mb-3">{{ policy.정책설명내용|truncatechars:100 }}</p>
-                            <span class="{{ policy.category_color.bg }} {{ policy.category_color.text }} text-xs font-medium px-3 py-1 rounded-full w-fit">{{ policy.정책중분류명 }}</span>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ policy.plcy_nm }}</h3>
+                            <p class="text-gray-600 text-sm mb-3">{{ policy.plcy_expln_cn|truncatechars:100 }}</p>
+                            <span class="{{ policy.category_color.bg }} {{ policy.category_color.text }} text-xs font-medium px-3 py-1 rounded-full w-fit">{{ policy.mclsf_nm }}</span>
                         </div>
                     </div>
                 </div>
