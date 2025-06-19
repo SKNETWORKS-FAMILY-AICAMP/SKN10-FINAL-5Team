@@ -8,10 +8,11 @@ from .service import get_rag_chain
 from User.services import verify_and_refresh_tokens
 from functools import wraps
 from User.models import User
-from .models import ChatSession, Message
-from datetime import datetime
+from .models import ChatSession, Message, SearchHistory
+from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
+import difflib
 
 # 챗봇 페이지 렌더링
 def chatbot_view(request):
@@ -91,6 +92,20 @@ def search_chat_history(request):
                     'status': 'success',
                     'results': []
                 })
+            
+            # 검색 기록 저장 (1분 이내 동일 쿼리 중복 저장 방지)
+            if request.user.is_authenticated:
+                now = timezone.now()
+                recent_history = SearchHistory.objects.filter(
+                    user=request.user,
+                    query=query,
+                    search_dt__gte=now - timedelta(minutes=1)
+                ).exists()
+                if not recent_history:
+                    SearchHistory.objects.create(
+                        user=request.user,
+                        query=query
+                    )
             
             # 현재 사용자의 세션들에서 검색
             # 세션 제목과 메시지 내용에서 검색

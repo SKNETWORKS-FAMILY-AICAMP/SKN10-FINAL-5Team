@@ -32,6 +32,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentSessionId = null;
     // 검색 디바운스 타이머
     let searchDebounceTimer = null;
+    // 검색 기록 저장(서버 저장) 디바운스 타이머
+    let saveHistoryDebounceTimer = null;
     
     // 사이드바 닫기 버튼 클릭 이벤트 리스너
     sidebarCloseBtn.addEventListener('click', function() {
@@ -73,8 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 검색 입력 필드 이벤트 리스너
     searchInput.addEventListener('input', function() {
         const query = this.value.trim();
-        
-        // 디바운스 처리
+        // 검색 결과는 바로 보여줌
         clearTimeout(searchDebounceTimer);
         searchDebounceTimer = setTimeout(() => {
             if (query.length >= 1) {
@@ -83,6 +84,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearSearchResults();
             }
         }, 300);
+
+        // 검색 기록 저장은 2초 디바운스
+        clearTimeout(saveHistoryDebounceTimer);
+        if (query.length >= 1) {
+            saveHistoryDebounceTimer = setTimeout(() => {
+                saveSearchHistory(query);
+            }, 2000);
+        }
     });
 
     // 사이드바를 숨기는 함수
@@ -740,6 +749,19 @@ document.addEventListener('DOMContentLoaded', function() {
             if (chatContainer) {
                 chatContainer.innerHTML = '<p class="text-center text-red-500 text-sm py-4">대화 내용을 불러오는데 실패했습니다.</p>';
             }
+        });
+    }
+
+    // 검색 기록 저장(서버 저장) 함수
+    function saveSearchHistory(query) {
+        fetch('/chatbot/api/search/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ query })
         });
     }
 
