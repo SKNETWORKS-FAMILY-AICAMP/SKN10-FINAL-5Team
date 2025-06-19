@@ -240,7 +240,7 @@ class YouthPolicyDataInserter:
         return embeddings
     
     def insert_policies(self, df):
-        """통합 정책 테이블에 모든 정보 삽입"""
+        """통합 정책 테이블에 모든 정보 삽입 및 업데이트된 정책번호 반환"""
         policies_data = []
         
         for _, row in df.iterrows():
@@ -290,8 +290,7 @@ class YouthPolicyDataInserter:
                 # 정책 URL 정보
                 row['신청URL주소'],
                 row['참고URL주소1'],
-                row['참고URL주소2']
-            )
+                row['참고URL주소2']            )
             policies_data.append(policy_data)
         
         query = """
@@ -347,25 +346,68 @@ class YouthPolicyDataInserter:
             ref_url_addr1 = EXCLUDED.ref_url_addr1,
             ref_url_addr2 = EXCLUDED.ref_url_addr2,
             updated_at = CURRENT_TIMESTAMP
+        WHERE EXCLUDED.last_mdfcn_dt > policies.last_mdfcn_dt 
+           OR policies.last_mdfcn_dt IS NULL
         """
         
+        # 업데이트된 정책번호들을 저장할 임시 테이블 생성
+        self.cursor.execute("""
+            DROP TABLE IF EXISTS temp_updated_policies;
+            CREATE TEMPORARY TABLE temp_updated_policies (
+                plcy_no VARCHAR(50)
+            )
+        """)
+        
         execute_values(self.cursor, query, policies_data)
+        
+        # 업데이트된 정책번호들을 임시 테이블에 저장
+        policy_numbers = [policy[0] for policy in policies_data]  # 정책번호들
+        policy_numbers_placeholders = ','.join(['%s'] * len(policy_numbers))
+        
+        # 실제로 삽입되거나 업데이트된 정책들을 찾기
+        update_check_query = f"""
+        INSERT INTO temp_updated_policies (plcy_no)
+        SELECT p.plcy_no 
+        FROM policies p
+        WHERE p.plcy_no IN ({policy_numbers_placeholders})
+        AND (
+            p.updated_at >= CURRENT_TIMESTAMP - INTERVAL '1 minute'
+            OR p.created_at >= CURRENT_TIMESTAMP - INTERVAL '1 minute'
+        )
+        """
+        
+        self.cursor.execute(update_check_query, policy_numbers)
         self.conn.commit()
-        logger.info(f"통합 정책 테이블에 {len(policies_data)}개 레코드 삽입 완료")
+        
+        # 업데이트된 정책번호들 조회
+        self.cursor.execute("SELECT plcy_no FROM temp_updated_policies")
+        updated_policy_numbers = [row[0] for row in self.cursor.fetchall()]
+        
+        logger.info(f"통합 정책 테이블에 {len(policies_data)}개 레코드 처리 완료 (업데이트 대상: {len(updated_policy_numbers)}개)")        
+        return updated_policy_numbers
     
-    def insert_policy_embeddings(self, df):
-        """정책 임베딩 정보 삽입"""
+    def insert_policy_embeddings(self, df, updated_policy_numbers=None):
+        """정책 임베딩 정보 삽입 (업데이트된 정책만)"""
         if not openai.api_key:
             logger.warning("OpenAI API 키가 없어 임베딩 생성을 건너뜁니다.")
             return
         
-        logger.info("정책 임베딩 생성 시작...")
+        # 업데이트된 정책만 필터링
+        if updated_policy_numbers:
+            df_filtered = df[df['정책번호'].isin(updated_policy_numbers)]
+            if df_filtered.empty:
+                logger.info("업데이트된 정책이 없어 임베딩 생성을 건너뜁니다.")
+                return
+        else:
+            df_filtered = df
+        
+        logger.info(f"정책 임베딩 생성 시작... (대상: {len(df_filtered)}개 정책)")
         
         # 임베딩용 텍스트 생성
         embedding_texts = []
         policy_numbers = []
         
-        for _, row in df.iterrows():
+        for _, row in df_filtered.iterrows():
             text = self.create_embedding_text(row)
             embedding_texts.append(text)
             policy_numbers.append(row['정책번호'])
@@ -394,6 +436,60 @@ class YouthPolicyDataInserter:
         self.conn.commit()
         logger.info(f"정책 임베딩 테이블에 {len(embedding_data)}개 레코드 삽입 완료")
     
+    def insert_policy_conditions(self, df):
+        """정책 조건 정보 테이블에 데이터 삽입"""
+        conditions_data = []
+        
+        for _, row in df.iterrows():
+            policy_no = row['정책번호']
+            
+            # 결혼상태 조건 (제한없음 제외)
+            if pd.notna(row['결혼상태코드']) and row['결혼상태코드'] != '제한없음':
+                conditions_data.append((policy_no, 'marriage_status', row['결혼상태코드']))
+            
+            # 전공 조건 (제한없음 제외)
+            if pd.notna(row['정책전공요건코드']) and row['정책전공요건코드'] != '제한없음':
+                conditions_data.append((policy_no, 'major_requirement', row['정책전공요건코드']))
+            
+            # 취업 조건 (제한없음 제외)
+            if pd.notna(row['정책취업요건코드']) and row['정책취업요건코드'] != '제한없음':
+                conditions_data.append((policy_no, 'job_requirement', row['정책취업요건코드']))
+            
+            # 학력 조건 (제한없음 제외)
+            if pd.notna(row['정책학력요건코드']) and row['정책학력요건코드'] != '제한없음':
+                conditions_data.append((policy_no, 'education_requirement', row['정책학력요건코드']))
+            
+            # 거주지역 조건 (전국 제외)
+            if pd.notna(row['정책거주지역코드']) and row['정책거주지역코드'] != '전국':
+                conditions_data.append((policy_no, 'region_requirement', row['정책거주지역코드']))
+            # 소득 조건 (무관이 아닌 경우 소득기타내용을 데이터로 사용)
+            if pd.notna(row['소득조건구분코드']) and row['소득조건구분코드'] != '무관':
+                income_desc = row['소득기타내용'] if pd.notna(row['소득기타내용']) else row['소득조건구분코드']
+                conditions_data.append((policy_no, 'income_requirement', income_desc))
+            # 추가 자격 조건 (추가신청자격조건내용과 참여제안대상내용 통합)
+            additional_conditions = []
+            if pd.notna(row['추가신청자격조건내용']):
+                additional_conditions.append(row['추가신청자격조건내용'])
+            if pd.notna(row['참여제안대상내용']):
+                additional_conditions.append(row['참여제안대상내용'])
+            
+            if additional_conditions:
+                combined_condition = " / ".join(additional_conditions)
+                conditions_data.append((policy_no, 'additional_requirement', combined_condition))
+        
+        if conditions_data:
+            query = """
+            INSERT INTO policy_conditions (plcy_no, condition_type, condition_desc)
+            VALUES %s
+            ON CONFLICT DO NOTHING
+            """
+            
+            execute_values(self.cursor, query, conditions_data)
+            self.conn.commit()
+            logger.info(f"정책 조건 테이블에 {len(conditions_data)}개 레코드 삽입 완료")
+        else:
+            logger.info("삽입할 정책 조건 데이터가 없습니다.")
+    
     def insert_all_data(self, csv_file_path, include_embeddings=True):
         """전체 데이터 삽입 프로세스"""
         try:
@@ -402,16 +498,18 @@ class YouthPolicyDataInserter:
             df = self.preprocess_data(df)
             
             # DB 연결
-            self.connect_db()
-            
-            # 통합 정책 테이블에 데이터 삽입
+            self.connect_db()            # 통합 정책 테이블에 데이터 삽입
             logger.info("통합 정책 테이블 데이터 삽입 시작")
-            self.insert_policies(df)
+            updated_policy_numbers = self.insert_policies(df)
             
-            # 임베딩 테이블에 데이터 삽입 (선택사항)
+            # 정책 조건 테이블에 데이터 삽입
+            logger.info("정책 조건 테이블 데이터 삽입 시작")
+            self.insert_policy_conditions(df)
+            
+            # 임베딩 테이블에 데이터 삽입 (업데이트된 정책만)
             if include_embeddings:
                 logger.info("정책 임베딩 정보 삽입 시작")
-                self.insert_policy_embeddings(df)
+                self.insert_policy_embeddings(df, updated_policy_numbers)
             
             logger.info("모든 데이터 삽입 완료")
             

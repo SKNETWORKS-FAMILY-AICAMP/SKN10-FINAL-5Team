@@ -68,6 +68,15 @@ CREATE TABLE policy_embeddings (
     FOREIGN KEY (plcy_no) REFERENCES policies(plcy_no) ON DELETE CASCADE
 );
 
+-- 3. 정책 조건 정보 테이블
+CREATE TABLE policy_conditions (
+    condition_id SERIAL PRIMARY KEY,
+    plcy_no VARCHAR(50) NOT NULL,
+    condition_type VARCHAR(50) NOT NULL, -- 조건 유형 (예: 'age', 'income', 'education' 등)
+    condition_desc TEXT NOT NULL, -- 조건 값 (예: '18-25', '대졸 이상' 등)
+    FOREIGN KEY (plcy_no) REFERENCES policies(plcy_no) ON DELETE CASCADE
+);
+
 -- 인덱스 생성
 CREATE INDEX idx_policies_plcy_nm ON policies(plcy_nm);
 CREATE INDEX idx_policies_aply_dates ON policies(aply_bgng_ymd, aply_end_ymd);
@@ -77,6 +86,7 @@ CREATE INDEX idx_policies_classification ON policies(lclsf_nm, mclsf_nm);
 -- 테이블 코멘트
 COMMENT ON TABLE policies IS '정책 통합 정보 테이블';
 COMMENT ON TABLE policy_embeddings IS '정책 임베딩 벡터 테이블';
+COMMENT ON TABLE policy_conditions IS '정책 조건 정보 테이블';
 
 -- 컬럼 코멘트
 -- policies 테이블
@@ -130,3 +140,9 @@ COMMENT ON COLUMN policies.ref_url_addr2 IS '참고URL주소2';
 -- policy_embeddings 테이블
 COMMENT ON COLUMN policy_embeddings.plcy_no IS '정책번호';
 COMMENT ON COLUMN policy_embeddings.embedding IS '정책 임베딩 (3072차원)';
+
+-- policy_conditions 테이블
+COMMENT ON COLUMN policy_conditions.condition_id IS '조건 ID';
+COMMENT ON COLUMN policy_conditions.plcy_no IS '정책번호';
+COMMENT ON COLUMN policy_conditions.condition_type IS '조건 유형';
+COMMENT ON COLUMN policy_conditions.condition_desc IS '조건 값';
