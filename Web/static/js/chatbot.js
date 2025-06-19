@@ -380,11 +380,17 @@ document.addEventListener('DOMContentLoaded', function() {
         card.className = (sender === 'user' 
             ? 'bg-blue-100 text-blue-800' 
             : 'bg-slate-100 text-slate-800') + 
-            ' rounded-lg shadow p-4 max-w-xs break-words';
+            ' rounded-lg shadow p-4 break-words max-w-2xl sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl';
         
         // 카드 내용 설정 (사용자 메시지는 HTML 이스케이프 처리)
         card.innerHTML = `
-            <div class="font-semibold mb-1">${sender === 'user' ? escapeHtml(message) : message}</div>
+            <div class="font-semibold mb-1">
+                ${
+                    sender === 'user'
+                    ? formatUserMessage(message)
+                    : marked.parse(message)
+                }
+            </div>
             ${createdAt ? `<div class="text-xs text-slate-400 text-right">${createdAt}</div>` : ''}
         `;
         
@@ -798,4 +804,11 @@ document.addEventListener('DOMContentLoaded', function() {
     loadSessionList();
     // 페이지 로드 시 초기 화면 표시
     resetChatSession();
+
+    function formatUserMessage(text) {
+        return escapeHtml(text)
+            .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;') // 탭을 4칸 공백으로
+            .replace(/  /g, '&nbsp;&nbsp;')             // 연속 공백 보존
+            .replace(/\n/g, '<br>');                   // 줄바꿈
+    }
 });
