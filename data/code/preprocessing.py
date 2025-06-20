@@ -111,30 +111,6 @@ def transform_region_code_detailed(code_value, region_code_map):
         return code_value
 
 
-# def transform_requirement_code(code_value, threshold=4):
-#     """
-#     요건코드에서 쉼표로 분리된 항목이 임계값 이상이면 '제한없음'으로 변환하는 통합 함수
-    
-#     Args:
-#         code_value: 변환할 코드 값
-#         threshold: 임계값 (기본값: 4)
-    
-#     Returns:
-#         변환된 코드 값 또는 '제한없음'
-#     """
-#     if pd.isna(code_value) or not isinstance(code_value, str):
-#         return code_value
-    
-#     # 쉼표로 분리하고 공백 제거
-#     items = [item.strip() for item in code_value.split(',') if item.strip()]
-    
-#     # 임계값 이상이면 '제한없음'으로 변환
-#     if len(items) >= threshold:
-#         return '제한없음'
-    
-#     return code_value
-
-
 def transform_employment_status(code_value):
     """
     정책취업요건코드에서 특정 취업 상태를 '비정규직'로 변환하는 함수

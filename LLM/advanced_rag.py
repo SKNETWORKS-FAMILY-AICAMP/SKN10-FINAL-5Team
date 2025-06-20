@@ -51,6 +51,10 @@ class QueryClassification(BaseModel):
         default=None,
         description="중분류(mclsf_nm): 주거-금융지원/주거지원/보조금지원, 일자리-훈련/창업/취업지원, 기타-없음"
     )
+    query_keywords: str = Field(
+        default=None,
+        description="사용자 질문에서 추출된 키워드"
+    )
     confidence: float = Field(
         description="분류 신뢰도 (0.0-1.0)", 
         ge=0.0, 
@@ -211,7 +215,11 @@ def classify_query_node(state: GraphState) -> GraphState:
 **중분류 (mclsf_nm):**
 - 어떤 상황이든 null로 분류해주세요.
 
-주거와 일자리 관련 키워드를 정확히 식별하고, 애매한 경우에는 기타로 분류하세요."""),
+주거와 일자리 관련 키워드를 정확히 식별하고, 애매한 경우에는 기타로 분류하세요.
+
+**키워드 (query_keywords):**
+- 사용자 질문에서 추출된 키워드, 정책 검색 시 유사도 판단에 사용됩니다.             
+"""),
             ("human", "다음 질문을 분류해주세요: {query}")
         ])
         # 구조화된 출력을 위한 체인 생성 (streaming 비활성화)
@@ -273,7 +281,7 @@ def extract_user_conditions_node(state: GraphState) -> GraphState:
 5. school_cd: 학력 상태 ('고졸 미만', '고교 재학', '고졸 예정', '고교 졸업', '대학 재학', '대졸 예정', '대학 졸업', '석·박사' 중 하나)
 6. zip_cd: 거주지 (광역지자체, 기초지자체 형태로)
 7. earn_etc_cn: 소득 요건 (구체적인 소득 수준이나 조건)
-8. additional_requirement: 어떤한 경우에도 null로 설정 
+8. additional_requirement: 기초생활수급자, 한부모가정, 농업인, 중소기업 등 추가적인 조건
 
 **추출 규칙:**
 - 명시적으로 언급되지 않은 조건은 None으로 설정
@@ -318,7 +326,7 @@ def generate_sql_query_node(state: GraphState) -> GraphState:
         
         try:
             # 직접 SQL 쿼리 생성 체인 생성
-            sql_chain = create_direct_sql_chain(config, classification.lclsf_nm, user_conditions)
+            sql_chain = create_direct_sql_chain(config, classification, user_conditions)
             
             # SQL 쿼리 생성
             logger.info("SQL 쿼리 생성 중...")
@@ -598,10 +606,11 @@ earn_etc_cn -> string 값 (예: '중위소득 150% 이하', '월소득 200만원
 1. 반드시 PostgreSQL 문법을 사용하세요
 2. 안전한 쿼리만 생성하세요 (SELECT문만 허용, INSERT/UPDATE/DELETE 금지)
 3. 테이블명과 컬럼명을 정확히 사용하세요
-4. WHERE 조건을 적절히 활용하여 관련성 높은 결과를 반환하도록 하세요
 5. LIMIT을 사용하여 결과 수를 10개로 제한하세요
 6. 분류 정보로 policies 테이블의 lclsf_nm을 사용하여 필터링하세요
 7. 나이 정보는 policies 테이블의 sprt_trgt_min_age, sprt_trgt_max_age 컬럼을 사용하여 필터링하세요
+    - sprt_trgt_min_age와 sprt_trgt_max_age 가 0 인 경우는 필터링하지 않습니다.
+    - 예: sprt_trgt_min_age <= {user_condition.age} AND sprt_trgt_max_age >= {user_condition.age} OR (sprt_trgt_min_age = 0 AND sprt_trgt_max_age = 0)
 8. mrg_stts_cd 검색 시 IN (조건 정보,'제한없음') 형태로 필터링하세요
 9. school_cd, plcy_major_cd, job_cd 검색 시 '제한없음'과 해당 조건을 필터링 하세요
     - 예 school_cd ILIKE '%대학 졸업%' OR school_cd = '제한없음'
@@ -609,10 +618,16 @@ earn_etc_cn -> string 값 (예: '중위소득 150% 이하', '월소득 200만원
 10. zip_cd 검색 시 전국, 해당지역, 해당 지역의 상위 지역을 포함하여 필터링 해야 합니다.
     - zip_cd 데이터가 예를들을 '경기도 수원시 팔달구'이면 '경기도', '경기도 수원시', '경기도 수원시 팔달구' 데이터를 모두 포함해야 합니다.
     - 예 zip_cd ILIKE '%경기도 수원시 팔달구%' OR zip_cd ILIKE '%경기도 수원시%' OR zip_cd ILIKE '%경기도%' OR zip_cd = '전국'
-11. earn_etc_cn은 필터링은 하지 않고 유사한 정책으로 정렬하는 데이터로 사용합니다.
-12. policies 테이블의 모든 컬럼을 SELECT 하여 반환하세요
-13. 사용자 조건과 제일 유사한 정책으로 정렬해야 합니다.
-14. 필터링 할 때는 분류 정보, 조건 정보만 사용해서 쿼리를 구성해야 합니다
+11. earn_etc_cn은 유사도를 판단하는데 사용합니다.
+    - 예 ORDER BY similarity(earn_etc_cn, 조건 정보의 earn_etc_cn) DESC
+12. additional_requirement도 필터링은 하지 않고 add_aply_qlfcc_cn, ptcp_prp_trgt_cn 컬럼과 유사도 판단으로 사용합니다.
+    - 예 ORDER BY similarity(add_aply_qlfcc_cn, additional_requirement) DESC, similarity(ptcp_prp_trgt_cn, additional_requirement) DESC
+13. query_keywords는 policies 테이블의 plcy_nm, plcy_expl_cn 컬럼과 유사도 판단으로 사용합니다.
+    - 예 ORDER BY similarity(plcy_nm, query_keywords) DESC, similarity(plcy_expl_cn, query_keywords) DESC
+    - query_keywords 정렬은 반드시 사용을 해야 합니다.
+14. policies 테이블의 모든 컬럼을 SELECT 하여 반환하세요
+15. 사용자 조건과 제일 유사한 정책으로 정렬하도록 쿼리를 구성해주세요
+16. 필터링 할 때는 분류 정보, 조건 정보만 사용해서 쿼리를 구성해야 합니다
 
 **주의사항:**
 - 쿼리는 반드시 실행 가능한 형태여야 합니다
@@ -623,7 +638,7 @@ earn_etc_cn -> string 값 (예: '중위소득 150% 이하', '월소득 200만원
 - 중복 제거가 필요한 경우 서브쿼리나 윈도우 함수를 사용하여 해결하세요
 
 """),
-        ("human", "PostgreSQL 쿼리를 생성해주세요")
+        ("human", "PostgreSQL 쿼리를 생성해주세요:")
     ])
     # 구조화된 출력을 위한 LLM 체인 (streaming 비활성화)
     llm_no_stream = config.thinking_model.bind(stream=False)

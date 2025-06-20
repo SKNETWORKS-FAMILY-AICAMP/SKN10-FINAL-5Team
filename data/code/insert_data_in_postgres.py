@@ -90,7 +90,6 @@ class YouthPolicyDataInserter:
         for _, row in df.iterrows():
             policy_data = (
                 # 기본 정책 정보
-                row['정책번호'],
                 row['정책명'],
                 row['정책설명내용'],
                 row['정책지원내용'],
@@ -98,43 +97,7 @@ class YouthPolicyDataInserter:
                 row['심사방법내용'],
                 row['제출서류내용'],
                 row['기타사항내용'],
-                int(row['조회수']) if pd.notna(row['조회수']) else 0,
-                row['최초등록일시'],
-                row['최종수정일시'],
-                row['신청시작일자'],
-                row['신청종료일자'],
-                
-                # 정책 조건 정보
-                int(row['지원대상최소연령']) if pd.notna(row['지원대상최소연령']) else None,
-                int(row['지원대상최대연령']) if pd.notna(row['지원대상최대연령']) else None,
-                row['결혼상태코드'],
-                row['정책전공요건코드'],
-                row['정책취업요건코드'],
-                row['정책학력요건코드'],
-                row['정책거주지역코드'],
-                row['소득조건구분코드'],
-                row['소득기타내용'],
-                row['추가신청자격조건내용'],
-                row['참여제안대상내용'],
-                
-                # 정책 메타데이터 정보
-                row['정책대분류명'],
-                row['정책중분류명'],
-                row['정책제공방법코드'],
-                row['정책키워드명'],
-                row['주관기관코드명'],
-                row['운영기관코드명'],
-                row['신청기간구분코드'],
-                row['사업기간구분코드'],
-                row['사업기간시작일자'],
-                row['사업기간종료일자'],
-                row['사업기간기타내용'],
-                row['정책특화요건코드'],
-                
-                # 정책 URL 정보
-                row['신청URL주소'],
-                row['참고URL주소1'],
-                row['참고URL주소2']            )
+                )
             policies_data.append(policy_data)
         
         query = """
