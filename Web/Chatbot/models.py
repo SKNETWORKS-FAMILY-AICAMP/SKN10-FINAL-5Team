@@ -36,5 +36,5 @@ class RecommendInterest(models.Model):
     ]
     interest_id = models.AutoField(primary_key=True, verbose_name='추천 관심도 아이디')
     interest_status = models.CharField(max_length=10, choices=INTEREST_STATUS_CHOICES, verbose_name='관심도')
-    plcyNo = models.ForeignKey(Policies, on_delete=models.CASCADE, verbose_name='정책번호')
+    plcy_no = models.ForeignKey(Policies, on_delete=models.CASCADE, verbose_name='정책번호')
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='사용자 아이디')

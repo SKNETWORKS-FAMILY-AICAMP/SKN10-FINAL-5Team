@@ -199,7 +199,7 @@ def get_notification_count(request):
         excluded_policies = RecommendInterest.objects.filter(
             user=user,
             interest_status__in=['확인', '신청']
-        ).values_list('plcyNo', flat=True)
+        ).values_list('plcy_no', flat=True)
         
         print(f"DEBUG: 사용자가 이미 확인/신청한 정책 개수: {excluded_policies.count()}")
         if excluded_policies.exists():
@@ -271,7 +271,7 @@ def mark_notifications_read(request):
         excluded_policies = RecommendInterest.objects.filter(
             user=user,
             interest_status__in=['확인', '신청']
-        ).values_list('plcyNo', flat=True)
+        ).values_list('plcy_no', flat=True)
         
         matching_policies = matching_policies.exclude(plcy_no__in=excluded_policies)
         current_count = matching_policies.count()
