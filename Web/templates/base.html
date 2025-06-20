@@ -4,6 +4,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="csrf-token" content="{{ csrf_token }}">
   <title>{% block title %}청년 정책 가이드{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet"/>
@@ -29,10 +30,24 @@
       <a href="{% url 'chatbot:chatbot' %}" class="bg-sky-400 text-white px-6 py-2 rounded-lg font-semibold hover:bg-sky-500 transition-colors">챗봇</a>
       {% if user.is_authenticated %}
         <div class="relative">
-          <button class="p-2 rounded-full hover:bg-gray-100">
+          <button id="notification-btn" class="p-2 rounded-full hover:bg-gray-100 relative">
             <span class="material-icons text-gray-600">notifications</span>
-            <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+            <span id="notification-dot" class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white hidden"></span>
           </button>
+          <!-- 알림 드롭다운 -->
+          <div id="notification-dropdown" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 hidden">
+            <div class="p-4">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-lg font-semibold text-gray-800">알림</h3>
+                <button id="close-notification" class="text-gray-400 hover:text-gray-600">
+                  <span class="material-icons text-sm">close</span>
+                </button>
+              </div>
+              <div id="notification-content" class="text-sm text-gray-600">
+                <!-- 알림 내용이 여기에 동적으로 추가됩니다 -->
+              </div>
+            </div>
+          </div>
         </div>
         <div class="flex items-center space-x-2">
           <div class="w-8 h-8 rounded-full overflow-hidden">
@@ -61,6 +76,135 @@
     {% block content %}{% endblock %}
   </main>
   {% endblock %}
+
+  <script>
+    // 알림 기능 JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+      const notificationBtn = document.getElementById('notification-btn');
+      const notificationDropdown = document.getElementById('notification-dropdown');
+      const notificationDot = document.getElementById('notification-dot');
+      const notificationContent = document.getElementById('notification-content');
+      const closeNotification = document.getElementById('close-notification');
+      
+      let notificationCount = 0;
+      let isDropdownOpen = false;
+
+      // 알림 개수 가져오기
+      async function fetchNotificationCount() {
+        try {
+          const response = await fetch('{% url "user:notification-count" %}');
+          const data = await response.json();
+          notificationCount = data.count;
+          const isNew = data.is_new;
+          updateNotificationUI(isNew);
+        } catch (error) {
+          console.error('알림 개수 가져오기 실패:', error);
+        }
+      }
+
+      // 알림 UI 업데이트
+      function updateNotificationUI(isNew = true) {
+        if (notificationCount > 0) {
+          if (isNew) {
+            notificationDot.classList.remove('hidden');
+          } else {
+            notificationDot.classList.add('hidden');
+          }
+        } else {
+          notificationDot.classList.add('hidden');
+        }
+      }
+
+      // 알림 드롭다운 토글
+      function toggleNotificationDropdown() {
+        if (isDropdownOpen) {
+          notificationDropdown.classList.add('hidden');
+          isDropdownOpen = false;
+        } else {
+          notificationDropdown.classList.remove('hidden');
+          isDropdownOpen = true;
+          updateNotificationContent();
+        }
+      }
+
+      // 알림 읽음 처리
+      async function markNotificationsAsRead() {
+        try {
+          await fetch('{% url "user:notification-read" %}', {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            }
+          });
+          // 빨간 점만 사라지고, 개수는 계속 표시
+          notificationDot.classList.add('hidden');
+        } catch (error) {
+          console.error('알림 읽음 처리 실패:', error);
+        }
+      }
+
+      // 알림 내용 업데이트
+      function updateNotificationContent() {
+        if (notificationCount > 0) {
+          const isRead = notificationDot.classList.contains('hidden');
+          const bgColor = isRead ? 'bg-gray-50' : 'bg-blue-50';
+          const textColor = isRead ? 'text-gray-700' : 'text-blue-800';
+          const buttonColor = isRead ? 'text-gray-600 hover:text-gray-800' : 'text-blue-600 hover:text-blue-800';
+          
+          notificationContent.innerHTML = `
+            <div class="mb-3 p-3 ${bgColor} rounded-lg">
+              <p class="${textColor} font-medium">맞춤 정책이 ${notificationCount}개 있습니다!</p>
+              <button id="go-to-chatbot" class="mt-2 ${buttonColor} underline text-sm">
+                챗봇에서 확인하기
+              </button>
+            </div>
+          `;
+          
+          // 챗봇으로 이동 버튼 이벤트
+          document.getElementById('go-to-chatbot').addEventListener('click', function() {
+            window.location.href = '{% url "chatbot:chatbot" %}?message=나에게 맞는 정책 찾아줘';
+          });
+        } else {
+          notificationContent.innerHTML = `
+            <div class="text-center py-4">
+              <p class="text-gray-500">맞춤 업데이트 정책이 없습니다.</p>
+            </div>
+          `;
+        }
+      }
+
+      // 이벤트 리스너 등록
+      if (notificationBtn) {
+        notificationBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          toggleNotificationDropdown();
+          if (notificationCount > 0) {
+            markNotificationsAsRead();
+            // 빨간 점만 사라지도록 즉시 업데이트
+            notificationDot.classList.add('hidden');
+          }
+        });
+      }
+
+      if (closeNotification) {
+        closeNotification.addEventListener('click', function() {
+          notificationDropdown.classList.add('hidden');
+          isDropdownOpen = false;
+        });
+      }
+
+      // 드롭다운 외부 클릭시 닫기
+      document.addEventListener('click', function(e) {
+        if (!notificationBtn.contains(e.target) && !notificationDropdown.contains(e.target)) {
+          notificationDropdown.classList.add('hidden');
+          isDropdownOpen = false;
+        }
+      });
+
+      // 페이지 로드시 알림 개수 가져오기
+      fetchNotificationCount();
+    });
+  </script>
 
   {% block extra_js %}{% endblock %}
 </body>

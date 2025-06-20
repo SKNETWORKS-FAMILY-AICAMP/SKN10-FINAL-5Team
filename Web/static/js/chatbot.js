@@ -35,6 +35,37 @@ document.addEventListener('DOMContentLoaded', function() {
     // 검색 기록 저장(서버 저장) 디바운스 타이머
     let saveHistoryDebounceTimer = null;
     
+    // URL 파라미터에서 메시지 확인 및 자동 입력
+    function checkUrlMessage() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const message = urlParams.get('message');
+        if (message) {
+            // 메시지 입력창에 자동 입력
+            messageInput.value = decodeURIComponent(message);
+            // textarea 높이 조절
+            messageInput.style.height = 'auto';
+            messageInput.style.height = (messageInput.scrollHeight) + 'px';
+            if (messageInput.scrollHeight > 120) {
+                messageInput.style.overflowY = 'auto';
+                messageInput.style.height = '120px';
+            } else {
+                messageInput.style.overflowY = 'hidden';
+            }
+            // 버튼 활성화
+            sendButton.disabled = false;
+            sendButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            
+            // 잠시 후 자동 전송
+            setTimeout(() => {
+                sendMessage();
+            }, 500);
+            
+            // URL에서 파라미터 제거
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+        }
+    }
+    
     // 사이드바 닫기 버튼 클릭 이벤트 리스너
     sidebarCloseBtn.addEventListener('click', function() {
         hideSidebar();
@@ -804,6 +835,8 @@ document.addEventListener('DOMContentLoaded', function() {
     loadSessionList();
     // 페이지 로드 시 초기 화면 표시
     resetChatSession();
+    // URL 파라미터에서 메시지 확인 및 자동 입력
+    checkUrlMessage();
 
     function formatUserMessage(text) {
         return escapeHtml(text)
