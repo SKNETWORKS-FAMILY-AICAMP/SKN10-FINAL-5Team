@@ -638,7 +638,7 @@ earn_etc_cn -> string 값 (예: '중위소득 150% 이하', '월소득 200만원
 - 중복 제거가 필요한 경우 서브쿼리나 윈도우 함수를 사용하여 해결하세요
 
 """),
-        ("human", "PostgreSQL 쿼리를 생성해주세요:")
+        ("human", "다음 질문에 PostgreSQL 쿼리를 생성해주세요: {query}")
     ])
     # 구조화된 출력을 위한 LLM 체인 (streaming 비활성화)
     llm_no_stream = config.thinking_model.bind(stream=False)
