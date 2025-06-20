@@ -344,6 +344,8 @@ def redefine_mid_category_all(df, top_col='정책대분류명', mid_col='정책�
 #         '대전': '대전광역시',
 #         '인천': '인천광역시',
 #         '제주': '제주특별자치도',
+#         '전라북도': '전북특별자치도',
+#         '강원도': '강원특별자치도',
 #     }
     
 #     # 쉼표로 분리된 경우 처리
@@ -414,8 +416,8 @@ def main():
     # df['정책전공요건코드'] = df['정책전공요건코드'].apply(lambda x: transform_requirement_code(x, threshold=4))    # 정책취업요건코드 변환 (4개 이상 항목이 있으면 '제한없음'으로 변환)
     # df['정책취업요건코드'] = df['정책취업요건코드'].apply(lambda x: transform_requirement_code(x, threshold=4))
     
-    # # 정책취업요건코드에서 프리랜서, 일용근로자, 단기근로자를 '기타'로 변환
-    # df['정책취업요건코드'] = df['정책취업요건코드'].apply(transform_employment_status)
+    # 정책취업요건코드에서 프리랜서, 일용근로자, 단기근로자를 '기타'로 변환
+    df['정책취업요건코드'] = df['정책취업요건코드'].apply(transform_employment_status)
 
     # 지역 코드 매핑
     df_region['시군구_코드_법정동기준'] = df_region['시군구_코드_법정동기준'].astype(str)
