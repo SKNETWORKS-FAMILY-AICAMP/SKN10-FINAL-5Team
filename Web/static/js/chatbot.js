@@ -329,7 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         // 메시지가 있으면 각 메시지를 화면에 표시
                         if (data.messages) {
                             data.messages.forEach(msg => {
-                                displayMessage(msg.content, msg.sender, false, msg.created_at, msg.id);
+                                displayMessage(msg.content, msg.sender, false, msg.created_at, msg.id, msg.sql_result);
                             });
                         }
                         // 세션 리스트 새로고침
@@ -354,7 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 메시지가 있으면 각 메시지를 화면에 표시
                 if (data.messages) {
                     data.messages.forEach(msg => {
-                        displayMessage(msg.content, msg.sender, false, msg.created_at, msg.id);
+                        displayMessage(msg.content, msg.sender, false, msg.created_at, msg.id, msg.sql_result);
                     });
                 }
                 // 세션 리스트 새로고침
@@ -386,7 +386,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 메시지를 화면에 표시하는 함수
-    function displayMessage(message, sender, isLoading = false, createdAt = null, messageId = null) {
+    function displayMessage(message, sender, isLoading = false, createdAt = null, messageId = null, sqlResult = null) {
         // 채팅 메시지 컨테이너 요소 선택
         const messagesContainer = document.getElementById('chat-messages');
         // 채팅 컨테이너가 없으면 에러 로그 출력 후 함수 종료
@@ -424,6 +424,55 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             ${createdAt ? `<div class="text-xs text-slate-400 text-right">${createdAt}</div>` : ''}
         `;
+        // sqlResult가 있고 배열인 경우 정책 카드들을 렌더링
+        if (sqlResult && sqlResult.length > 0) {
+            // 정책 카드들을 생성
+            let policyCards = '';
+            sqlResult.forEach((policy, index) => {
+                // 텍스트 길이 제한 함수
+                const truncateText = (text, limit = 50) => {
+                    if (!text) return '';
+                    return text.length > limit ? text.substring(0, limit) + '...' : text;
+                };
+                
+                // 카테고리 색상 설정 (기본값)
+                const categoryColors = {
+                    bg: 'bg-blue-100',
+                    text: 'text-blue-800'
+                };
+                
+                policyCards += `
+                    <div class="w-full md:w-1/2 lg:w-1/3 xl:w-1/4 flex-shrink-0 px-2">
+                        <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow h-full cursor-pointer" 
+                            onclick="openPolicyModal('${policy.plcy_no || ''}')">
+                            <div class="flex flex-col h-full">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-2">${escapeHtml(policy.plcy_nm || '정책명 없음')}</h3>
+                                <p class="text-gray-600 text-sm mb-3">${escapeHtml(truncateText(policy.plcy_expln_cn))}</p>
+                                <span class="${categoryColors.bg} ${categoryColors.text} text-xs font-medium px-3 py-1 rounded-full w-fit">${escapeHtml(policy.mclsf_nm || '카테고리 없음')}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            card.innerHTML += `
+                <div class="relative mt-4">
+                    <div class="overflow-hidden">
+                        <div class="flex transition-transform duration-500 ease-in-out" id="policySlider-${messageId}">
+                            ${policyCards}
+                        </div>
+                    </div>
+                    ${sqlResult.length > 1 ? `
+                        <button class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100" onclick="slidePrev('policySlider-${messageId}')">
+                            <span class="material-icons">chevron_left</span>
+                        </button>
+                        <button class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100" onclick="slideNext('policySlider-${messageId}')">
+                            <span class="material-icons">chevron_right</span>
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+        }
         
         // 래퍼에 카드 추가
         wrapper.appendChild(card);
@@ -603,7 +652,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.messages && data.messages.length > 0) {
                 // 각 메시지를 화면에 표시
                 data.messages.forEach(msg => {
-                    displayMessage(msg.content, msg.sender, false, msg.created_at, msg.id);
+                    displayMessage(msg.content, msg.sender, false, msg.created_at, msg.id, msg.sql_result);
                 });
                 // 스크롤을 항상 아래로 이동
                 chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -776,7 +825,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (data.messages && data.messages.length > 0) {
                 data.messages.forEach((msg, index) => {
-                    displayMessage(msg.content, msg.sender, false, msg.created_at, msg.id);
+                    displayMessage(msg.content, msg.sender, false, msg.created_at, msg.id, msg.sql_result);
                 });
                 
                 // 타겟 메시지를 찾아서 스크롤
@@ -845,3 +894,49 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/\n/g, '<br>');                   // 줄바꿈
     }
 });
+
+// 슬라이더 관련 전역 함수들
+let currentSlideIndex = {};
+
+function slidePrev(sliderId) {
+    const slider = document.getElementById(sliderId);
+    if (!slider) return;
+    
+    if (!currentSlideIndex[sliderId]) {
+        currentSlideIndex[sliderId] = 0;
+    }
+    
+    const slides = slider.children;
+    const totalSlides = slides.length;
+    
+    if (totalSlides <= 1) return;
+    
+    currentSlideIndex[sliderId] = (currentSlideIndex[sliderId] - 1 + totalSlides) % totalSlides;
+    updateSliderPosition(sliderId);
+}
+
+function slideNext(sliderId) {
+    const slider = document.getElementById(sliderId);
+    if (!slider) return;
+    
+    if (!currentSlideIndex[sliderId]) {
+        currentSlideIndex[sliderId] = 0;
+    }
+    
+    const slides = slider.children;
+    const totalSlides = slides.length;
+    
+    if (totalSlides <= 1) return;
+    
+    currentSlideIndex[sliderId] = (currentSlideIndex[sliderId] + 1) % totalSlides;
+    updateSliderPosition(sliderId);
+}
+
+function updateSliderPosition(sliderId) {
+    const slider = document.getElementById(sliderId);
+    if (!slider) return;
+    
+    const slideWidth = slider.children[0].offsetWidth;
+    const translateX = -currentSlideIndex[sliderId] * slideWidth;
+    slider.style.transform = `translateX(${translateX}px)`;
+}

@@ -17,6 +17,7 @@ class Message(models.Model):
     msg_id = models.AutoField(primary_key=True, verbose_name='메시지 아이디')
     sender = models.CharField(max_length=10, choices=MSG_SENDER_CHOICES, verbose_name='발신자')
     content = models.TextField(verbose_name='내용')
+    sql_result = models.JSONField(null=True, blank=True, verbose_name='SQL 결과')
     create_dt = models.DateTimeField(auto_now_add=True, verbose_name='생성일시')
     session = models.ForeignKey(ChatSession, on_delete=models.CASCADE, verbose_name='세션 아이디')
 

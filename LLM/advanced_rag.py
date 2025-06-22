@@ -627,6 +627,7 @@ earn_etc_cn -> string 값 (예: '중위소득 150% 이하', '월소득 200만원
     - query_keywords 정렬은 반드시 사용을 해야 합니다.
 14. policies 테이블의 모든 컬럼을 SELECT 하여 반환하세요
 15. 사용자 조건과 제일 유사한 정책으로 정렬하도록 쿼리를 구성해주세요
+    - 정렬 순서: zip_cd > mrg_stts_cd, school_cd, plcy_major_cd, job_cd > query_keywords >earn_etc_cn, additional_requirement
 16. 필터링 할 때는 분류 정보, 조건 정보만 사용해서 쿼리를 구성해야 합니다
 
 **주의사항:**

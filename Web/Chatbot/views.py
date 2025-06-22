@@ -1,10 +1,11 @@
 import json
+import logging
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.db.models import Max, Q
-from .service import get_rag_chain
+from .service import graph
 from User.services import verify_and_refresh_tokens
 from functools import wraps
 from User.models import User
@@ -13,6 +14,8 @@ from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 import difflib
+
+logger = logging.getLogger(__name__)
 
 # 챗봇 페이지 렌더링
 def chatbot_view(request):
@@ -59,6 +62,7 @@ def session_detail(request, session_id):
                 'id': message.msg_id,
                 'sender': message.sender,
                 'content': message.content,
+                'sql_result': message.sql_result,
                 'created_at': local_time.strftime('%Y-%m-%d %H:%M')
             })
         
@@ -228,14 +232,67 @@ def send_message(request):
                 create_dt=timezone.localtime(timezone.now())
             )
             
-            # 챗봇 응답 생성 (실제 구현 필요)
-            bot_response = "안녕하세요! 청년 정책 가이드 챗봇입니다."
+            # 챗봇 응답 생성
+            try:
+                logger.info(f"사용자 메시지 처리 시작: {user_message.content}")
+                
+                # LangGraph의 invoke 메서드 호출 - GraphState 형태로 반환됨
+                # HumanMessage 객체로 감싸서 전달
+                from langchain_core.messages import HumanMessage
+                
+                graph_result = graph.invoke({
+                    "messages": [HumanMessage(content=user_message.content)],
+                    "query": user_message.content
+                })
+                
+                logger.info(f"그래프 결과 타입: {type(graph_result)}")
+                logger.info(f"그래프 결과 키들: {graph_result.keys() if isinstance(graph_result, dict) else 'Not a dict'}")
+                
+                # GraphState에서 final_response 추출
+                if isinstance(graph_result, dict):
+                    if 'final_response' in graph_result and graph_result['final_response']:
+                        bot_response = graph_result['final_response']
+                        logger.info("final_response에서 응답 추출 성공")
+                    elif 'error' in graph_result:
+                        bot_response = graph_result['error']
+                        logger.info("error 필드에서 응답 추출")
+                    elif 'messages' in graph_result and graph_result['messages']:
+                        # 마지막 AI 메시지에서 내용 추출
+                        last_message = graph_result['messages'][-1]
+                        bot_response = last_message.content if hasattr(last_message, 'content') else str(last_message)
+                        logger.info("messages에서 응답 추출")
+                    else:
+                        bot_response = "죄송합니다. 응답을 생성할 수 없습니다."
+                        logger.warning("그래프 결과에서 응답을 찾을 수 없음")
+                else:
+                    # 그래프 결과가 문자열인 경우 (이전 버전 호환성)
+                    bot_response = str(graph_result)
+                    logger.info("그래프 결과를 문자열로 변환")
+                    
+            except Exception as graph_error:
+                logger.error(f"그래프 처리 중 오류: {graph_error}", exc_info=True)
+                bot_response = f"죄송합니다. 요청을 처리하는 중 오류가 발생했습니다: {str(graph_error)}"
             
             # 챗봇 메시지 저장
+            # sql_result에서 필요한 필드만 필터링
+            filtered_sql_result = None
+            if isinstance(graph_result, dict) and 'sql_result' in graph_result and graph_result['sql_result']:
+                filtered_sql_result = []
+                for policy in graph_result['sql_result']:
+                    filtered_policy = {
+                        'plcy_no': policy.get('plcy_no'),
+                        'plcy_nm': policy.get('plcy_nm'),
+                        'plcy_expln_cn': policy.get('plcy_expln_cn'),
+                        'mclsf_nm': policy.get('mclsf_nm'),
+                        'inq_cnt': policy.get('inq_cnt', 0)
+                    }
+                    filtered_sql_result.append(filtered_policy)
+            
             bot_message = Message.objects.create(
                 session=session,
                 sender='chatbot',
                 content=bot_response,
+                sql_result=filtered_sql_result,
                 create_dt=timezone.localtime(timezone.now())
             )
             
@@ -253,6 +310,7 @@ def send_message(request):
                         'id': bot_message.msg_id,
                         'sender': 'chatbot',
                         'content': bot_response,
+                        'sql_result': filtered_sql_result,
                         'created_at': timezone.localtime(bot_message.create_dt).strftime('%Y-%m-%d %H:%M')
                     }
                 ]
