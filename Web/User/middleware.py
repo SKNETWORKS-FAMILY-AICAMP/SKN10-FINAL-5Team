@@ -3,10 +3,13 @@ from django.shortcuts import redirect
 from .services import verify_and_refresh_tokens
 from rest_framework.exceptions import AuthenticationFailed
 from django.http import HttpResponse, JsonResponse
+import logging
 
 # User 모델 가져오기
 # 이후 request.user에 User 객체 할당시 사용
 User = get_user_model()
+
+logger = logging.getLogger('User.middleware')
 
 class JWTAuthenticationMiddleware:
 
@@ -21,15 +24,21 @@ class JWTAuthenticationMiddleware:
 
     def _redirect_to_login(self, request):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
+            response = JsonResponse({
                 'status': 'redirect',
                 'redirect_url': '/user/login/'
             }, status=401)
-        return redirect('user:login')
+        else:
+            response = redirect('user:login')
+        
+        # 쿠키 삭제
+        response.delete_cookie('access_token')
+        response.delete_cookie('refresh_token')
+        return response
 
     # 미들웨어 본체 -> 모든 요청마다 실행
     def __call__(self, request):
-        print('미들웨어 사용됨')
+        logger.info('미들웨어 사용됨')
         
         # 공개 페이지 URL 목록
         # 인증 검사 제외 대상
@@ -43,8 +52,8 @@ class JWTAuthenticationMiddleware:
         request.user = None
 
         # 공개 페이지는 인증 체크를 하지 않음
-        # 토큰 검증 스킵하고 → view 실행
-        if request.path in public_urls:
+        # '/api/policy/'로 시작하는 URL도 인증 검사 제외
+        if request.path in public_urls or request.path.startswith('/api/policy/'):
             return self.get_response(request)
 
         try:
@@ -66,6 +75,25 @@ class JWTAuthenticationMiddleware:
             is_valid, response, user_id = verify_and_refresh_tokens(request)
 
             # 토큰 갱신이 필요한 경우 (새로운 액세스 토큰 발급)
+            if is_valid and response and isinstance(response, str):
+                # 새 액세스 토큰을 받은 경우
+                new_access_token = response
+                
+                # AJAX 요청이면 token_refreshed JSON 응답 반환
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    response_obj = JsonResponse({
+                        'status': 'token_refreshed',
+                        'message': '토큰이 갱신되었습니다.',
+                        'retry_request': True
+                    })
+                else:
+                    # 일반 요청이면 redirect로 새 토큰 적용
+                    response_obj = redirect(request.path)
+                
+                response_obj.set_cookie('access_token', new_access_token, httponly=True, samesite='Lax')
+                return response_obj
+
+            # 기존 응답 객체가 있는 경우 (이전 로직과의 호환성)
             if response and isinstance(response, (HttpResponse, JsonResponse)):
                 return response
 
