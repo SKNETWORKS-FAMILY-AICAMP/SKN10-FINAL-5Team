@@ -4,7 +4,6 @@ LangGraph Studio용 청년정책 RAG 시스템
 그 외 질문에 대해서는 답변을 거부하는 시스템
 """
 import os
-import json
 import logging
 from typing import List, Dict, Any, Optional, Literal, Annotated
 from typing_extensions import TypedDict
@@ -17,7 +16,6 @@ from langgraph.graph.message import add_messages
 # LangChain imports
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 from langchain_core.prompts import ChatPromptTemplate
-from langchain.prompts.prompt import PromptTemplate
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
@@ -26,12 +24,6 @@ from langchain_community.utilities import SQLDatabase
 from langchain_openai import ChatOpenAI
 import psycopg2
 from psycopg2.extras import RealDictCursor
-
-# HTML 생성을 위한 추가 imports
-import markdown
-from markdown.extensions import codehilite
-import html
-
 
 # 환경변수 로드
 load_dotenv()
@@ -226,7 +218,7 @@ def classify_query_node(state: GraphState) -> GraphState:
 주거와 일자리 관련 키워드를 정확히 식별하고, 애매한 경우에는 기타로 분류하세요.
 
 **키워드 (query_keywords):**
-- 사용자 질문에서 추출된 키워드, 정책 검색 시 유사도 판단에 사용됩니다.             
+- 사용자 질문에서 추출된 키워드, 정책 검색 시 유사도 판단에 사용됩니다.
 """),
             ("human", "다음 질문을 분류해주세요: {query}")
         ])
@@ -410,7 +402,8 @@ def generate_response_node(state: GraphState) -> GraphState:
 6. 필요시 추가 문의 방법이나 관련 기관 정보를 제공하세요
 7. 답변 시 markdown 형식을 사용하여 가독성을 높이세요
 8. 적절한 이모지를 사용하여 답변을 더 친근하게 만드세요
-9. 주거정책과 일자리 정책을 구분하여 답변하세요"""),
+9. 주거정책과 일자리 정책을 구분하여 답변하세요
+"""),
             ("human", "위 검색 결과를 바탕으로 사용자 질문에 대한 답변을 생성해주세요.")
         ])
         
