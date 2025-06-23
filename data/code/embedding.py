@@ -10,7 +10,7 @@ from langchain.docstore.document import Document
 load_dotenv()
 
 # 데이터 불러오기
-df = pd.read_csv("청년정책_전처리완료_v2.csv")
+df = pd.read_csv("../청년정책목록_전처리완료_2025-06-20.csv")
 
 # 임베딩할 텍스트 구성
 df["통합본문"] = df[

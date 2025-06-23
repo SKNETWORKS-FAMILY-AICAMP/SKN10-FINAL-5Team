@@ -185,12 +185,22 @@ LOGGING = {
         'User': {  # User 앱의 로거
             'handlers': ['console', 'file'],
             'level': 'INFO',
-            'propagate': True,
+            'propagate': False,  # 중복 방지를 위해 False로 변경
+        },
+        'User.services': {  # services 모듈 전용 로거
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'User.middleware': {  # middleware 모듈 전용 로거
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
         },
         'django': {  # Django 기본 로거
             'handlers': ['console'],
             'level': 'INFO',
-            'propagate': True,
+            'propagate': False,
         },
     },
 }

@@ -1,0 +1,18 @@
+[
+  {
+    "ParameterKey": "DBHost",
+    "ParameterValue": "youth-policy-api-postgres.czoqimai8z0n.ap-northeast-2.rds.amazonaws.com"
+  },
+  {
+    "ParameterKey": "DBName",
+    "ParameterValue": "postgres"
+  },
+  {
+    "ParameterKey": "DBUser",
+    "ParameterValue": "postgres"
+  },
+  {
+    "ParameterKey": "DBPassword",
+    "ParameterValue": "postgres"
+  }
+] 

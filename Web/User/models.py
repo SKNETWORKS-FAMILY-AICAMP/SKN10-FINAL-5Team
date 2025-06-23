@@ -52,3 +52,17 @@ class RefreshToken(models.Model):
 
     def __str__(self):
         return f"{self.user.user_nm} - {self.token_id}"
+
+
+# 알림 상태 모델 정의
+class NotificationStatus(models.Model):
+    status_id = models.AutoField(primary_key=True, verbose_name='알림 상태 아이디')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='사용자 아이디')
+    last_checked_count = models.IntegerField(default=0, verbose_name='마지막 확인한 정책 개수')
+    last_checked_dt = models.DateTimeField(auto_now=True, verbose_name='마지막 확인 일시')
+
+    class Meta:
+        unique_together = ['user']
+
+    def __str__(self):
+        return f"{self.user.user_nm} - {self.last_checked_count}개"

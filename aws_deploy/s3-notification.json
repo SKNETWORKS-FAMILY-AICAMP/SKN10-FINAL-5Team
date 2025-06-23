@@ -1,0 +1,19 @@
+{
+  "LambdaFunctionConfigurations": [
+    {
+      "Id": "trigger-data-processing",
+      "LambdaFunctionArn": "arn:aws:lambda:ap-northeast-2:285951302252:function:youth-policy-data-processor",
+      "Events": ["s3:ObjectCreated:*"],
+      "Filter": {
+        "Key": {
+          "FilterRules": [
+            {
+              "Name": "prefix",
+              "Value": "raw/"
+            }
+          ]
+        }
+      }
+    }
+  ]
+} 
