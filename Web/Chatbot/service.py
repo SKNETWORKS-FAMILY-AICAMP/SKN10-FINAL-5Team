@@ -4,8 +4,8 @@ LangGraph Studio용 청년정책 RAG 시스템
 그 외 질문에 대해서는 답변을 거부하는 시스템
 """
 import os
-import json
 import logging
+import time
 from typing import List, Dict, Any, Optional, Literal, Annotated
 from typing_extensions import TypedDict
 from dotenv import load_dotenv
@@ -17,7 +17,6 @@ from langgraph.graph.message import add_messages
 # LangChain imports
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 from langchain_core.prompts import ChatPromptTemplate
-from langchain.prompts.prompt import PromptTemplate
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
@@ -26,12 +25,7 @@ from langchain_community.utilities import SQLDatabase
 from langchain_openai import ChatOpenAI
 import psycopg2
 from psycopg2.extras import RealDictCursor
-
-# HTML 생성을 위한 추가 imports
-import markdown
-from markdown.extensions import codehilite
-import html
-
+from psycopg2 import pool
 
 # 환경변수 로드
 load_dotenv()
@@ -39,6 +33,12 @@ load_dotenv()
 # 로깅 설정
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# 성능 최적화를 위한 전역 변수
+_connection_pool = None
+_schema_cache = None
+_schema_cache_time = 0
+SCHEMA_CACHE_TTL = 3600  # 1시간
 
 class QueryClassification(BaseModel):
     """질의 분류를 위한 구조화된 출력 모델"""
@@ -162,18 +162,24 @@ class YouthPolicyRAGConfig:
         # PostgreSQL URI 생성
         self.db_uri = f"postgresql://{self.db_config['user']}:{self.db_config['password']}@{self.db_config['host']}:{self.db_config['port']}/{self.db_config['database']}"
 
-        # LangChain LLM 설정
+        # 연결 풀 초기화
+        self._init_connection_pool()
+
+        # LangChain LLM 설정 (타임아웃 추가)
         try:
             self.chat_llm = ChatOpenAI(
                 api_key=self.openai_api_key,
                 temperature=0,
                 verbose=True,
                 model="gpt-4o",
+                timeout=30,  # 30초 타임아웃
+                max_retries=2,  # 최대 2회 재시도
             )
             logger.info("LangChain LLM 초기화 완료")
         except Exception as e:
             logger.warning(f"LangChain LLM 초기화 실패: {e}")
             self.chat_llm = None
+            
         # SQLDatabase 설정
         try:
             self.sql_database = SQLDatabase.from_uri(self.db_uri)
@@ -182,11 +188,48 @@ class YouthPolicyRAGConfig:
             logger.warning(f"SQLDatabase 초기화 실패: {e}")
             self.sql_database = None
         
-        # LangChain ChatOpenAI 모델 설정 (질의 분류용)
+        # LangChain ChatOpenAI 모델 설정 (질의 분류용, 타임아웃 추가)
         self.thinking_model = ChatOpenAI(
             api_key=self.openai_api_key,
             model="o3-mini",
+            timeout=30,
+            max_retries=2,
         )
+    def _init_connection_pool(self):
+        """데이터베이스 연결 풀 초기화"""
+        global _connection_pool
+        if _connection_pool is None:
+            try:
+                _connection_pool = pool.ThreadedConnectionPool(
+                    minconn=2,  # 최소 연결 수
+                    maxconn=10,  # 최대 연결 수
+                    host=self.db_config['host'],
+                    database=self.db_config['database'],
+                    user=self.db_config['user'],
+                    password=self.db_config['password'],
+                    port=self.db_config['port']
+                )
+                logger.info("데이터베이스 연결 풀 초기화 완료")
+            except Exception as e:
+                logger.error(f"연결 풀 초기화 실패: {e}")
+                _connection_pool = None
+    
+    def get_connection(self):
+        """연결 풀에서 연결 가져오기"""
+        if _connection_pool:
+            try:
+                return _connection_pool.getconn()
+            except Exception as e:
+                logger.error(f"연결 풀에서 연결 가져오기 실패: {e}")
+        return None
+    
+    def return_connection(self, conn):
+        """연결을 풀에 반환"""
+        if _connection_pool and conn:
+            try:
+                _connection_pool.putconn(conn)
+            except Exception as e:
+                logger.error(f"연결 풀에 연결 반환 실패: {e}")
 
 
 # 전역 설정 인스턴스
@@ -482,16 +525,31 @@ def reject_query_node(state: GraphState) -> GraphState:
     }
 
 def get_postgresql_schema(config) -> str:
-    """PostgreSQL 데이터베이스 스키마 정보를 가져오는 함수"""
+    """PostgreSQL 데이터베이스 스키마 정보를 가져오는 함수 (캐싱 적용)"""
+    global _schema_cache, _schema_cache_time
+    
+    # 캐시 확인
+    current_time = time.time()
+    if _schema_cache and (current_time - _schema_cache_time) < SCHEMA_CACHE_TTL:
+        logger.info("스키마 정보 캐시 히트")
+        return _schema_cache
+    
     try:
-        # config의 db_config를 사용하여 직접 연결
-        conn = psycopg2.connect(
-            host=config.db_config['host'],
-            database=config.db_config['database'],
-            user=config.db_config['user'],
-            password=config.db_config['password'],
-            port=config.db_config['port']
-        )
+        # 연결 풀에서 연결 가져오기
+        conn = config.get_connection()
+        use_pool = True
+        
+        if not conn:
+            # 연결 풀이 없으면 직접 연결
+            conn = psycopg2.connect(
+                host=config.db_config['host'],
+                database=config.db_config['database'],
+                user=config.db_config['user'],
+                password=config.db_config['password'],
+                port=config.db_config['port']
+            )
+            use_pool = False
+            
         cursor = conn.cursor(cursor_factory=RealDictCursor)
 
         # 테이블 스키마 정보 쿼리 (policies, policy_conditions 테이블만, 코멘트 포함)
@@ -539,7 +597,17 @@ def get_postgresql_schema(config) -> str:
             schema_info += f"  - {row['column_name']}: {row['data_type']} {nullable} {default}{column_comment}\n"
         
         cursor.close()
-        conn.close()
+        
+        # 연결 처리
+        if use_pool:
+            config.return_connection(conn)
+        else:
+            conn.close()
+        
+        # 캐시에 저장
+        _schema_cache = schema_info
+        _schema_cache_time = current_time
+        logger.info("스키마 정보 캐시 업데이트")
         
         return schema_info
         
@@ -549,17 +617,29 @@ def get_postgresql_schema(config) -> str:
 
 
 def execute_postgresql_query(config, sql_query: str) -> Dict[str, Any]:
-    """PostgreSQL 쿼리를 직접 실행하는 함수"""
+    """PostgreSQL 쿼리를 직접 실행하는 함수 (연결 풀링 적용)"""
     try:
-        # config의 db_config를 사용하여 직접 연결
-        conn = psycopg2.connect(
-            host=config.db_config['host'],
-            database=config.db_config['database'],
-            user=config.db_config['user'],
-            password=config.db_config['password'],
-            port=config.db_config['port']
-        )
+        start_time = time.time()
+        
+        # 연결 풀에서 연결 가져오기
+        conn = config.get_connection()
+        use_pool = True
+        
+        if not conn:
+            # 연결 풀이 없으면 직접 연결
+            conn = psycopg2.connect(
+                host=config.db_config['host'],
+                database=config.db_config['database'],
+                user=config.db_config['user'],
+                password=config.db_config['password'],
+                port=config.db_config['port']
+            )
+            use_pool = False
+        
         cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # 쿼리 타임아웃 설정 (30초)
+        cursor.execute("SET statement_timeout = '30s'")
         
         # 쿼리 실행
         cursor.execute(sql_query)
@@ -569,12 +649,21 @@ def execute_postgresql_query(config, sql_query: str) -> Dict[str, Any]:
         result_data = [dict(row) for row in results]
         
         cursor.close()
-        conn.close()
+        
+        # 연결 처리
+        if use_pool:
+            config.return_connection(conn)
+        else:
+            conn.close()
+        
+        execution_time = time.time() - start_time
+        logger.info(f"쿼리 실행 시간: {execution_time:.2f}초, 결과 수: {len(result_data)}개")
         
         return {
             "success": True,
             "data": result_data,
-            "row_count": len(result_data)
+            "row_count": len(result_data),
+            "execution_time": execution_time
         }
         
     except Exception as e:
@@ -582,7 +671,8 @@ def execute_postgresql_query(config, sql_query: str) -> Dict[str, Any]:
         return {
             "success": False,
             "error": str(e),
-            "data": []
+            "data": [],
+            "execution_time": 0
         }
 
 
