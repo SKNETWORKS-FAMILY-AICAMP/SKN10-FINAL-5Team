@@ -9,6 +9,7 @@ function safeValue(val) {
 
 // 정책 번호를 매개변수로 받아 해당 정책 상세 정보를 보여주는 함수
 function openPolicyModal(policyId) {
+    window.currentPolicyId = policyId;
     console.log('Opening modal for policy:', policyId);
     
     // 기존 모달 제거
@@ -27,6 +28,30 @@ function openPolicyModal(policyId) {
         .then(data => {
             // JSON 파싱된 데이터를 받아 사용
             console.log('Policy data:', data);
+            
+            // 로그인된 경우에만 관심도 저장
+            function saveInterest(policyId, interestStatus, retry) {
+                fetch('/chatbot/api/interest/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': (document.querySelector('[name=csrfmiddlewaretoken]') || {}).value || ''
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ plcy_no: policyId, interest_status: interestStatus })
+                })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status === 'token_refreshed' && !retry) {
+                        // 토큰 갱신 후 1회만 재시도
+                        saveInterest(policyId, interestStatus, true);
+                        return;
+                    }
+                    console.log('관심도 저장 응답:', res);
+                })
+                .catch(err => { console.error('관심도 저장 에러:', err); });
+            }
+            saveInterest(policyId, '확인', false);
             
             // 지연 후 모달 생성 및 표시
             setTimeout(() => {
@@ -159,6 +184,39 @@ function closePolicyModal() {
 // 모달 하단 버튼 클릭 시 URL을 새 탭으로 열기
 function handlePolicyButtonClick() {
     if (currentPolicyUrl) {
+        // 정책 신청/이동 버튼 클릭 시 '신청' 상태로 저장
+        const modal = document.getElementById('policyModal');
+        if (modal) {
+            const policyNameElem = modal.querySelector('#modalPolicyName');
+            if (policyNameElem) {
+                const policyName = policyNameElem.textContent;
+                // 정책 번호는 모달에 숨겨진 데이터로 저장하거나, openPolicyModal에서 전역 변수로 저장 필요
+                // 여기서는 policyId를 전역 변수로 저장한다고 가정
+                if (window.currentPolicyId) {
+                    function saveInterestApply(policyId, retry) {
+                        fetch('/chatbot/api/interest/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': (document.querySelector('[name=csrfmiddlewaretoken]') || {}).value || ''
+                            },
+                            credentials: 'same-origin',
+                            body: JSON.stringify({ plcy_no: policyId, interest_status: '신청' })
+                        })
+                        .then(res => res.json())
+                        .then(res => {
+                            if (res.status === 'token_refreshed' && !retry) {
+                                saveInterestApply(policyId, true);
+                                return;
+                            }
+                            console.log('관심도 저장 응답:', res);
+                        })
+                        .catch(err => { console.error('관심도 저장 에러:', err); });
+                    }
+                    saveInterestApply(window.currentPolicyId, false);
+                }
+            }
+        }
         window.open(currentPolicyUrl, '_blank');
     }
 }
