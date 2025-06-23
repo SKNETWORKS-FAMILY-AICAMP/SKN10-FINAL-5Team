@@ -425,7 +425,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 ${
                     sender === 'user'
                     ? formatUserMessage(message)
-                    : marked.parse(message)
+                    : marked.parse(removeContentBetweenDashes(message))
                 }
             </div>
             ${createdAt ? `<div class="text-xs text-slate-400 text-right">${formatDateTime(createdAt)}</div>` : ''}
@@ -944,6 +944,13 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;') // 탭을 4칸 공백으로
             .replace(/  /g, '&nbsp;&nbsp;')             // 연속 공백 보존
             .replace(/\n/g, '<br>');                   // 줄바꿈
+    }
+
+    // --- 사이의 내용을 제거하는 함수
+    function removeContentBetweenDashes(text) {
+        if (!text) return '';
+        // ---로 시작해서 다음 ---까지의 내용을 모두 제거 (각 블록을 개별적으로 처리)
+        return text.replace(/---[\s\S]*?(?=---|$)/g, '').trim();
     }
 });
 
