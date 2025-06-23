@@ -119,6 +119,25 @@ class SQLQueryGeneration(BaseModel):
         le=1.0
     )
 
+class SelectedPolicy(BaseModel):
+    """선정된 정책 정보"""
+    plcy_no: str = Field(description="정책 번호")
+    plcy_nm: str = Field(description="정책명")
+    plcy_expln_nm: str = Field(description="정책 설명명")
+    lclsf_nm: str = Field(description="대분류명")
+    mclsf_nm: str = Field(description="중분류명")
+    zip_cd: str = Field(description="지역코드")
+    inq_cnt: int = Field(description="문의 횟수")
+
+class PolicySelection(BaseModel):
+    """LLM이 선정한 정책들을 위한 구조화된 출력 모델"""
+    selected_policies: List[SelectedPolicy] = Field(
+        description="LLM이 선정한 정책 목록 (최대 5개)"
+    )
+    selection_reasoning: str = Field(
+        description="정책 선정 근거"
+    )
+
 class GraphState(TypedDict):
     """그래프 상태 정의"""
     messages: Annotated[List[BaseMessage], add_messages]  # LangGraph Studio 호환성을 위한 메시지 리스트
@@ -126,6 +145,7 @@ class GraphState(TypedDict):
     query_analysis: Optional[QueryAnalysis]  # 질의 분석 결과 (분류 + 조건 추출)
     generated_sql: Optional[str]  # 정책 검색을 위한 필터 쿼리
     sql_result: Optional[str]
+    selected_policies: Optional[List[Dict[str, Any]]]  # LLM이 선정한 정책 목록 (딕셔너리 형태)
     final_response: Optional[str]  # 최종 답변
     html_content: Optional[str]  # HTML 형식의 최종 결과
     error: Optional[str]  # 오류 메시지
@@ -357,7 +377,45 @@ def generate_response_node(state: GraphState) -> GraphState:
         query = state["query"]
         sql_result = state.get("sql_result", [])
         
-        # 결과를 바탕으로 자연어 응답 생성
+        # 1단계: 정책 선정을 위한 LLM 호출
+        policy_selection_prompt = ChatPromptTemplate.from_messages([
+            ("system", """당신은 청년정책 전문가입니다. 
+검색된 정책 데이터를 분석하여 사용자의 질문과 조건에 가장 적합한 정책들을 선정해주세요.
+
+**사용자 질문:** {user_query}
+**사용자 조건:** {user_conditions}
+**검색된 정책 데이터:** {search_data}
+
+**정책 선정 가이드라인:**
+1. 사용자의 조건(나이, 거주지, 학력, 취업상태 등)에 가장 적합한 정책을 우선 선정
+2. 사용자 질문의 키워드와 관련성이 높은 정책을 선정
+3. 최대 10개까지의 정책을 선정
+4. 선정된 각 정책에 대해 plcy_no, plcy_nm, plcy_expln_nm, lclsf_nm, mclsf_nm, zip_cd, inq_cnt 정보를 정확히 추출
+5. 선정 근거를 명확히 제시
+
+**주의사항:**
+- 검색 결과에서 실제 존재하는 정책만 선정
+- 정책 정보는 검색 결과에서 정확히 추출
+- mclsf_nm이 null인 경우 빈 문자열로 처리"""),
+            ("human", "위 검색 결과에서 사용자에게 적합한 정책들을 선정해주세요.")
+        ])
+        
+        # 정책 선정을 위한 구조화된 LLM 체인
+        llm_no_stream = config.thinking_model.bind(stream=False)
+        policy_selection_llm = llm_no_stream.with_structured_output(PolicySelection)
+        policy_selection_chain = policy_selection_prompt | policy_selection_llm
+        
+        # 정책 선정 실행
+        policy_selection_result = policy_selection_chain.invoke({
+            "user_query": query,
+            "user_conditions": str(query_analysis),
+            "search_data": str(sql_result)
+        })
+        
+        logger.info(f"정책 선정 완료: {len(policy_selection_result.selected_policies)}개 정책 선정")
+        logger.info(f"선정 근거: {policy_selection_result.selection_reasoning}")
+        
+        # 3단계: 자연어 응답 생성
         response_prompt = ChatPromptTemplate.from_messages([
             ("system", """당신은 청년정책 전문 상담사입니다. 
 데이터베이스 검색 결과를 바탕으로 사용자에게 도움이 되는 정확하고 친절한 답변을 제공해주세요.
@@ -365,6 +423,7 @@ def generate_response_node(state: GraphState) -> GraphState:
 **분류 정보:** {classification_type}
 **사용자 질문:** {user_query}
 **검색된 데이터:** {search_data}
+**선정된 정책:** {selected_policies}
 
 **답변 가이드라인:**
 1. 검색 결과를 바탕으로 정확한 정보를 제공하세요
@@ -385,7 +444,8 @@ def generate_response_node(state: GraphState) -> GraphState:
         final_response = response_chain.invoke({
             "classification_type": query_analysis.lclsf_nm,
             "user_query": query,
-            "search_data": str(sql_result)
+            "search_data": str(sql_result),
+            "selected_policies": str([policy.model_dump() for policy in policy_selection_result.selected_policies])
         })
         
         logger.info("자연어 응답 생성 완료")
@@ -396,6 +456,7 @@ def generate_response_node(state: GraphState) -> GraphState:
         return {
             **state,
             "messages": state["messages"] + [ai_message],
+            "selected_policies": [policy.model_dump() for policy in policy_selection_result.selected_policies],
             "final_response": final_response.content
         }
         
