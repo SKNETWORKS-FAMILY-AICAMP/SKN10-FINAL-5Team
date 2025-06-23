@@ -417,7 +417,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const card = document.createElement('div');
         card.className = (sender === 'user' 
             ? 'bg-blue-100 text-blue-800' 
-            : 'bg-slate-100 text-slate-800') + 
+            : 'bg-slate-200 text-slate-800 markdown-body bg-slate-200 list-disc pl-6 mb-2') + 
             ' rounded-lg shadow p-4 break-words max-w-2xl sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl';
 
         card.innerHTML = `
