@@ -426,22 +426,20 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         // sqlResult가 있고 배열인 경우 정책 카드들을 렌더링
         if (sqlResult && sqlResult.length > 0) {
-            // 정책 카드들을 생성
-            let policyCards = '';
-            sqlResult.forEach((policy, index) => {
-                // 텍스트 길이 제한 함수
-                const truncateText = (text, limit = 50) => {
-                    if (!text) return '';
-                    return text.length > limit ? text.substring(0, limit) + '...' : text;
-                };
-                
-                // 카테고리 색상 설정 (기본값)
-                const categoryColors = {
-                    bg: 'bg-blue-100',
-                    text: 'text-blue-800'
-                };
-                
-                policyCards += `
+            // lclsf_nm에 따라 정책들을 분류
+            const housingPolicies = sqlResult.filter(policy => policy.lclsf_nm === '주거');
+            const jobPolicies = sqlResult.filter(policy => policy.lclsf_nm === '일자리');
+            const otherPolicies = sqlResult.filter(policy => policy.lclsf_nm !== '주거' && policy.lclsf_nm !== '일자리');
+            
+            // 텍스트 길이 제한 함수
+            const truncateText = (text, limit = 50) => {
+                if (!text) return '';
+                return text.length > limit ? text.substring(0, limit) + '...' : text;
+            };
+            
+            // 정책 카드 생성 함수
+            const createPolicyCards = (policies, categoryColors) => {
+                return policies.map((policy, index) => `
                     <div class="w-full md:w-1/2 lg:w-1/3 xl:w-1/4 flex-shrink-0 px-2">
                         <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow h-full cursor-pointer" 
                             onclick="openPolicyModal('${policy.plcy_no || ''}')">
@@ -449,29 +447,77 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <h3 class="text-lg font-semibold text-gray-800 mb-2">${escapeHtml(policy.plcy_nm || '정책명 없음')}</h3>
                                 <p class="text-gray-600 text-sm mb-3">${escapeHtml(truncateText(policy.plcy_expln_cn))}</p>
                                 <span class="${categoryColors.bg} ${categoryColors.text} text-xs font-medium px-3 py-1 rounded-full w-fit">${escapeHtml(policy.mclsf_nm || '카테고리 없음')}</span>
+                                <span class="${categoryColors.bg} ${categoryColors.text} text-xs font-medium px-3 py-1 rounded-full w-fit">${escapeHtml(policy.zip_cd || '카테고리 없음')}</span>
                             </div>
                         </div>
                     </div>
-                `;
-            });
+                `).join('');
+            };
             
-            card.innerHTML += `
-                <div class="relative mt-4">
-                    <div class="overflow-hidden">
-                        <div class="flex transition-transform duration-500 ease-in-out" id="policySlider-${messageId}">
-                            ${policyCards}
+            // 슬라이더 컨테이너 생성 함수
+            const createSliderContainer = (policies, title, categoryColors, containerId) => {
+                if (policies.length === 0) return '';
+                
+                const policyCards = createPolicyCards(policies, categoryColors);
+                
+                return `
+                    <div class="mt-6">
+                        <h4 class="text-lg font-semibold ${categoryColors.text} mb-3 flex items-center">
+                            <span class="w-2 h-2 ${categoryColors.bg} rounded-full mr-2"></span>
+                            ${title} (${policies.length}개)
+                        </h4>
+                        <div class="relative">
+                            <div class="overflow-hidden">
+                                <div class="flex transition-transform duration-500 ease-in-out" id="${containerId}">
+                                    ${policyCards}
+                                </div>
+                            </div>
+                            ${policies.length > 1 ? `
+                                <button class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100" onclick="slidePrev('${containerId}')">
+                                    <span class="material-icons">chevron_left</span>
+                                </button>
+                                <button class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100" onclick="slideNext('${containerId}')">
+                                    <span class="material-icons">chevron_right</span>
+                                </button>
+                            ` : ''}
                         </div>
                     </div>
-                    ${sqlResult.length > 1 ? `
-                        <button class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100" onclick="slidePrev('policySlider-${messageId}')">
-                            <span class="material-icons">chevron_left</span>
-                        </button>
-                        <button class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100" onclick="slideNext('policySlider-${messageId}')">
-                            <span class="material-icons">chevron_right</span>
-                        </button>
-                    ` : ''}
-                </div>
-            `;
+                `;
+            };
+            
+            let policyContainers = '';
+            
+            // 주거 정책 컨테이너
+            if (housingPolicies.length > 0) {
+                policyContainers += createSliderContainer(
+                    housingPolicies, 
+                    '주거 정책', 
+                    { bg: 'bg-green-100', text: 'text-green-800' },
+                    `housingSlider-${messageId}`
+                );
+            }
+            
+            // 일자리 정책 컨테이너
+            if (jobPolicies.length > 0) {
+                policyContainers += createSliderContainer(
+                    jobPolicies, 
+                    '일자리 정책', 
+                    { bg: 'bg-purple-100', text: 'text-purple-800' },
+                    `jobSlider-${messageId}`
+                );
+            }
+            
+            // 기타 정책 컨테이너
+            if (otherPolicies.length > 0) {
+                policyContainers += createSliderContainer(
+                    otherPolicies, 
+                    '기타 정책', 
+                    { bg: 'bg-blue-100', text: 'text-blue-800' },
+                    `otherSlider-${messageId}`
+                );
+            }
+            
+            card.innerHTML += `<div class="mt-4">${policyContainers}</div>`;
         }
         
         // 래퍼에 카드 추가

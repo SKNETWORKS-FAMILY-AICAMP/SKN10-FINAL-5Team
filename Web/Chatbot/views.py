@@ -283,7 +283,9 @@ def send_message(request):
                         'plcy_no': policy.get('plcy_no'),
                         'plcy_nm': policy.get('plcy_nm'),
                         'plcy_expln_cn': policy.get('plcy_expln_cn'),
+                        'lclsf_nm': policy.get('lclsf_nm'),
                         'mclsf_nm': policy.get('mclsf_nm'),
+                        'zip_cd': policy.get('zip_cd'),
                         'inq_cnt': policy.get('inq_cnt', 0)
                     }
                     filtered_sql_result.append(filtered_policy)

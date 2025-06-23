@@ -42,8 +42,8 @@ logger = logging.getLogger(__name__)
 
 class QueryClassification(BaseModel):
     """질의 분류를 위한 구조화된 출력 모델"""
-    lclsf_nm: Literal["주거", "일자리", "기타"] = Field(
-        description="대분류(lclsf_nm): 주거, 일자리, 기타"
+    lclsf_nm: Literal["주거", "일자리", "일반", "그 외 정책", "기타"] = Field(
+        description="대분류(lclsf_nm): 주거, 일자리, 일반, 그 외 정책, 기타"
     )
     mclsf_nm: Optional[Literal[
         "대출, 이자, 전월세 등 금융지원",
@@ -215,7 +215,9 @@ def classify_query_node(state: GraphState) -> GraphState:
 
 **대분류 (lclsf_nm):**
 - '주거': 전월세 대출, 임대주택, 기숙사, 이사비 지원, 부동산 중개비 지원 등 관련 정책
-- '일자리': 일자리, 창업, 취업, 전문인력양성, 훈련 등 관련 정책  
+- '일자리': 일자리, 창업, 취업, 전문인력양성, 훈련, 기업지원 등 관련 정책
+- '일반': 정책과 관련한 일반적인 질문이나 정보 요청
+- '그 외 정책': 주거와 일자리 관련이 아닌 기타 정책이나 질문
 - '기타': 그 외 모든 질문
 
 **중분류 (mclsf_nm):**
@@ -261,7 +263,7 @@ def route_after_classification(state: GraphState) -> Literal["continue", "reject
     if not classification:
         return "reject"
     # 주거 또는 일자리 관련이고 신뢰도가 임계값 이상인 경우만 계속 진행
-    if classification.lclsf_nm in ["주거", "일자리"]:
+    if classification.lclsf_nm in ["주거", "일자리", "일반"]:
         logger.info(f"질의 승인: {classification.lclsf_nm} (신뢰도: {classification.confidence})")
         return "continue"
     else:
@@ -407,7 +409,8 @@ def generate_response_node(state: GraphState) -> GraphState:
 5. 친근하고 도움이 되는 톤으로 답변하세요
 6. 필요시 추가 문의 방법이나 관련 기관 정보를 제공하세요
 7. 답변 시 markdown 형식을 사용하여 가독성을 높이세요
-8. 적절한 이모지를 사용하여 답변을 더 친근하게 만드세요"""),
+8. 적절한 이모지를 사용하여 답변을 더 친근하게 만드세요
+9. 주거정책과 일자리 정책을 구분하여 답변하세요"""),
             ("human", "위 검색 결과를 바탕으로 사용자 질문에 대한 답변을 생성해주세요.")
         ])
         
@@ -454,8 +457,6 @@ def reject_query_node(state: GraphState) -> GraphState:
 다시 시도해 주시기 바랍니다."""
     else:
         response = f"""죄송합니다. 저는 청년들의 **주거 관련 정책**과 **일자리 관련 정책**에 대해서만 도움을 드릴 수 있습니다.
-
-현재 질문은 '{classification.lclsf_nm if classification else '분류불가'}' 카테고리로 분류되어 답변을 드릴 수 없습니다.
 
 다음과 같은 질문에 대해 도움을 드릴 수 있습니다:
 
@@ -615,6 +616,8 @@ earn_etc_cn -> string 값 (예: '중위소득 150% 이하', '월소득 200만원
 3. 테이블명과 컬럼명을 정확히 사용하세요
 5. LIMIT을 사용하여 결과 수를 10개로 제한하세요
 6. 분류 정보로 policies 테이블의 lclsf_nm을 사용하여 필터링하세요
+    - lclsf_nm 이 '일반'인 경우 policies 테이블의 lclsf_nm 컬럼을 '주거' 또는 '일자리'로 필터링합니다.
+    - lclsf_nm 이 '일반'인 경우 policies 테이블의 lclsf_nm의 '주거', '일자리'를 각각 5개씩 반환합니다.
 7. 나이 정보는 policies 테이블의 sprt_trgt_min_age, sprt_trgt_max_age 컬럼을 사용하여 필터링하세요
     - sprt_trgt_min_age와 sprt_trgt_max_age 가 0 인 경우는 필터링하지 않습니다.
     - 예: sprt_trgt_min_age <= {user_condition.age} AND sprt_trgt_max_age >= {user_condition.age} OR (sprt_trgt_min_age = 0 AND sprt_trgt_max_age = 0)
