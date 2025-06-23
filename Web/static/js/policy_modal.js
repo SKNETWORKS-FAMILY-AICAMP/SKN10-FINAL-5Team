@@ -2,6 +2,11 @@
 // 버튼 클릭 시 새 탭으로 열 때 사용
 let currentPolicyUrl = '';
 
+// 값이 없을 때 '공식 홈페이지 참고'로 표시하는 함수로 수정
+function safeValue(val) {
+    return (val === null || val === undefined || val === '') ? '공식 홈페이지 참고' : val;
+}
+
 // 정책 번호를 매개변수로 받아 해당 정책 상세 정보를 보여주는 함수
 function openPolicyModal(policyId) {
     console.log('Opening modal for policy:', policyId);
@@ -34,7 +39,8 @@ function openPolicyModal(policyId) {
                 newModal.innerHTML = `
                     <div class="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto relative">
                         <div class="flex justify-between items-start mb-6">
-                            <h2 id="modalPolicyName" class="text-2xl font-bold text-gray-800">${data.plcy_nm}</h2>
+                            <h2 id="modalPolicyName" class="text-2xl font-bold text-gray-800">
+                                ${safeValue(data.plcy_nm)}</h2>
                             <button onclick="closePolicyModal()" class="text-gray-500 hover:text-gray-700 absolute top-4 right-4">
                                 <span class="material-icons">close</span>
                             </button>
@@ -42,37 +48,38 @@ function openPolicyModal(policyId) {
                         
                         <div class="space-y-6">
                             <div>
-                                <span id="modalPolicyCategory" class="text-sm font-medium px-3 py-1 rounded-full ${data.category_color.bg} ${data.category_color.text}">${data.mclsf_nm}</span>
+                                <span id="modalPolicyCategory" class="text-sm font-medium px-3 py-1 rounded-full ${data.category_color.bg} ${data.category_color.text}">${safeValue(data.mclsf_nm)}</span>
+                                <span id="modalPolicyZipCd" class="text-sm font-medium px-3 py-1 rounded-full bg-gray-200 text-gray-700 ml-2">${safeValue(data.zip_cd)}</span>
                             </div>
                             
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-800 mb-2">정책 설명</h3>
-                                <p id="modalPolicyDescription" class="text-gray-600 whitespace-pre-line">${data.plcy_expln_cn}</p>
+                                <p id="modalPolicyDescription" class="text-gray-600 whitespace-pre-line">${safeValue(data.plcy_expln_cn)}</p>
                             </div>
                             
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-800 mb-2">지원 내용</h3>
-                                <p id="modalPolicySupport" class="text-gray-600 whitespace-pre-line">${data.plcy_sprt_cn}</p>
+                                <p id="modalPolicySupport" class="text-gray-600 whitespace-pre-line">${safeValue(data.plcy_sprt_cn)}</p>
                             </div>
                             
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-800 mb-2">신청 방법</h3>
-                                <p id="modalPolicyApplyMethod" class="text-gray-600 whitespace-pre-line">${data.plcy_aply_mthd_cn}</p>
+                                <p id="modalPolicyApplyMethod" class="text-gray-600 whitespace-pre-line">${safeValue(data.plcy_aply_mthd_cn)}</p>
                             </div>
                             
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-800 mb-2">제출 서류</h3>
-                                <p id="modalPolicyDocuments" class="text-gray-600 whitespace-pre-line">${data.sbmsn_dcmnt_cn}</p>
+                                <p id="modalPolicyDocuments" class="text-gray-600 whitespace-pre-line">${safeValue(data.sbmsn_dcmnt_cn)}</p>
                             </div>
                             
                             <div class="flex justify-between text-sm text-gray-500">
                                 <div>
                                     <span>조회수: </span>
-                                    <span id="modalPolicyViews">${data.inq_cnt}</span>
+                                    <span id="modalPolicyViews">${safeValue(data.inq_cnt)}</span>
                                 </div>
                                 <div>
                                     <span>신청기간: </span>
-                                    <span id="modalPolicyPeriod">${data.aply_bgng_ymd ? new Date(data.aply_bgng_ymd).toLocaleDateString() : ''} ~ ${data.aply_end_ymd ? new Date(data.aply_end_ymd).toLocaleDateString() : ''}</span>
+                                    <span id="modalPolicyPeriod">${data.aply_bgng_ymd ? new Date(data.aply_bgng_ymd).toLocaleDateString() : '미제공'} ~ ${data.aply_end_ymd ? new Date(data.aply_end_ymd).toLocaleDateString() : '미제공'}</span>
                                 </div>
                             </div>
                             
