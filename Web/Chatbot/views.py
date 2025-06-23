@@ -299,6 +299,21 @@ def send_message(request):
                 create_dt=timezone.localtime(timezone.now())
             )
             
+            # LLM 추천 정책을 관심(추천)으로 저장
+            if request.user.is_authenticated and filtered_sql_result:
+                for policy_data in filtered_sql_result:
+                    plcy_no = policy_data.get('plcy_no')
+                    if plcy_no:
+                        try:
+                            policy_obj = Policies.objects.get(plcy_no=plcy_no)
+                            RecommendInterest.objects.get_or_create(
+                                user=request.user,
+                                plcy_no=policy_obj,
+                                interest_status='추천'
+                            )
+                        except Policies.DoesNotExist:
+                            pass  # 정책이 DB에 없으면 무시
+            
             return JsonResponse({
                 'status': 'success',
                 'session_id': session.session_id,
