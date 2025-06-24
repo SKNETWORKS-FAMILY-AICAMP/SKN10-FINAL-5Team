@@ -48,6 +48,7 @@ def get_policy_detail(request, policy_id):
             'ref_url_addr1': policy.ref_url_addr1,
             'ref_url_addr2': policy.ref_url_addr2,
             'category_color': category_color,
+            'zip_cd': policy.zip_cd,
         }
         return JsonResponse(data)
     except Policies.DoesNotExist:

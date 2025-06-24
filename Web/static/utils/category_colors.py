@@ -17,7 +17,7 @@ CATEGORY_COLORS = {
     '청년국제교류': {'bg': 'bg-sky-100', 'text': 'text-sky-700'},
     '전문인력양성, 훈련': {'bg': 'bg-amber-100', 'text': 'text-amber-700'},
     '정책인프라구축': {'bg': 'bg-lime-100', 'text': 'text-lime-700'},
-    '기타': {'bg': 'bg-gray-100', 'text': 'text-gray-700'},
+    '기타': {'bg': 'bg-fuchsia-100', 'text': 'text-fuchsia-700'},
 }
 
 def get_category_color(category):

@@ -9,11 +9,12 @@ from .service import graph
 from User.services import verify_and_refresh_tokens
 from functools import wraps
 from User.models import User
-from .models import ChatSession, Message, SearchHistory
+from .models import ChatSession, Message, SearchHistory, RecommendInterest
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 import difflib
+from Home.models import Policies
 
 logger = logging.getLogger(__name__)
 
@@ -298,6 +299,21 @@ def send_message(request):
                 create_dt=timezone.localtime(timezone.now())
             )
             
+            # LLM 추천 정책을 관심(추천)으로 저장
+            if request.user.is_authenticated and filtered_sql_result:
+                for policy_data in filtered_sql_result:
+                    plcy_no = policy_data.get('plcy_no')
+                    if plcy_no:
+                        try:
+                            policy_obj = Policies.objects.get(plcy_no=plcy_no)
+                            RecommendInterest.objects.get_or_create(
+                                user=request.user,
+                                plcy_no=policy_obj,
+                                interest_status='추천'
+                            )
+                        except Policies.DoesNotExist:
+                            pass  # 정책이 DB에 없으면 무시
+            
             return JsonResponse({
                 'status': 'success',
                 'session_id': session.session_id,
@@ -322,3 +338,31 @@ def send_message(request):
             return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': '잘못된 요청입니다.'}, status=400)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def save_interest(request):
+    """
+    정책 카드 클릭(모달 오픈) 시 '확인', 신청/이동 버튼 클릭 시 '신청'으로 관심도 저장
+    body: { plcy_no: string, interest_status: '확인' | '신청' }
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': '로그인 필요'}, status=401)
+    try:
+        data = json.loads(request.body)
+        plcy_no = data.get('plcy_no')
+        interest_status = data.get('interest_status')
+        if not plcy_no or interest_status not in ['확인', '신청']:
+            return JsonResponse({'success': False, 'error': '잘못된 요청'}, status=400)
+        policy = Policies.objects.get(plcy_no=plcy_no)
+        # 이미 동일 정책+유저+상태로 저장된 경우 중복 저장 방지
+        obj, created = RecommendInterest.objects.get_or_create(
+            user=request.user,
+            plcy_no=policy,
+            interest_status=interest_status
+        )
+        return JsonResponse({'success': True, 'created': created})
+    except Policies.DoesNotExist:
+        return JsonResponse({'success': False, 'error': '정책 없음'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
