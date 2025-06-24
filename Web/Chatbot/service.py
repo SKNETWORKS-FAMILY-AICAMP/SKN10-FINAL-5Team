@@ -132,10 +132,13 @@ class SelectedPolicy(BaseModel):
 class PolicySelection(BaseModel):
     """LLM이 선정한 정책들을 위한 구조화된 출력 모델"""
     selected_policies: List[SelectedPolicy] = Field(
-        description="LLM이 선정한 정책 목록 (최대 5개)"
+        description="LLM이 선정한 정책 목록 (최대 10개)"
     )
     selection_reasoning: str = Field(
         description="정책 선정 근거"
+    )
+    final_response: str = Field(
+        description="최종 응답"
     )
 
 class GraphState(TypedDict):
@@ -380,8 +383,9 @@ def generate_response_node(state: GraphState) -> GraphState:
         # 1단계: 정책 선정을 위한 LLM 호출
         policy_selection_prompt = ChatPromptTemplate.from_messages([
             ("system", """당신은 청년정책 전문가입니다. 
-검색된 정책 데이터를 분석하여 사용자의 질문과 조건에 가장 적합한 정책들을 선정해주세요.
+검색된 정책 데이터를 분석하여 사용자의 질문과 조건에 가장 적합한 정책들을 선정하고 친절한 답변을 제공해주세요.
 
+**분류 정보:** {classification_type}
 **사용자 질문:** {user_query}
 **사용자 조건:** {user_conditions}
 **검색된 정책 데이터:** {search_data}
@@ -396,34 +400,7 @@ def generate_response_node(state: GraphState) -> GraphState:
 **주의사항:**
 - 검색 결과에서 실제 존재하는 정책만 선정
 - 정책 정보는 검색 결과에서 정확히 추출
-- mclsf_nm이 null인 경우 빈 문자열로 처리"""),
-            ("human", "위 검색 결과에서 사용자에게 적합한 정책들을 선정해주세요.")
-        ])
-        
-        # 정책 선정을 위한 구조화된 LLM 체인
-        llm_no_stream = config.thinking_model.bind(stream=False)
-        policy_selection_llm = llm_no_stream.with_structured_output(PolicySelection)
-        policy_selection_chain = policy_selection_prompt | policy_selection_llm
-        
-        # 정책 선정 실행
-        policy_selection_result = policy_selection_chain.invoke({
-            "user_query": query,
-            "user_conditions": str(query_analysis),
-            "search_data": str(sql_result)
-        })
-        
-        logger.info(f"정책 선정 완료: {len(policy_selection_result.selected_policies)}개 정책 선정")
-        logger.info(f"선정 근거: {policy_selection_result.selection_reasoning}")
-        
-        # 3단계: 자연어 응답 생성
-        response_prompt = ChatPromptTemplate.from_messages([
-            ("system", """당신은 청년정책 전문 상담사입니다. 
-데이터베이스 검색 결과를 바탕으로 사용자에게 도움이 되는 정확하고 친절한 답변을 제공해주세요.
-
-**분류 정보:** {classification_type}
-**사용자 질문:** {user_query}
-**검색된 데이터:** {search_data}
-**선정된 정책:** {selected_policies}
+- mclsf_nm이 null인 경우 빈 문자열로 처리
 
 **답변 가이드라인:**
 1. 검색 결과를 바탕으로 정확한 정보를 제공하세요
@@ -437,27 +414,34 @@ def generate_response_node(state: GraphState) -> GraphState:
 9. 주거정책과 일자리 정책을 구분하여 답변하세요
 10. 2개 이상의 정책목록 나열 시 구분할 수 있도록 정책 앞과 뒤에 --- 형태로 구분하세요
 """),
-            ("human", "위 검색 결과를 바탕으로 사용자 질문에 대한 답변을 생성해주세요.")
+            ("human", "위 검색 결과에서 사용자에게 적합한 정책들을 선정하고 사용자 질문에 대한 답변을 생성해주세요.")
         ])
         
-        response_chain = response_prompt | config.chat_llm
-        final_response = response_chain.invoke({
+        # 정책 선정을 위한 구조화된 LLM 체인
+        llm_no_stream = config.chat_llm.bind(stream=False)
+        policy_selection_llm = llm_no_stream.with_structured_output(PolicySelection)
+        policy_selection_chain = policy_selection_prompt | policy_selection_llm
+        
+        # 정책 선정 실행
+        policy_selection_result = policy_selection_chain.invoke({
             "classification_type": query_analysis.lclsf_nm,
             "user_query": query,
-            "search_data": str(sql_result),
-            "selected_policies": str([policy.model_dump() for policy in policy_selection_result.selected_policies])
+            "user_conditions": str(query_analysis),
+            "search_data": str(sql_result)
         })
         
-        logger.info("자연어 응답 생성 완료")
+        logger.info(f"정책 선정 완료: {len(policy_selection_result.selected_policies)}개 정책 선정")
+        logger.info(f"선정 근거: {policy_selection_result.selection_reasoning}")
         
+
         # 메시지 리스트에 AI 응답 추가
-        ai_message = AIMessage(content=final_response.content)
+        ai_message = AIMessage(content=policy_selection_result.final_response)
         
         return {
             **state,
             "messages": state["messages"] + [ai_message],
             "selected_policies": [policy.model_dump() for policy in policy_selection_result.selected_policies],
-            "final_response": final_response.content
+            "final_response": policy_selection_result.final_response
         }
         
     except Exception as e:
