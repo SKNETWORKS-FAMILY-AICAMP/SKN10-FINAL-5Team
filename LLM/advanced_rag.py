@@ -38,17 +38,6 @@ class QueryAnalysis(BaseModel):
     lclsf_nm: Literal["주거", "일자리", "일반", "그 외 정책", "기타"] = Field(
         description="대분류(lclsf_nm): 주거, 일자리, 일반, 그 외 정책, 기타"
     )
-    mclsf_nm: Optional[Literal[
-        "대출, 이자, 전월세 등 금융지원",
-        "임대주택, 기숙사 등 주거지원", 
-        "이사비, 부동산 중개비 등 보조금지원",
-        "전문인력양성, 훈련",
-        "창업",
-        "취업 전후 지원"
-    ]] = Field(
-        default=None,
-        description="중분류(mclsf_nm): 주거-금융지원/주거지원/보조금지원, 일자리-훈련/창업/취업지원, 기타-없음"
-    )
     query_keywords: str = Field(
         default=None,
         description="사용자 질문에서 추출된 키워드"
@@ -56,14 +45,6 @@ class QueryAnalysis(BaseModel):
     query_intent: Literal["맞춤 정책 검색", "정책 상세 설명", "기타"] = Field(
         default="맞춤 정책 검색",
         description="사용자 질문의 의도 (맞춤 정책 검색, 정책 상세 설명, 기타)"
-    )
-    classification_confidence: float = Field(
-        description="분류 신뢰도 (0.0-1.0)", 
-        ge=0.0, 
-        le=1.0
-    )
-    reasoning: str = Field(
-        description="분류 근거 설명"
     )
     
     # 사용자 조건 정보
@@ -99,24 +80,11 @@ class QueryAnalysis(BaseModel):
         default=None,
         description="기타 추가 요건이나 상황"
     )
-    extraction_confidence: float = Field(
-        description="조건 추출 신뢰도 (0.0-1.0)",
-        ge=0.0,
-        le=1.0
-    )
 
 class SQLQueryGeneration(BaseModel):
     """SQL 쿼리 생성을 위한 구조화된 출력 모델"""
     sql_query: str = Field(
         description="생성된 PostgreSQL 쿼리"
-    )
-    explanation: str = Field(
-        description="쿼리 생성 근거 및 설명"
-    )
-    confidence: float = Field(
-        description="쿼리 생성 신뢰도 (0.0-1.0)",
-        ge=0.0,
-        le=1.0
     )
 
 class SelectedPolicy(BaseModel):
@@ -134,9 +102,6 @@ class PolicySelection(BaseModel):
     selected_policies: List[SelectedPolicy] = Field(
         description="LLM이 선정한 정책 목록 (최대 10개)"
     )
-    selection_reasoning: str = Field(
-        description="정책 선정 근거"
-    )
     final_response: str = Field(
         description="최종 응답"
     )
@@ -150,7 +115,6 @@ class GraphState(TypedDict):
     sql_result: Optional[str]
     selected_policies: Optional[List[Dict[str, Any]]]  # LLM이 선정한 정책 목록 (딕셔너리 형태)
     final_response: Optional[str]  # 최종 답변
-    html_content: Optional[str]  # HTML 형식의 최종 결과
     error: Optional[str]  # 오류 메시지
     timestamp: str  # 처리 시각
 
@@ -175,29 +139,14 @@ class YouthPolicyRAGConfig:
         # RAG 설정
         self.top_k = int(os.getenv('TOP_K', 10))
         self.confidence_threshold = os.getenv('CONFIDENCE_THRESHOLD', 0.5)  # 분류 신뢰도 임계값
-        
-        # PostgreSQL URI 생성
-        self.db_uri = f"postgresql://{self.db_config['user']}:{self.db_config['password']}@{self.db_config['host']}:{self.db_config['port']}/{self.db_config['database']}"
 
         # LangChain LLM 설정
-        try:
-            self.chat_llm = ChatOpenAI(
-                api_key=self.openai_api_key,
-                temperature=0,
-                verbose=True,
-                model="gpt-4o",
-            )
-            logger.info("LangChain LLM 초기화 완료")
-        except Exception as e:
-            logger.warning(f"LangChain LLM 초기화 실패: {e}")
-            self.chat_llm = None
-        # SQLDatabase 설정
-        try:
-            self.sql_database = SQLDatabase.from_uri(self.db_uri)
-            logger.info("SQLDatabase 초기화 완료")
-        except Exception as e:
-            logger.warning(f"SQLDatabase 초기화 실패: {e}")
-            self.sql_database = None
+        self.chat_llm = ChatOpenAI(
+            api_key=self.openai_api_key,
+            temperature=0,
+            verbose=True,
+            model="gpt-4o",
+        )
         
         # LangChain ChatOpenAI 모델 설정 (질의 분류용)
         self.thinking_model = ChatOpenAI(
@@ -237,9 +186,6 @@ def analyze_query_node(state: GraphState) -> GraphState:
 - '그 외 정책': 주거와 일자리 관련이 아닌 기타 정책이나 질문
 - '기타': 그 외 모든 질문
 
-**중분류 (mclsf_nm):**
-- 어떤 상황이든 null로 분류해주세요.
-
 **키워드 (query_keywords):**
 - 사용자 질문에서 추출된 키워드, 정책 검색 시 유사도 판단에 사용됩니다.
 
@@ -250,11 +196,11 @@ def analyze_query_node(state: GraphState) -> GraphState:
 
 **2. 사용자 조건 추출:**
 1. age: 나이 (숫자로)
-2. mrg_stts_cd: 결혼 상태 ('기혼', '미혼' 중 하나)
-3. plcy_major_cd: 전공 계열 ('인문계열', '자연계열', '사회계열', '상경계열', '이학계열', '공학계열', '예체능계열', '농산업계열' 중 하나)
-4. job_cd: 취업 상태 ('재직자', '미취업자', '자영업자', '(예비)창업자', '영농종사자', '비정규직' 중 하나)
-5. school_cd: 학력 상태 ('고졸 미만', '고교 재학', '고졸 예정', '고교 졸업', '대학 재학', '대졸 예정', '대학 졸업', '석·박사' 중 하나)
-6. zip_cd: 거주지 (광역지자체, 기초지자체 형태로)
+2. mrg_stts_cd: 결혼 상태 ('기혼', '미혼')
+3. plcy_major_cd: 전공 계열 ('인문계열', '자연계열', '사회계열', '상경계열', '이학계열', '공학계열', '예체능계열', '농산업계열')
+4. job_cd: 취업 상태 ('재직자', '미취업자', '자영업자', '(예비)창업자', '영농종사자', '비정규직')
+5. school_cd: 학력 상태 ('고졸 미만', '고교 재학', '고졸 예정', '고교 졸업', '대학 재학', '대졸 예정', '대학 졸업', '석·박사')
+6. zip_cd: 거주지 ('전국', 광역지자체, 기초지자체 형태로)
 7. earn_etc_cn: 소득 요건 (구체적인 소득 수준이나 조건)
 8. additional_requirement: 기초생활수급자, 한부모가정, 농업인, 중소기업 등 추가적인 조건
 
@@ -275,10 +221,7 @@ def analyze_query_node(state: GraphState) -> GraphState:
         
         # 질의 분석 실행
         query_analysis = chain.invoke({"query": user_message})
-        
-        logger.info(f"질의 분석 완료: {query_analysis.lclsf_nm}/{query_analysis.mclsf_nm} (분류 신뢰도: {query_analysis.classification_confidence})")
-        logger.info(f"조건 추출 완료 (추출 신뢰도: {query_analysis.extraction_confidence})")
-        logger.info(f"추출된 조건: 나이={query_analysis.age}, 결혼상태={query_analysis.mrg_stts_cd}, 거주지={query_analysis.zip_cd}")
+        logger.info(f"질의 분석 완료: {query_analysis}")    
         
         return {
             **state,
@@ -304,62 +247,51 @@ def route_after_analysis(state: GraphState) -> Literal["continue", "reject"]:
         return "reject"
     # 주거 또는 일자리 관련이고 신뢰도가 임계값 이상인 경우만 계속 진행
     if query_analysis.lclsf_nm in ["주거", "일자리", "일반"]:
-        logger.info(f"질의 승인: {query_analysis.lclsf_nm} (분류 신뢰도: {query_analysis.classification_confidence})")
+        logger.info(f"질의 승인: {query_analysis.lclsf_nm}")
         return "continue"
     else:
-        logger.info(f"질의 거부: {query_analysis.lclsf_nm} (분류 신뢰도: {query_analysis.classification_confidence})")
+        logger.info(f"질의 거부: {query_analysis.lclsf_nm}")
         return "reject"
 
 
 
 def generate_sql_query_node(state: GraphState) -> GraphState:
     """SQL 쿼리를 생성하고 실행하는 노드"""
+    logger.info("SQL 쿼리 생성 및 실행 시작 노드")
+    
+    query_analysis = state["query_analysis"]
+    query = state["query"]
+        
     try:
-        logger.info("SQL 쿼리 생성 및 실행 시작")
+        # 직접 SQL 쿼리 생성 체인 생성
+        sql_chain = create_direct_sql_chain(config, query_analysis)
         
-        query_analysis = state["query_analysis"]
-        query = state["query"]
+        # SQL 쿼리 생성
+        logger.info("SQL 쿼리 생성 중...")
+        sql_generation = sql_chain.invoke({"query": query})
         
-        try:
-            # 직접 SQL 쿼리 생성 체인 생성
-            sql_chain = create_direct_sql_chain(config, query_analysis, query_analysis)
-            
-            # SQL 쿼리 생성
-            logger.info("SQL 쿼리 생성 중...")
-            sql_generation = sql_chain.invoke({"query": query})
-            
-            logger.info(f"생성된 SQL 쿼리: {sql_generation.sql_query}")
-            logger.info(f"쿼리 생성 근거: {sql_generation.explanation}")
-            
-            # SQL 쿼리 실행
-            logger.info("PostgreSQL 쿼리 실행 중...")
-            sql_result = execute_postgresql_query(config, sql_generation.sql_query)
-            
-            if not sql_result["success"]:
-                raise Exception(f"SQL 실행 실패: {sql_result['error']}")
-            
-            logger.info(f"쿼리 실행 완료: {sql_result['row_count']}개 결과 반환")
-            
-            return {
-                **state,
-                "generated_sql": sql_generation.sql_query,
-                "sql_result": sql_result['data'],
-                "sql_explanation": sql_generation.explanation
-            }
-            
-        except Exception as e:
-            logger.error(f"SQL 쿼리 처리 실패: {e}")
-            error_message = f"정책 검색 중 오류가 발생했습니다: {str(e)}"
-            return {
-                **state,
-                "error": error_message
-            }
+        logger.info(f"SQL 쿼리 생성 완료.")
         
-    except Exception as e:
-        logger.error(f"SQL 쿼리 노드 실행 실패: {e}")
+        # SQL 쿼리 실행
+        sql_result = execute_postgresql_query(config, sql_generation.sql_query)
+        
+        if not sql_result["success"]:
+            raise Exception(f"SQL 실행 실패: {sql_result['error']}")
+        
+        logger.info(f"쿼리 실행 완료: {sql_result['row_count']}개 결과 반환")
+        
         return {
             **state,
-            "error": f"SQL 쿼리 생성 중 오류가 발생했습니다: {str(e)}"
+            "generated_sql": sql_generation.sql_query,
+            "sql_result": sql_result['data'],
+        }
+        
+    except Exception as e:
+        logger.error(f"SQL 쿼리 처리 실패: {e}")
+        error_message = f"정책 검색 중 오류가 발생했습니다: {str(e)}"
+        return {
+            **state,
+            "error": error_message
         }
 
 
@@ -395,12 +327,10 @@ def generate_response_node(state: GraphState) -> GraphState:
 2. 사용자 질문의 키워드와 관련성이 높은 정책을 선정
 3. 최대 10개까지의 정책을 선정
 4. 선정된 각 정책에 대해 plcy_no, plcy_nm, plcy_expln_nm, lclsf_nm, mclsf_nm, zip_cd, inq_cnt 정보를 정확히 추출
-5. 선정 근거를 명확히 제시
 
 **주의사항:**
 - 검색 결과에서 실제 존재하는 정책만 선정
 - 정책 정보는 검색 결과에서 정확히 추출
-- mclsf_nm이 null인 경우 빈 문자열로 처리
 
 **답변 가이드라인:**
 1. 검색 결과를 바탕으로 정확한 정보를 제공하세요
@@ -430,8 +360,7 @@ def generate_response_node(state: GraphState) -> GraphState:
             "search_data": str(sql_result)
         })
         
-        logger.info(f"정책 선정 완료: {len(policy_selection_result.selected_policies)}개 정책 선정")
-        logger.info(f"선정 근거: {policy_selection_result.selection_reasoning}")
+        logger.info(f"정책 선정 및 응답 완료: {len(policy_selection_result.selected_policies)}개 정책 선정")
         
 
         # 메시지 리스트에 AI 응답 추가
@@ -458,8 +387,6 @@ def generate_response_node(state: GraphState) -> GraphState:
 def reject_query_node(state: GraphState) -> GraphState:
     """질의 거부 노드"""
     logger.info("질의 거부 처리")
-    
-    query_analysis = state.get("query_analysis")
     
     if state.get("error"):
         response = f"""죄송합니다. 질문을 처리하는 중 오류가 발생했습니다.
@@ -496,17 +423,7 @@ def reject_query_node(state: GraphState) -> GraphState:
 def get_postgresql_schema(config) -> str:
     """PostgreSQL 데이터베이스 스키마 정보를 가져오는 함수"""
     try:
-        # config의 db_config를 사용하여 직접 연결
-        conn = psycopg2.connect(
-            host=config.db_config['host'],
-            database=config.db_config['database'],
-            user=config.db_config['user'],
-            password=config.db_config['password'],
-            port=config.db_config['port']
-        )
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-
-        # 테이블 스키마 정보 쿼리 (policies, policy_conditions 테이블만, 코멘트 포함)
+        # 테이블 스키마 정보 쿼리 (policies 테이블만, 코멘트 포함)
         schema_query = """
         SELECT 
             t.table_name,
@@ -526,10 +443,12 @@ def get_postgresql_schema(config) -> str:
             AND col_desc.objsubid = c.ordinal_position
         WHERE t.table_schema = 'public'
         AND t.table_type = 'BASE TABLE'
-        AND t.table_name IN ('policies', 'policy_conditions')
+        AND t.table_name IN ('policies')
         ORDER BY t.table_name, c.ordinal_position;
         """
-        
+        conn = psycopg2.connect(**config.db_config)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
         cursor.execute(schema_query)
         schema_results = cursor.fetchall()
 
@@ -552,7 +471,7 @@ def get_postgresql_schema(config) -> str:
         
         cursor.close()
         conn.close()
-        
+
         return schema_info
         
     except Exception as e:
@@ -563,16 +482,9 @@ def get_postgresql_schema(config) -> str:
 def execute_postgresql_query(config, sql_query: str) -> Dict[str, Any]:
     """PostgreSQL 쿼리를 직접 실행하는 함수"""
     try:
-        # config의 db_config를 사용하여 직접 연결
-        conn = psycopg2.connect(
-            host=config.db_config['host'],
-            database=config.db_config['database'],
-            user=config.db_config['user'],
-            password=config.db_config['password'],
-            port=config.db_config['port']
-        )
+        conn = psycopg2.connect(**config.db_config)
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
+
         # 쿼리 실행
         cursor.execute(sql_query)
         results = cursor.fetchall()
@@ -598,7 +510,7 @@ def execute_postgresql_query(config, sql_query: str) -> Dict[str, Any]:
         }
 
 
-def create_direct_sql_chain(config, query_analysis, user_condition):
+def create_direct_sql_chain(config, query_analysis):
     """직접 SQL 쿼리를 생성하는 LLM 체인을 생성하는 함수"""
     
     # 데이터베이스 스키마 정보 가져오기
@@ -620,7 +532,7 @@ zip_cd -> string 값 (예: '전국', '서울특별시', '대구광역시', '경�
 earn_etc_cn -> string 값 (예: '중위소득 150% 이하', '월소득 200만원 이하')
 
 **분류 정보:** {query_analysis.lclsf_nm}
-**조건 정보:** {user_condition}
+**조건 정보:** {query_analysis}
 
 **쿼리 생성 규칙:**
 1. 반드시 PostgreSQL 문법을 사용하세요
@@ -632,7 +544,7 @@ earn_etc_cn -> string 값 (예: '중위소득 150% 이하', '월소득 200만원
     - lclsf_nm 이 '일반'인 경우 policies 테이블의 lclsf_nm의 '주거', '일자리'를 각각 5개씩 반환합니다.
 7. 나이 정보는 policies 테이블의 sprt_trgt_min_age, sprt_trgt_max_age 컬럼을 사용하여 필터링하세요
     - sprt_trgt_min_age와 sprt_trgt_max_age 가 0 인 경우는 필터링하지 않습니다.
-    - 예: sprt_trgt_min_age <= {user_condition.age} AND sprt_trgt_max_age >= {user_condition.age} OR (sprt_trgt_min_age = 0 AND sprt_trgt_max_age = 0)
+    - 예: sprt_trgt_min_age <= 25 AND sprt_trgt_max_age >= 25 OR (sprt_trgt_min_age = 0 AND sprt_trgt_max_age = 0)
 8. mrg_stts_cd 검색 시 IN (조건 정보,'제한없음') 형태로 필터링하세요
 9. school_cd, plcy_major_cd, job_cd 검색 시 '제한없음'과 해당 조건을 필터링 하세요
     - 예 school_cd ILIKE '%대학 졸업%' OR school_cd = '제한없음'
