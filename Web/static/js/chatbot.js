@@ -320,6 +320,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 원본 메시지를 저장
                 const originalMessage = message;
                 // 토큰 재발급 후 원본 메시지로 다시 요청
+                // 재요청 시에도 로딩 메시지 표시
+                const retryLoadingElement = displayMessage('답변을 생성중입니다...', 'bot', true);
+                
                 fetch('/chatbot/api/chat/', {
                     method: 'POST',
                     headers: {
@@ -334,6 +337,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .then(response => response.json())
                 .then(data => {
+                    // 재요청의 로딩 요소 제거
+                    retryLoadingElement.remove();
+                    
                     if (data.status === 'success' && data.messages) {
                         data.messages.forEach(msg => {
                             if (msg.sender === 'chatbot') {
@@ -349,6 +355,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 })
                 .catch(error => {
+                    // 재요청 실패 시에도 로딩 요소 제거
+                    retryLoadingElement.remove();
                     displayMessage('네트워크 오류가 발생했습니다. 다시 시도해주세요.', 'bot');
                 });
                 return;
