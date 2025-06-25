@@ -20,7 +20,6 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
 # LangChain SQL imports
-from langchain_community.utilities import SQLDatabase
 from langchain_openai import ChatOpenAI
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -151,7 +150,7 @@ class YouthPolicyRAGConfig:
         # LangChain ChatOpenAI 모델 설정 (질의 분류용)
         self.thinking_model = ChatOpenAI(
             api_key=self.openai_api_key,
-            model="o3-mini",
+            model="gpt-4o",
         )
 
 
@@ -200,13 +199,12 @@ def analyze_query_node(state: GraphState) -> GraphState:
 3. plcy_major_cd: 전공 계열 ('인문계열', '자연계열', '사회계열', '상경계열', '이학계열', '공학계열', '예체능계열', '농산업계열')
 4. job_cd: 취업 상태 ('재직자', '미취업자', '자영업자', '(예비)창업자', '영농종사자', '비정규직')
 5. school_cd: 학력 상태 ('고졸 미만', '고교 재학', '고졸 예정', '고교 졸업', '대학 재학', '대졸 예정', '대학 졸업', '석·박사')
-6. zip_cd: 거주지 ('전국', 광역지자체, 기초지자체 형태로)
+6. zip_cd: 거주지 (광역지자체, 기초지자체 형태로)
 7. earn_etc_cn: 소득 요건 (구체적인 소득 수준이나 조건)
 8. additional_requirement: 기초생활수급자, 한부모가정, 농업인, 중소기업 등 추가적인 조건
 
 **추출 규칙:**
 - 명시적으로 언급되지 않은 조건은 None으로 설정
-- 추론이나 가정하지 말고, 명확히 언급된 내용만 추출
 - 거주지는 "서울특별시", "대구광역시", "경상북도", "전북특별자치도", "강원특별자치도", "서울특별시 구로구", "경기도 수원시 팔달구" 의 형태로 추출
 - 소득은 "월소득 200만원 이하", "중위소득 150% 이하" 등의 형태로 추출
 - classification_confidence는 분류의 명확성을 기준으로 평가

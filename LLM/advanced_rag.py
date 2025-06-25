@@ -20,7 +20,6 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
 # LangChain SQL imports
-from langchain_community.utilities import SQLDatabase
 from langchain_openai import ChatOpenAI
 import psycopg2
 from psycopg2.extras import RealDictCursor
