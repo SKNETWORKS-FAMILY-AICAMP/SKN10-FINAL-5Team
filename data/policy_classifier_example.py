@@ -20,7 +20,7 @@ def example_1_train_model():
     # 모델 훈련
     metrics = classifier.train(
         train_data_path="청년정책목록_전체.csv",
-        validate_on_separate_data="청년정책목록_전처리완료_2025-06-09.csv"
+        validate_on_separate_data="청년정책목록_전처리완료_2025-06-17.csv"
     )
     
     # 모델 저장
@@ -35,8 +35,12 @@ def example_2_load_and_predict():
     """예제 2: 저장된 모델 로드 및 예측"""
     print("\n=== 예제 2: 모델 로드 및 예측 ===")
     
-    # 저장된 모델 로드
-    classifier = PolicyClassifier("policy_classifier_model.pkl")
+    # 저장된 모델 로드가 실패하면 간단한 테스트만 수행
+    try:
+        classifier = PolicyClassifier("simple_model.pkl")
+    except:
+        print("저장된 모델이 없습니다. 먼저 모델을 훈련하세요.")
+        return
     
     # 단일 텍스트 예측
     test_text = "청년 취업 지원 프로그램으로 면접 기술과 이력서 작성을 도와드립니다"
@@ -54,12 +58,15 @@ def example_3_batch_prediction():
     """예제 3: 배치 예측"""
     print("\n=== 예제 3: 배치 예측 ===")
     
-    # 저장된 모델 로드
-    classifier = PolicyClassifier("policy_classifier_model.pkl")
+    try:
+        classifier = PolicyClassifier("policy_classifier_model.pkl")
+    except:
+        print("저장된 모델이 없습니다. 먼저 모델을 훈련하세요.")
+        return
     
     # 파일 기반 배치 예측 (확률값 포함)
     classifier.predict_file(
-        input_file_path="청년정책목록_전처리완료_2025-06-09.csv",
+        input_file_path="청년정책목록_전처리완료_2025-06-17.csv",
         output_file_path="예측_결과_with_probabilities.csv",
         include_probabilities=True
     )
@@ -71,7 +78,11 @@ def example_4_multiple_texts():
     """예제 4: 여러 텍스트 동시 예측"""
     print("\n=== 예제 4: 여러 텍스트 동시 예측 ===")
     
-    classifier = PolicyClassifier("policy_classifier_model.pkl")
+    try:
+        classifier = PolicyClassifier("simple_model.pkl")
+    except:
+        print("저장된 모델이 없습니다. 먼저 모델을 훈련하세요.")
+        return
     
     # 여러 텍스트 리스트
     test_texts = [
@@ -92,7 +103,11 @@ def example_5_dataframe_prediction():
     """예제 5: DataFrame 직접 예측"""
     print("\n=== 예제 5: DataFrame 직접 예측 ===")
     
-    classifier = PolicyClassifier("policy_classifier_model.pkl")
+    try:
+        classifier = PolicyClassifier("simple_model.pkl")
+    except:
+        print("저장된 모델이 없습니다. 먼저 모델을 훈련하세요.")
+        return
     
     # 샘플 DataFrame 생성
     sample_data = pd.DataFrame({
@@ -129,10 +144,14 @@ def example_6_model_validation():
     """예제 6: 모델 성능 검증"""
     print("\n=== 예제 6: 모델 성능 검증 ===")
     
-    classifier = PolicyClassifier("policy_classifier_model.pkl")
+    try:
+        classifier = PolicyClassifier("policy_classifier_model.pkl")
+    except:
+        print("저장된 모델이 없습니다. 먼저 모델을 훈련하세요.")
+        return
     
     # 검증 수행
-    metrics = classifier.validate("청년정책목록_전처리완료_2025-06-09.csv")
+    metrics = classifier.validate("청년정책목록_전처리완료_2025-06-17.csv")
     
     print("검증 결과:")
     for metric, value in metrics.items():
@@ -151,13 +170,11 @@ def main():
         print("직접 실행하려면 example_1_train_model() 주석을 해제하세요.")
         
         # 예제 2-6은 훈련된 모델이 있다고 가정
-        # example_2_load_and_predict()
-        # example_3_batch_prediction()
-        # example_4_multiple_texts()
-        # example_5_dataframe_prediction()
-        # example_6_model_validation()
+        example_2_load_and_predict()
+        example_4_multiple_texts()
+        example_5_dataframe_prediction()
         
-        print("\n모든 예제를 실행하려면 먼저 모델을 훈련하세요:")
+        print("\n추가 예제를 실행하려면:")
         print("python policy_classifier.py train --data 청년정책목록_전체.csv --model policy_classifier_model.pkl")
         
     except FileNotFoundError as e:
