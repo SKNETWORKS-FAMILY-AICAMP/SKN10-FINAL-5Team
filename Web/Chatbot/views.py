@@ -295,7 +295,7 @@ def send_message(request):
                 session=session,
                 sender='chatbot',
                 content=bot_response,
-                sql_result=graph_result['selected_policies'],
+                sql_result=filtered_sql_result,
                 create_dt=timezone.localtime(timezone.now())
             )
             
@@ -328,7 +328,7 @@ def send_message(request):
                         'id': bot_message.msg_id,
                         'sender': 'chatbot',
                         'content': bot_response,
-                        'sql_result': graph_result['selected_policies'],
+                        'sql_result': filtered_sql_result,
                         'created_at': timezone.localtime(bot_message.create_dt).strftime('%Y-%m-%d %H:%M')
                     }
                 ]

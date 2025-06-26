@@ -3,8 +3,8 @@ import pandas as pd
 import pickle
 import tiktoken
 from dotenv import load_dotenv
-from langchain_openai import OpenAIEmbeddings
-from langchain_community.vectorstores import FAISS
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import FAISS
 from langchain.docstore.document import Document
 
 load_dotenv()

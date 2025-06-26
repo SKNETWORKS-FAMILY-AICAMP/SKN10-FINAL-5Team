@@ -1,139 +1,47 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Youth Policy Data Processing Pipeline - 4 Lambda Functions with Secrets Manager'
+Description: 'Youth Policy Data Processing Pipeline'
 
 Parameters:
-  SecretName:
+  DBHost:
     Type: String
-    Default: 'youth-policy-secrets'
-    Description: Name of the Secrets Manager secret containing DB credentials and API keys
-  
-  BucketName:
+    Description: PostgreSQL RDS host
+  DBPort:
     Type: String
-    Default: 'youth-policy-data-bucket'
-    Description: S3 bucket name for data storage
+    Default: '5432'
+    Description: PostgreSQL RDS port
+  DBName:
+    Type: String
+    Description: PostgreSQL database name
+  DBUser:
+    Type: String
+    Description: PostgreSQL database user
+  DBPassword:
+    Type: String
+    NoEcho: true
+    Description: PostgreSQL database password
 
 Resources:
-  # Use existing Secrets Manager Secret (no need to create new one)
-
-  # S3 Bucket for data storage
-  DataBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Ref BucketName
-      VersioningConfiguration:
-        Status: Enabled
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
-      NotificationConfiguration:
-        LambdaConfigurations:
-          - Event: s3:ObjectCreated:*
-            Function: !GetAtt Lambda2DataPreprocessing.Arn
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: 'raw/'
-          - Event: s3:ObjectCreated:*
-            Function: !GetAtt Lambda3MLClassification.Arn
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: 'preprocessed/'
-          - Event: s3:ObjectCreated:*
-            Function: !GetAtt Lambda4RDSStorage.Arn
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: 'policy_reclassified/'
-
-  # Lambda 1: Raw Data Ingestion (Weekly Schedule)
-  Lambda1RawDataIngest:
+  # Lambda function for data processing
+  DataProcessingFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: youth-policy-lambda1-raw-data-ingest
+      FunctionName: youth-policy-data-processor
       Handler: lambda_function.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
         ZipFile: |
-          # Lambda1 function code will be deployed separately
-          def lambda_handler(event, context):
-              return {"statusCode": 200, "body": "Lambda1 placeholder"}
+          # Lambda function code will be deployed via GitHub Actions
       Runtime: python3.9
-      Timeout: 600
+      Timeout: 300
       MemorySize: 512
       Environment:
         Variables:
-          S3_BUCKET_NAME: !Ref DataBucket
-          SECRET_NAME: !Ref SecretName
-          DATA_SOURCE: 'api'
-
-  # Lambda 2: Data Preprocessing
-  Lambda2DataPreprocessing:
-    Type: AWS::Lambda::Function
-    Properties:
-      FunctionName: youth-policy-lambda2-data-preprocessing
-      Handler: lambda_function.lambda_handler
-      Role: !GetAtt LambdaExecutionRole.Arn
-      Code:
-        ZipFile: |
-          # Lambda2 function code will be deployed separately
-          def lambda_handler(event, context):
-              return {"statusCode": 200, "body": "Lambda2 placeholder"}
-      Runtime: python3.9
-      Timeout: 600
-      MemorySize: 1024
-      Environment:
-        Variables:
-          S3_BUCKET_NAME: !Ref DataBucket
-          SECRET_NAME: !Ref SecretName
-
-  # Lambda 3: ML Classification
-  Lambda3MLClassification:
-    Type: AWS::Lambda::Function
-    Properties:
-      FunctionName: youth-policy-lambda3-ml-classification
-      Handler: lambda_function.lambda_handler
-      Role: !GetAtt LambdaExecutionRole.Arn
-      Code:
-        ZipFile: |
-          # Lambda3 function code will be deployed separately
-          def lambda_handler(event, context):
-              return {"statusCode": 200, "body": "Lambda3 placeholder"}
-      Runtime: python3.9
-      Timeout: 900
-      MemorySize: 2048
-      Environment:
-        Variables:
-          S3_BUCKET_NAME: !Ref DataBucket
-          SECRET_NAME: !Ref SecretName
-          MODEL_S3_KEY: 'models/policy_classifier.pkl'
-
-  # Lambda 4: RDS Storage
-  Lambda4RDSStorage:
-    Type: AWS::Lambda::Function
-    Properties:
-      FunctionName: youth-policy-lambda4-rds-storage
-      Handler: lambda_function.lambda_handler
-      Role: !GetAtt LambdaExecutionRole.Arn
-      Code:
-        ZipFile: |
-          # Lambda4 function code will be deployed separately
-          def lambda_handler(event, context):
-              return {"statusCode": 200, "body": "Lambda4 placeholder"}
-      Runtime: python3.9
-      Timeout: 600
-      MemorySize: 1024
-      Environment:
-        Variables:
-          S3_BUCKET_NAME: !Ref DataBucket
-          SECRET_NAME: !Ref SecretName
-          POLICIES_TABLE: 'youth_policies'
-          CLASSIFICATIONS_TABLE: 'policy_classifications'
+          DB_HOST: !Ref DBHost
+          DB_PORT: !Ref DBPort
+          DB_NAME: !Ref DBName
+          DB_USER: !Ref DBUser
+          DB_PASSWORD: !Ref DBPassword
+          S3_BUCKET_NAME: youth-policy-data-bucket
 
   # IAM Role for Lambda
   LambdaExecutionRole:
@@ -149,7 +57,7 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
-        - PolicyName: S3FullAccess
+        - PolicyName: S3Access
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -157,129 +65,23 @@ Resources:
                 Action:
                   - s3:GetObject
                   - s3:PutObject
-                  - s3:ListBucket
-                  - s3:DeleteObject
                 Resource: 
-                  - !Sub '${DataBucket}/*'
-                  - !GetAtt DataBucket.Arn
-        - PolicyName: SecretsManagerAccess
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - secretsmanager:GetSecretValue
-                  - secretsmanager:DescribeSecret
-                Resource: !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${SecretName}*'
+                  - arn:aws:s3:::youth-policy-data-bucket/raw/*
+                  - arn:aws:s3:::youth-policy-data-bucket/processed/*
 
-  # Lambda Permissions for S3 triggers
-  Lambda2S3Permission:
+
+
+  # Lambda Permission for S3
+  LambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref Lambda2DataPreprocessing
+      FunctionName: !Ref DataProcessingFunction
       Principal: s3.amazonaws.com
       SourceAccount: !Ref AWS::AccountId
-      SourceArn: !GetAtt DataBucket.Arn
-
-  Lambda3S3Permission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref Lambda3MLClassification
-      Principal: s3.amazonaws.com
-      SourceAccount: !Ref AWS::AccountId
-      SourceArn: !GetAtt DataBucket.Arn
-
-  Lambda4S3Permission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref Lambda4RDSStorage
-      Principal: s3.amazonaws.com
-      SourceAccount: !Ref AWS::AccountId
-      SourceArn: !GetAtt DataBucket.Arn
-
-  # CloudWatch Event Rule for Lambda1 (Weekly execution - Every Sunday 2AM KST)
-  Lambda1WeeklyScheduleRule:
-    Type: AWS::Events::Rule
-    Properties:
-      Name: youth-policy-lambda1-weekly-schedule
-      Description: 'Weekly schedule for Lambda1 raw data ingestion (Every Sunday 2AM KST = Saturday 5PM UTC)'
-      ScheduleExpression: 'cron(0 17 ? * SAT *)'  # Every Saturday 5PM UTC (Sunday 2AM KST)
-      State: ENABLED
-      Targets:
-        - Arn: !GetAtt Lambda1RawDataIngest.Arn
-          Id: Lambda1WeeklyTarget
-          Input: !Sub |
-            {
-              "source": "aws.events",
-              "detail-type": "Scheduled Event",
-              "detail": {
-                "schedule": "weekly",
-                "trigger": "cloudwatch-events"
-              }
-            }
-
-  # Lambda1 CloudWatch Event Permission
-  Lambda1EventPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref Lambda1RawDataIngest
-      Principal: events.amazonaws.com
-      SourceArn: !GetAtt Lambda1WeeklyScheduleRule.Arn
-
-  # CloudWatch Log Groups
-  Lambda1LogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${Lambda1RawDataIngest}'
-      RetentionInDays: 14
-
-  Lambda2LogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${Lambda2DataPreprocessing}'
-      RetentionInDays: 14
-
-  Lambda3LogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${Lambda3MLClassification}'
-      RetentionInDays: 14
-
-  Lambda4LogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${Lambda4RDSStorage}'
-      RetentionInDays: 14
+      SourceArn: arn:aws:s3:::youth-policy-data-bucket
 
 Outputs:
-  SecretArn:
-    Description: ARN of the existing Secrets Manager secret
-    Value: !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${SecretName}'
-    
-  DataBucket:
-    Description: S3 bucket for data storage
-    Value: !Ref DataBucket
-    
-  Lambda1Function:
-    Description: Lambda1 - Raw Data Ingestion (Weekly Schedule)
-    Value: !Ref Lambda1RawDataIngest
-    
-  Lambda2Function:
-    Description: Lambda2 - Data Preprocessing
-    Value: !Ref Lambda2DataPreprocessing
-    
-  Lambda3Function:
-    Description: Lambda3 - ML Classification
-    Value: !Ref Lambda3MLClassification
-    
-  Lambda4Function:
-    Description: Lambda4 - RDS Storage
-    Value: !Ref Lambda4RDSStorage
-    
-  ScheduleRule:
-    Description: CloudWatch Events rule for weekly execution
-    Value: !Ref Lambda1WeeklyScheduleRule 
+  LambdaFunctionName:
+    Description: Name of the Lambda function
+    Value: !Ref DataProcessingFunction 
