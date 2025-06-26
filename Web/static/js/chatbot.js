@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const chatContainer = document.getElementById('chat-messages');
         // 채팅 컨테이너가 없으면 에러 로그 출력 후 함수 종료
         if (!chatContainer) {
-            console.error('채팅 컨테이너를 찾을 수 없습니다.');
+            // console.error('채팅 컨테이너를 찾을 수 없습니다.');
             return;
         }
 
@@ -230,17 +230,17 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             // 토큰 재발급 후 재요청 처리
             if (data.status === 'token_refreshed') {
-                console.log('토큰이 갱신되었습니다. 새 세션 생성을 다시 요청합니다.');
+                // console.log('토큰이 갱신되었습니다. 새 세션 생성을 다시 요청합니다.');
                 resetChatSession(); // 재귀적으로 다시 호출
                 return;
             }
-            console.log('새 세션이 생성되었습니다.');
+            // console.log('새 세션이 생성되었습니다.');
             
             // 새 세션 생성 후 사이드바 리스트 업데이트
             loadSessionList();
         })
         .catch(error => {
-            console.error('세션 생성 중 오류 발생:', error);
+            // console.error('세션 생성 중 오류 발생:', error);
         });
     }
 
@@ -394,7 +394,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // 채팅 메시지 컨테이너 요소 선택
         const messagesContainer = document.getElementById('chat-messages');
         if (!messagesContainer) {
-            console.error('채팅 컨테이너를 찾을 수 없습니다.');
+            // console.error('채팅 컨테이너를 찾을 수 없습니다.');
             return;
         }
 
@@ -574,7 +574,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 세션 리스트를 불러오는 함수
     function loadSessionList() {
-        console.log('세션 리스트 로드 시작');
+        // console.log('세션 리스트 로드 시작');
         
         // 서버에서 세션 목록을 요청하는 fetch 요청
         fetch('/chatbot/api/sessions/', {
@@ -584,43 +584,52 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .then(res => {
-            console.log('서버 응답 상태:', res.status);
+            // console.log('서버 응답 상태:', res.status);
             // 401 상태 코드(인증 실패)인 경우 로그인 페이지로 이동
             if (res.status === 401) {
-                console.log('인증 실패, 로그인 페이지로 이동');
+                // console.log('인증 실패, 로그인 페이지로 이동');
                 window.location.href = '/user/login/';
                 return;
-            }
-            // 응답이 성공적이지 않으면 에러 발생
-            if (!res.ok) {
-                throw new Error('세션 목록을 불러오는데 실패했습니다.');
             }
             return res.json();
         })
         .then(data => {
-            console.log('받은 데이터:', data);
-            // 데이터가 없으면 함수 종료
-            if (!data) return;
+            // console.log('받은 데이터:', data);
             
             // 토큰 재발급 후 재요청 처리
             if (data.status === 'token_refreshed') {
-                console.log('토큰이 갱신되었습니다. 세션 목록을 다시 요청합니다.');
+                // console.log('토큰이 갱신되었습니다. 세션 목록을 다시 요청합니다.');
                 loadSessionList(); // 재귀적으로 다시 호출
                 return;
             }
             
             // 세션 리스트 컨테이너 요소 선택
-            const listContainer = document.getElementById('session-list');
-            // 세션 리스트 컨테이너가 없으면 에러 로그 출력 후 함수 종료
-            if (!listContainer) {
-                console.error('세션 리스트 컨테이너를 찾을 수 없습니다.');
+            const sessionListContainer = document.getElementById('session-list');
+            if (!sessionListContainer) {
+                // console.error('세션 리스트 컨테이너를 찾을 수 없습니다.');
                 return;
             }
+            
+            // console.log('세션 목록 렌더링 시작:', data.sessions);
+            
+            // 세션 목록이 비어있는 경우
+            if (!data.sessions || data.sessions.length === 0) {
+                // console.log('세션 목록이 비어있음');
+                sessionListContainer.innerHTML = `
+                    <div class="p-4 text-center text-gray-500">
+                        <p>대화 기록이 없습니다.</p>
+                        <p class="text-sm mt-1">새로운 대화를 시작해보세요!</p>
+                    </div>
+                `;
+                return;
+            }
+            
             // 세션 리스트 컨테이너 내용 초기화
-            listContainer.innerHTML = '';
+            sessionListContainer.innerHTML = '';
+            
             // 세션이 있고 개수가 0보다 크면
             if (data.sessions && data.sessions.length > 0) {
-                console.log('세션 목록 렌더링 시작:', data.sessions);
+                // console.log('세션 목록 렌더링 시작:', data.sessions);
                 // 각 세션에 대해 HTML 요소 생성
                 data.sessions.forEach(session => {
                     // 세션 div 요소 생성
@@ -647,21 +656,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     // 세션 클릭 시 해당 세션의 상세 정보를 불러오는 이벤트 리스너 추가
                     div.addEventListener('click', () => loadSessionDetail(session.id));
                     // 세션 리스트 컨테이너에 세션 div 추가
-                    listContainer.appendChild(div);
+                    sessionListContainer.appendChild(div);
                 });
             } else {
-                console.log('세션 목록이 비어있음');
+                // console.log('세션 목록이 비어있음');
                 // 세션이 없을 때 표시할 메시지
-                listContainer.innerHTML = '<p class="text-center text-slate-500 text-sm py-4">대화 내역이 없습니다.</p>';
+                sessionListContainer.innerHTML = '<p class="text-center text-slate-500 text-sm py-4">대화 내역이 없습니다.</p>';
             }
         })
         .catch(error => {
-            console.error('세션 목록 로드 중 오류:', error);
+            // console.error('세션 목록 로드 중 오류:', error);
             // 세션 리스트 컨테이너 요소 선택
-            const listContainer = document.getElementById('session-list');
+            const sessionListContainer = document.getElementById('session-list');
             // 세션 리스트 컨테이너가 있으면 에러 메시지 표시
-            if (listContainer) {
-                listContainer.innerHTML = '<p class="text-center text-red-500 text-sm py-4">세션 목록을 불러오는데 실패했습니다.</p>';
+            if (sessionListContainer) {
+                sessionListContainer.innerHTML = '<p class="text-center text-red-500 text-sm py-4">세션 목록을 불러오는데 실패했습니다.</p>';
             }
         });
     }
@@ -695,7 +704,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // 토큰 재발급 후 재요청 처리
             if (data.status === 'token_refreshed') {
-                console.log('토큰이 갱신되었습니다. 세션 상세 정보를 다시 요청합니다.');
+                // console.log('토큰이 갱신되었습니다. 세션 상세 정보를 다시 요청합니다.');
                 loadSessionDetail(sessionId); // 재귀적으로 다시 호출
                 return;
             }
@@ -704,7 +713,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const chatContainer = document.getElementById('chat-messages');
             // 채팅 컨테이너가 없으면 에러 로그 출력 후 함수 종료
             if (!chatContainer) {
-                console.error('채팅 컨테이너를 찾을 수 없습니다.');
+                // console.error('채팅 컨테이너를 찾을 수 없습니다.');
                 return;
             }
             // 채팅 컨테이너 내용 초기화
@@ -726,7 +735,7 @@ document.addEventListener('DOMContentLoaded', function() {
             loadSessionList();
         })
         .catch(error => {
-            console.error('세션 상세 정보 로드 중 오류:', error);
+            // console.error('세션 상세 정보 로드 중 오류:', error);
             // 채팅 메시지 컨테이너 요소 선택
             const chatContainer = document.getElementById('chat-messages');
             // 채팅 컨테이너가 있으면 에러 메시지 표시
@@ -782,7 +791,7 @@ document.addEventListener('DOMContentLoaded', function() {
             searchLoading.classList.add('hidden');
             
             if (data.status === 'token_refreshed') {
-                console.log('토큰이 갱신되었습니다. 검색을 다시 요청합니다.');
+                // console.log('토큰이 갱신되었습니다. 검색을 다시 요청합니다.');
                 performSearch(query);
                 return;
             }
@@ -794,7 +803,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
-            console.error('검색 중 오류 발생:', error);
+            // console.error('검색 중 오류 발생:', error);
             searchLoading.classList.add('hidden');
             if (error.message === 'Unauthorized') {
                 window.location.href = '/user/login/';
@@ -871,14 +880,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!data) return;
             
             if (data.status === 'token_refreshed') {
-                console.log('토큰이 갱신되었습니다. 세션 상세 정보를 다시 요청합니다.');
+                // console.log('토큰이 갱신되었습니다. 세션 상세 정보를 다시 요청합니다.');
                 loadSessionWithScroll(sessionId, messageId);
                 return;
             }
             
             const chatContainer = document.getElementById('chat-messages');
             if (!chatContainer) {
-                console.error('채팅 컨테이너를 찾을 수 없습니다.');
+                // console.error('채팅 컨테이너를 찾을 수 없습니다.');
                 return;
             }
             
@@ -916,7 +925,7 @@ document.addEventListener('DOMContentLoaded', function() {
             loadSessionList();
         })
         .catch(error => {
-            console.error('세션 상세 정보 로드 중 오류:', error);
+            // console.error('세션 상세 정보 로드 중 오류:', error);
             const chatContainer = document.getElementById('chat-messages');
             if (chatContainer) {
                 chatContainer.innerHTML = '<p class="text-center text-red-500 text-sm py-4">대화 내용을 불러오는데 실패했습니다.</p>';
@@ -938,7 +947,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 페이지 로드 시 초기화
-    console.log('페이지 로드 완료, 초기화 시작');
+    // console.log('페이지 로드 완료, 초기화 시작');
     // 예시 질문 버튼들에 이벤트 리스너 설정
     setupPresetButtons();
     // 세션 리스트 로드

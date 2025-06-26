@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // 토큰 갱신 상태인 경우 재요청
       if (data.status === 'token_refreshed' && !retry) {
-        console.log('토큰이 갱신되었습니다. 알림 개수를 다시 요청합니다.');
+        // console.log('토큰이 갱신되었습니다. 알림 개수를 다시 요청합니다.');
         fetchNotificationCount(true);
         return;
       }
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const isNew = data.is_new;
       updateNotificationUI(isNew);
     } catch (error) {
-      console.error('알림 개수 가져오기 실패:', error);
+      // console.error('알림 개수 가져오기 실패:', error);
     }
   }
 
@@ -75,14 +75,14 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // 토큰 갱신 상태인 경우 재요청
       if (data.status === 'token_refreshed' && !retry) {
-        console.log('토큰이 갱신되었습니다. 알림 읽음 처리를 다시 요청합니다.');
+        // console.log('토큰이 갱신되었습니다. 알림 읽음 처리를 다시 요청합니다.');
         markNotificationsAsRead(true);
         return;
       }
       
       notificationDot.classList.add('hidden');
     } catch (error) {
-      console.error('알림 읽음 처리 실패:', error);
+      // console.error('알림 읽음 처리 실패:', error);
     }
   }
 

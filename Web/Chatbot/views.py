@@ -1,5 +1,5 @@
 import json
-import logging
+# import logging
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -16,7 +16,7 @@ from django.utils import timezone
 import difflib
 from Home.models import Policies
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 # 챗봇 페이지 렌더링
 def chatbot_view(request):
@@ -25,15 +25,15 @@ def chatbot_view(request):
 # 현재 로그인한 사용자의 챗봇 세션 리스트 반환
 def session_list(request):
 
-    print("현재 사용자:", request.user)
-    print("인증 여부:", request.user.is_authenticated)
+    # print("현재 사용자:", request.user)
+    # print("인증 여부:", request.user.is_authenticated)
     
     # 마지막 메시지의 생성일자를 기준으로 세션을 정렬
     sessions = ChatSession.objects.filter(user=request.user).annotate(
         last_message_time=Max('message__create_dt')
     ).order_by('-last_message_time', '-create_dt')
     
-    print("조회된 세션 수:", sessions.count())
+    # print("조회된 세션 수:", sessions.count())
     
     session_list = []
     for session in sessions:
@@ -45,7 +45,7 @@ def session_list(request):
             'name': session.session_nm,
             'created_at': local_time.strftime('%Y-%m-%d %H:%M')
         })
-    print("반환할 데이터:", session_list)
+    # print("반환할 데이터:", session_list)
 
     return JsonResponse({'sessions': session_list})
 
@@ -78,7 +78,7 @@ def session_detail(request, session_id):
     except ChatSession.DoesNotExist:
         return JsonResponse({'error': '세션을 찾을 수 없습니다.'}, status=404)
     except Exception as e:
-        print(f"세션 상세 조회 오류: {e}")
+        # print(f"세션 상세 조회 오류: {e}")
         return JsonResponse({
             'status': 'error',
             'message': '세션 상세 정보를 불러오는데 실패했습니다.'
@@ -186,7 +186,7 @@ def search_chat_history(request):
             })
             
         except Exception as e:
-            print(f"검색 중 오류 발생: {e}")
+            # print(f"검색 중 오류 발생: {e}")
             return JsonResponse({
                 'status': 'error',
                 'message': '검색 중 오류가 발생했습니다.'
@@ -235,7 +235,7 @@ def send_message(request):
             
             # 챗봇 응답 생성
             try:
-                logger.info(f"사용자 메시지 처리 시작: {user_message.content}")
+                # logger.info(f"사용자 메시지 처리 시작: {user_message.content}")
                 
                 # LangGraph의 invoke 메서드 호출 - GraphState 형태로 반환됨
                 # HumanMessage 객체로 감싸서 전달
@@ -246,32 +246,32 @@ def send_message(request):
                     "query": user_message.content
                 })
                 
-                logger.info(f"그래프 결과 타입: {type(graph_result)}")
-                logger.info(f"그래프 결과 키들: {graph_result.keys() if isinstance(graph_result, dict) else 'Not a dict'}")
+                # logger.info(f"그래프 결과 타입: {type(graph_result)}")
+                # logger.info(f"그래프 결과 키들: {graph_result.keys() if isinstance(graph_result, dict) else 'Not a dict'}")
                 
                 # GraphState에서 final_response 추출
                 if isinstance(graph_result, dict):
                     if 'final_response' in graph_result and graph_result['final_response']:
                         bot_response = graph_result['final_response']
-                        logger.info("final_response에서 응답 추출 성공")
+                        # logger.info("final_response에서 응답 추출 성공")
                     elif 'error' in graph_result:
                         bot_response = graph_result['error']
-                        logger.info("error 필드에서 응답 추출")
+                        # logger.info("error 필드에서 응답 추출")
                     elif 'messages' in graph_result and graph_result['messages']:
                         # 마지막 AI 메시지에서 내용 추출
                         last_message = graph_result['messages'][-1]
                         bot_response = last_message.content if hasattr(last_message, 'content') else str(last_message)
-                        logger.info("messages에서 응답 추출")
+                        # logger.info("messages에서 응답 추출")
                     else:
                         bot_response = "죄송합니다. 응답을 생성할 수 없습니다."
-                        logger.warning("그래프 결과에서 응답을 찾을 수 없음")
+                        # logger.warning("그래프 결과에서 응답을 찾을 수 없음")
                 else:
                     # 그래프 결과가 문자열인 경우 (이전 버전 호환성)
                     bot_response = str(graph_result)
-                    logger.info("그래프 결과를 문자열로 변환")
+                    # logger.info("그래프 결과를 문자열로 변환")
                     
             except Exception as graph_error:
-                logger.error(f"그래프 처리 중 오류: {graph_error}", exc_info=True)
+                # logger.error(f"그래프 처리 중 오류: {graph_error}", exc_info=True)
                 bot_response = f"죄송합니다. 요청을 처리하는 중 오류가 발생했습니다: {str(graph_error)}"
             
             # 챗봇 메시지 저장
@@ -352,7 +352,7 @@ def send_message(request):
                 ]
             })
         except Exception as e:
-            print(f"메시지 처리 중 오류 발생: {e}")
+            # print(f"메시지 처리 중 오류 발생: {e}")
             return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': '잘못된 요청입니다.'}, status=400)

@@ -10,7 +10,7 @@ function safeValue(val) {
 // 정책 번호를 매개변수로 받아 해당 정책 상세 정보를 보여주는 함수
 function openPolicyModal(policyId) {
     window.currentPolicyId = policyId;
-    console.log('Opening modal for policy:', policyId);
+    // console.log('Opening modal for policy:', policyId);
     
     // 기존 모달 제거
     const existingModal = document.getElementById('policyModal');
@@ -22,12 +22,12 @@ function openPolicyModal(policyId) {
     fetch(`/api/policy/${policyId}/`)
         .then(response => {
             // 응답 응답 객체를 JSON으로 파싱하고 디버깅 로그 남김
-            console.log('API Response:', response);
+            // console.log('API Response:', response);
             return response.json();
         })
         .then(data => {
             // JSON 파싱된 데이터를 받아 사용
-            console.log('Policy data:', data);
+            // console.log('Policy data:', data);
             
             // 로그인된 경우에만 관심도 저장
             function saveInterest(policyId, interestStatus, retry) {
@@ -47,9 +47,9 @@ function openPolicyModal(policyId) {
                         saveInterest(policyId, interestStatus, true);
                         return;
                     }
-                    console.log('관심도 저장 응답:', res);
+                    // console.log('관심도 저장 응답:', res);
                 })
-                .catch(err => { console.error('관심도 저장 에러:', err); });
+                .catch(err => { /* console.error('관심도 저장 에러:', err); */ });
             }
             saveInterest(policyId, '확인', false);
             
@@ -136,7 +136,7 @@ function openPolicyModal(policyId) {
             }, 50); // 300ms 지연 후 모달 표시
         })
         .catch(error => {
-            console.error('Error fetching policy details:', error);
+            // console.error('Error fetching policy details:', error);
             // 에러 발생 시에도 지연 후 모달 표시
             setTimeout(() => {
                 const newModal = document.createElement('div');
@@ -209,9 +209,9 @@ function handlePolicyButtonClick() {
                                 saveInterestApply(policyId, true);
                                 return;
                             }
-                            console.log('관심도 저장 응답:', res);
+                            // console.log('관심도 저장 응답:', res);
                         })
-                        .catch(err => { console.error('관심도 저장 에러:', err); });
+                        .catch(err => { /* console.error('관심도 저장 에러:', err); */ });
                     }
                     saveInterestApply(window.currentPolicyId, false);
                 }

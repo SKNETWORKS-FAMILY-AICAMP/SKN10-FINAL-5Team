@@ -4,7 +4,7 @@ LangGraph Studio용 청년정책 RAG 시스템
 그 외 질문에 대해서는 답변을 거부하는 시스템
 """
 import os
-import logging
+# import logging
 from typing import List, Dict, Any, Optional, Literal, Annotated
 from typing_extensions import TypedDict
 from dotenv import load_dotenv
@@ -28,8 +28,8 @@ from psycopg2.extras import RealDictCursor
 load_dotenv()
 
 # 로깅 설정
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+# logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# logger = logging.getLogger(__name__)
 
 class QueryAnalysis(BaseModel):
     """질의 분석을 위한 통합 구조화된 출력 모델 (분류 + 조건 추출)"""
@@ -161,7 +161,7 @@ config = YouthPolicyRAGConfig()
 def analyze_query_node(state: GraphState) -> GraphState:
     """질의 분석 노드 - 분류와 조건 추출을 동시에 수행"""
     try:
-        logger.info("질의 분석 시작 (분류 + 조건 추출)")
+        # logger.info("질의 분석 시작 (분류 + 조건 추출)")
         
         # 메시지에서 마지막 사용자 메시지 추출
         user_message = None
@@ -218,7 +218,7 @@ def analyze_query_node(state: GraphState) -> GraphState:
         
         # 질의 분석 실행
         query_analysis = chain.invoke({"query": user_message})
-        logger.info(f"질의 분석 완료: {query_analysis}")    
+        # logger.info(f"질의 분석 완료: {query_analysis}")    
         
         return {
             **state,
@@ -227,7 +227,7 @@ def analyze_query_node(state: GraphState) -> GraphState:
         }
         
     except Exception as e:
-        logger.error(f"질의 분석 실패: {e}")
+        # logger.error(f"질의 분석 실패: {e}")
         return {
             **state,
             "error": f"질의 분석 실패: {str(e)}"
@@ -244,17 +244,17 @@ def route_after_analysis(state: GraphState) -> Literal["continue", "reject"]:
         return "reject"
     # 주거 또는 일자리 관련이고 신뢰도가 임계값 이상인 경우만 계속 진행
     if query_analysis.lclsf_nm in ["주거", "일자리", "일반"]:
-        logger.info(f"질의 승인: {query_analysis.lclsf_nm}")
+        # logger.info(f"질의 승인: {query_analysis.lclsf_nm}")
         return "continue"
     else:
-        logger.info(f"질의 거부: {query_analysis.lclsf_nm}")
+        # logger.info(f"질의 거부: {query_analysis.lclsf_nm}")
         return "reject"
 
 
 
 def generate_sql_query_node(state: GraphState) -> GraphState:
     """SQL 쿼리를 생성하고 실행하는 노드"""
-    logger.info("SQL 쿼리 생성 및 실행 시작 노드")
+    # logger.info("SQL 쿼리 생성 및 실행 시작 노드")
     
     query_analysis = state["query_analysis"]
     query = state["query"]
@@ -264,10 +264,10 @@ def generate_sql_query_node(state: GraphState) -> GraphState:
         sql_chain = create_direct_sql_chain(config, query_analysis)
         
         # SQL 쿼리 생성
-        logger.info("SQL 쿼리 생성 중...")
+        # logger.info("SQL 쿼리 생성 중...")
         sql_generation = sql_chain.invoke({"query": query})
         
-        logger.info(f"SQL 쿼리 생성 완료.")
+        # logger.info(f"SQL 쿼리 생성 완료.")
         
         # SQL 쿼리 실행
         sql_result = execute_postgresql_query(config, sql_generation.sql_query)
@@ -275,7 +275,7 @@ def generate_sql_query_node(state: GraphState) -> GraphState:
         if not sql_result["success"]:
             raise Exception(f"SQL 실행 실패: {sql_result['error']}")
         
-        logger.info(f"쿼리 실행 완료: {sql_result['row_count']}개 결과 반환")
+        # logger.info(f"쿼리 실행 완료: {sql_result['row_count']}개 결과 반환")
         
         return {
             **state,
@@ -284,7 +284,7 @@ def generate_sql_query_node(state: GraphState) -> GraphState:
         }
         
     except Exception as e:
-        logger.error(f"SQL 쿼리 처리 실패: {e}")
+        # logger.error(f"SQL 쿼리 처리 실패: {e}")
         error_message = f"정책 검색 중 오류가 발생했습니다: {str(e)}"
         return {
             **state,
@@ -295,7 +295,7 @@ def generate_sql_query_node(state: GraphState) -> GraphState:
 def generate_response_node(state: GraphState) -> GraphState:
     """SQL 쿼리 결과를 바탕으로 자연어 응답을 생성하는 노드"""
     try:
-        logger.info("자연어 응답 생성 시작")
+        # logger.info("자연어 응답 생성 시작")
         
         # 에러가 있는 경우 에러 메시지 반환
         if state.get("error"):
@@ -358,7 +358,7 @@ def generate_response_node(state: GraphState) -> GraphState:
             "search_data": str(sql_result)
         })
         
-        logger.info(f"정책 선정 및 응답 완료: {len(policy_selection_result.selected_policies)}개 정책 선정")
+        # logger.info(f"정책 선정 및 응답 완료: {len(policy_selection_result.selected_policies)}개 정책 선정")
         
 
         # 메시지 리스트에 AI 응답 추가
@@ -372,7 +372,7 @@ def generate_response_node(state: GraphState) -> GraphState:
         }
         
     except Exception as e:
-        logger.error(f"응답 생성 실패: {e}")
+        # logger.error(f"응답 생성 실패: {e}")
         error_message = f"응답 생성 중 오류가 발생했습니다: {str(e)}"
         ai_message = AIMessage(content=error_message)
         
@@ -384,7 +384,7 @@ def generate_response_node(state: GraphState) -> GraphState:
 
 def reject_query_node(state: GraphState) -> GraphState:
     """질의 거부 노드"""
-    logger.info("질의 거부 처리")
+    # logger.info("질의 거부 처리")
     
     if state.get("error"):
         response = f"""죄송합니다. 질문을 처리하는 중 오류가 발생했습니다.
@@ -473,7 +473,7 @@ def get_postgresql_schema(config) -> str:
         return schema_info
         
     except Exception as e:
-        logger.error(f"스키마 정보 가져오기 실패: {e}")
+        # logger.error(f"스키마 정보 가져오기 실패: {e}")
         return "스키마 정보를 가져올 수 없습니다."
 
 
@@ -500,7 +500,7 @@ def execute_postgresql_query(config, sql_query: str) -> Dict[str, Any]:
         }
         
     except Exception as e:
-        logger.error(f"PostgreSQL 쿼리 실행 실패: {e}")
+        # logger.error(f"PostgreSQL 쿼리 실행 실패: {e}")
         return {
             "success": False,
             "error": str(e),

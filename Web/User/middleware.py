@@ -3,13 +3,13 @@ from django.shortcuts import redirect
 from .services import verify_and_refresh_tokens
 from rest_framework.exceptions import AuthenticationFailed
 from django.http import HttpResponse, JsonResponse
-import logging
+# import logging
 
 # User 모델 가져오기
 # 이후 request.user에 User 객체 할당시 사용
 User = get_user_model()
 
-logger = logging.getLogger('User.middleware')
+# logger = logging.getLogger('User.middleware')
 
 class JWTAuthenticationMiddleware:
 
@@ -38,7 +38,7 @@ class JWTAuthenticationMiddleware:
 
     # 미들웨어 본체 -> 모든 요청마다 실행
     def __call__(self, request):
-        logger.info('미들웨어 사용됨')
+        # logger.info('미들웨어 사용됨')
         
         # 공개 페이지 URL 목록
         # 인증 검사 제외 대상

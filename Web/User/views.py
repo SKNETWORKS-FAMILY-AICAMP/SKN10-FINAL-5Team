@@ -106,7 +106,7 @@ def naver_login_callback(request):
         return response
 
     except Exception as e:
-        print(f"Naver login error: {str(e)}")
+        # print(f"Naver login error: {str(e)}")
         return redirect('user:login')
 
 
@@ -145,17 +145,17 @@ def logout_view(request):
 def get_notification_count(request):
     """사용자에게 맞는 새로운 정책 개수를 반환하는 API"""
     if not request.user.is_authenticated:
-        print("DEBUG: 사용자가 인증되지 않음")
+        # print("DEBUG: 사용자가 인증되지 않음")
         return JsonResponse({'count': 0})
     
     try:
         # 사용자의 나이 계산
         user = request.user
-        print(f"DEBUG: 사용자 정보 - user_id: {user.user_id}, user_nm: {user.user_nm}")
-        print(f"DEBUG: 출생년도: {user.birthyear}, 생일: {user.birthday}")
+        # print(f"DEBUG: 사용자 정보 - user_id: {user.user_id}, user_nm: {user.user_nm}")
+        # print(f"DEBUG: 출생년도: {user.birthyear}, 생일: {user.birthday}")
         
         if not user.birthyear or not user.birthday:
-            print("DEBUG: 출생년도 또는 생일 정보가 없음")
+            # print("DEBUG: 출생년도 또는 생일 정보가 없음")
             return JsonResponse({'count': 0})
         
         # 생일에서 월/일 추출
@@ -169,13 +169,13 @@ def get_notification_count(request):
         if current_month < int(birthday_month) or (current_month == int(birthday_month) and current_day < int(birthday_day)):
             age -= 1
         
-        print(f"DEBUG: 계산된 나이: {age}세")
+        # print(f"DEBUG: 계산된 나이: {age}세")
         
         # 최근 일주일 이내 업데이트된 정책 필터링
         one_week_ago = timezone.now() - timedelta(days=7)
         today = timezone.now()
-        print(f"DEBUG: 일주일 전 날짜: {one_week_ago}")
-        print(f"DEBUG: 오늘 날짜: {today}")
+        # print(f"DEBUG: 일주일 전 날짜: {one_week_ago}")
+        # print(f"DEBUG: 오늘 날짜: {today}")
         
         # 조건에 맞는 정책 조회
         matching_policies = Policies.objects.filter(
@@ -193,7 +193,7 @@ def get_notification_count(request):
             models.Q(sprt_trgt_max_age__isnull=True)
         )
         
-        print(f"DEBUG: 나이 조건 + 업데이트 조건 만족하는 정책 개수: {matching_policies.count()}")
+        # print(f"DEBUG: 나이 조건 + 업데이트 조건 만족하는 정책 개수: {matching_policies.count()}")
         
         # 사용자가 이미 확인하거나 신청한 정책 제외
         excluded_policies = RecommendInterest.objects.filter(
@@ -201,26 +201,26 @@ def get_notification_count(request):
             interest_status__in=['확인', '신청']
         ).values_list('plcy_no', flat=True)
         
-        print(f"DEBUG: 사용자가 이미 확인/신청한 정책 개수: {excluded_policies.count()}")
-        if excluded_policies.exists():
-            print(f"DEBUG: 제외할 정책 ID들: {list(excluded_policies)}")
+        # print(f"DEBUG: 사용자가 이미 확인/신청한 정책 개수: {excluded_policies.count()}")
+        # if excluded_policies.exists():
+        #     print(f"DEBUG: 제외할 정책 ID들: {list(excluded_policies)}")
         
         matching_policies = matching_policies.exclude(plcy_no__in=excluded_policies)
         
         count = matching_policies.count()
-        print(f"DEBUG: 최종 매칭 정책 개수: {count}")
+        # print(f"DEBUG: 최종 매칭 정책 개수: {count}")
         
         # 세션에서 이전에 확인한 정책 개수 확인
         last_checked_count = request.session.get('last_checked_notification_count', 0)
-        print(f"DEBUG: 이전에 확인한 정책 개수: {last_checked_count}")
+        # print(f"DEBUG: 이전에 확인한 정책 개수: {last_checked_count}")
         
         # 항상 현재 정책 개수를 반환 (새로운 정책 여부는 프론트엔드에서 처리)
         return JsonResponse({'count': count, 'is_new': count > last_checked_count})
         
     except Exception as e:
-        print(f"DEBUG: 오류 발생: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        # print(f"DEBUG: 오류 발생: {str(e)}")
+        # import traceback
+        # traceback.print_exc()
         return JsonResponse({'count': 0, 'error': str(e)})
 
 @require_http_methods(["POST"])
@@ -278,12 +278,12 @@ def mark_notifications_read(request):
         
         # 세션에 현재 정책 개수 저장
         request.session['last_checked_notification_count'] = current_count
-        print(f"DEBUG: 사용자 {request.user.user_id}의 알림을 읽음으로 표시함 (현재 정책 개수: {current_count})")
+        # print(f"DEBUG: 사용자 {request.user.user_id}의 알림을 읽음으로 표시함 (현재 정책 개수: {current_count})")
         
         return JsonResponse({'success': True})
         
     except Exception as e:
-        print(f"DEBUG: 알림 읽음 처리 중 오류: {str(e)}")
+        # print(f"DEBUG: 알림 읽음 처리 중 오류: {str(e)}")
         return JsonResponse({'success': False})
 
 
