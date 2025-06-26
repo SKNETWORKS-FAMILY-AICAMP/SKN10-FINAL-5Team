@@ -1,5 +1,6 @@
 -- 청년정책 DB 테이블 설계
 -- 작성일: 2025-06-18
+-- 수정일: 2025-01-28 (데이터 관리 컬럼 추가)
 
 -- pgvector 확장 설치 (임베딩 테이블용)
 CREATE EXTENSION IF NOT EXISTS vector;
@@ -53,6 +54,12 @@ CREATE TABLE policies (
     ref_url_addr1 TEXT,
     ref_url_addr2 TEXT,
     
+    -- 데이터 관리 정보 (중복/삭제 처리용)
+    data_hash VARCHAR(32),                          -- 데이터 변경 감지용 MD5 해시
+    is_active BOOLEAN DEFAULT TRUE,                 -- 정책 활성 상태 (논리적 삭제)
+    last_checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 마지막 확인 시간
+    deactivated_at TIMESTAMP,                       -- 비활성화 시간
+    
     -- 타임스탬프
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -74,8 +81,14 @@ CREATE INDEX idx_policies_aply_dates ON policies(aply_bgng_ymd, aply_end_ymd);
 CREATE INDEX idx_policies_age ON policies(sprt_trgt_min_age, sprt_trgt_max_age);
 CREATE INDEX idx_policies_classification ON policies(lclsf_nm, mclsf_nm);
 
+-- 데이터 관리용 인덱스 추가
+CREATE INDEX idx_policies_is_active ON policies(is_active);
+CREATE INDEX idx_policies_data_hash ON policies(data_hash);
+CREATE INDEX idx_policies_last_checked ON policies(last_checked_at);
+CREATE INDEX idx_policies_deactivated ON policies(deactivated_at) WHERE deactivated_at IS NOT NULL;
+
 -- 테이블 코멘트
-COMMENT ON TABLE policies IS '정책 통합 정보 테이블';
+COMMENT ON TABLE policies IS '정책 통합 정보 테이블 (중복/삭제 관리 포함)';
 COMMENT ON TABLE policy_embeddings IS '정책 임베딩 벡터 테이블';
 
 -- 컬럼 코멘트
@@ -127,6 +140,50 @@ COMMENT ON COLUMN policies.aply_url_addr IS '신청URL주소';
 COMMENT ON COLUMN policies.ref_url_addr1 IS '참고URL주소1';
 COMMENT ON COLUMN policies.ref_url_addr2 IS '참고URL주소2';
 
+-- 데이터 관리 정보
+COMMENT ON COLUMN policies.data_hash IS '데이터 변경 감지용 MD5 해시값';
+COMMENT ON COLUMN policies.is_active IS '정책 활성 상태 (FALSE: 논리적 삭제)';
+COMMENT ON COLUMN policies.last_checked_at IS '마지막 데이터 확인 시간';
+COMMENT ON COLUMN policies.deactivated_at IS '정책 비활성화 시간';
+
 -- policy_embeddings 테이블
 COMMENT ON COLUMN policy_embeddings.plcy_no IS '정책번호';
 COMMENT ON COLUMN policy_embeddings.embedding IS '정책 임베딩 (3072차원)';
+
+-- 기존 테이블이 있는 경우 컬럼 추가용 ALTER 스크립트
+-- (새로 설치할 때는 실행하지 않아도 됨)
+/*
+-- 기존 policies 테이블에 새 컬럼 추가
+DO $$
+BEGIN
+    -- data_hash 컬럼 추가
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'policies' AND column_name = 'data_hash') THEN
+        ALTER TABLE policies ADD COLUMN data_hash VARCHAR(32);
+    END IF;
+    
+    -- is_active 컬럼 추가
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'policies' AND column_name = 'is_active') THEN
+        ALTER TABLE policies ADD COLUMN is_active BOOLEAN DEFAULT TRUE;
+    END IF;
+    
+    -- last_checked_at 컬럼 추가
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'policies' AND column_name = 'last_checked_at') THEN
+        ALTER TABLE policies ADD COLUMN last_checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+    END IF;
+    
+    -- deactivated_at 컬럼 추가
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'policies' AND column_name = 'deactivated_at') THEN
+        ALTER TABLE policies ADD COLUMN deactivated_at TIMESTAMP;
+    END IF;
+END $$;
+
+-- 새 인덱스 생성 (중복 방지)
+CREATE INDEX IF NOT EXISTS idx_policies_is_active ON policies(is_active);
+CREATE INDEX IF NOT EXISTS idx_policies_data_hash ON policies(data_hash);
+CREATE INDEX IF NOT EXISTS idx_policies_last_checked ON policies(last_checked_at);
+CREATE INDEX IF NOT EXISTS idx_policies_deactivated ON policies(deactivated_at) WHERE deactivated_at IS NOT NULL;
+*/
