@@ -19,10 +19,10 @@
 <body class="{% block body_class %}bg-white{% endblock %}">
 
   <!-- ✅ 네비게이션 바 -->
-  <header class="flex justify-between items-center p-6 shadow-sm bg-white">
+  <header class="flex justify-between items-center p-6 shadow-sm bg-white h-20">
     <div class="flex items-center">
       <a href="{% url 'home:home' %}">
-        <img src="{% static 'images/logo.png' %}" alt="로고" class="h-10 w-auto mr-3">
+        <img src="{% static 'images/home_logo.png' %}" alt="로고" class="h-full max-h-full w-auto mr-3" style="max-height:110px;">
       </a>
     </div>
     <div class="flex items-center space-x-4">
