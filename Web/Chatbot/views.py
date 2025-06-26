@@ -291,11 +291,29 @@ def send_message(request):
                     }
                     filtered_sql_result.append(filtered_policy)
             
+            # selected_policies를 JSON 직렬화 가능한 형태로 변환
+            serializable_selected_policies = []
+            if isinstance(graph_result, dict) and 'selected_policies' in graph_result and graph_result['selected_policies']:
+                for policy in graph_result['selected_policies']:
+                    if hasattr(policy, 'model_dump'):  # Pydantic 모델인 경우
+                        serializable_selected_policies.append(policy.model_dump())
+                    elif hasattr(policy, 'dict'):  # 이전 Pydantic 버전
+                        serializable_selected_policies.append(policy.dict())
+                    elif isinstance(policy, dict):  # 이미 딕셔너리인 경우
+                        serializable_selected_policies.append(policy)
+                    else:
+                        # 기본적으로 딕셔너리로 변환 시도
+                        try:
+                            serializable_selected_policies.append(vars(policy))
+                        except:
+                            # 변환할 수 없는 경우 문자열로 변환
+                            serializable_selected_policies.append(str(policy))
+            
             bot_message = Message.objects.create(
                 session=session,
                 sender='chatbot',
                 content=bot_response,
-                sql_result=graph_result['selected_policies'],
+                sql_result=serializable_selected_policies,
                 create_dt=timezone.localtime(timezone.now())
             )
             
@@ -328,7 +346,7 @@ def send_message(request):
                         'id': bot_message.msg_id,
                         'sender': 'chatbot',
                         'content': bot_response,
-                        'sql_result': graph_result['selected_policies'],
+                        'sql_result': serializable_selected_policies,
                         'created_at': timezone.localtime(bot_message.create_dt).strftime('%Y-%m-%d %H:%M')
                     }
                 ]
