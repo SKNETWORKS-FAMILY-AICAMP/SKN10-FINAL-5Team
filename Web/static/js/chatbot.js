@@ -461,7 +461,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <h3 class="text-lg font-semibold text-gray-800 mb-2">${escapeHtml(policy.plcy_nm || '정책명 없음')}</h3>
                                 <p class="text-gray-600 text-sm mb-3">${escapeHtml(truncateText(policy.plcy_expln_cn))}</p>
                                 <span class="${categoryColors.bg} ${categoryColors.text} text-xs font-medium px-3 py-1 rounded-full w-fit">${escapeHtml(policy.mclsf_nm || '카테고리 없음')}</span>
-                                <span class="${categoryColors.bg} ${categoryColors.text} text-xs font-medium px-3 py-1 rounded-full w-fit">${escapeHtml(policy.zip_cd || '카테고리 없음')}</span>
+                                <span class="bg-gray-100 text-gray-700 text-xs font-medium px-3 py-1 rounded-full w-fit">${escapeHtml(policy.zip_cd || '카테고리 없음')}</span>
                             </div>
                         </div>
                     </div>
@@ -520,6 +520,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     `jobSlider-${messageId}`
                 );
             }
+            
             
             // 기타 정책 컨테이너
             if (otherPolicies.length > 0) {

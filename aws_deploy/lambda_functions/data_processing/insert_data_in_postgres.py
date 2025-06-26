@@ -2,7 +2,9 @@
 청년정책 CSV 데이터를 PostgreSQL 통합 테이블에 삽입하는 스크립트 (임베딩 포함)
 - policies: 모든 정책 정보를 포함하는 통합 테이블
 - policy_embeddings: 정책 임베딩 벡터 테이블
+- 수정일시 비교를 통한 조건부 업데이트 지원
 작성일: 2025-06-18
+수정일: 2025-06-18 - 조건부 업데이트 로직 추가
 """
 
 import pandas as pd
@@ -11,9 +13,10 @@ from psycopg2.extras import execute_values
 import logging
 import openai
 import time
-from typing import List
+from typing import List, Tuple, Dict
 import os
 from dotenv import load_dotenv
+from datetime import datetime
 
 # 환경변수 로드
 load_dotenv()
@@ -82,6 +85,97 @@ class YouthPolicyDataInserter:
         
         logger.info("데이터 전처리 완료")
         return df
+    
+    def get_existing_policies_info(self) -> Dict[str, datetime]:
+        """기존 정책의 정책번호와 최종수정일시 정보 조회"""
+        query = """
+        SELECT plcy_no, last_mdfcn_dt 
+        FROM policies 
+        WHERE plcy_no IS NOT NULL
+        """
+        
+        self.cursor.execute(query)
+        results = self.cursor.fetchall()
+        
+        existing_policies = {}
+        for plcy_no, last_mdfcn_dt in results:
+            if last_mdfcn_dt:
+                # 문자열을 datetime으로 변환 (필요시)
+                if isinstance(last_mdfcn_dt, str):
+                    try:
+                        last_mdfcn_dt = pd.to_datetime(last_mdfcn_dt)
+                    except:
+                        last_mdfcn_dt = None
+                existing_policies[plcy_no] = last_mdfcn_dt
+            else:
+                existing_policies[plcy_no] = None
+        
+        logger.info(f"기존 정책 {len(existing_policies)}개 정보 조회 완료")
+        return existing_policies
+    
+    def filter_data_for_update(self, df) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """
+        데이터를 세 그룹으로 분류:
+        1. 새로운 정책 (INSERT)
+        2. 수정된 정책 (UPDATE) - 수정일시가 더 최신인 경우
+        3. 변경 없는 정책 (SKIP) - 기존과 동일하거나 더 오래된 경우
+        """
+        existing_policies = self.get_existing_policies_info()
+        
+        new_policies = []
+        updated_policies = []
+        skipped_policies = []
+        
+        for _, row in df.iterrows():
+            plcy_no = row['정책번호']
+            new_last_mdfcn_dt = row['최종수정일시']
+            
+            # 새로운 데이터의 수정일시를 datetime으로 변환
+            if pd.notna(new_last_mdfcn_dt):
+                try:
+                    new_last_mdfcn_dt = pd.to_datetime(new_last_mdfcn_dt)
+                except:
+                    new_last_mdfcn_dt = None
+            else:
+                new_last_mdfcn_dt = None
+            
+            if plcy_no not in existing_policies:
+                # 새로운 정책
+                new_policies.append(row)
+                logger.debug(f"새로운 정책: {plcy_no}")
+            else:
+                existing_last_mdfcn_dt = existing_policies[plcy_no]
+                
+                # 수정일시 비교
+                should_update = False
+                
+                if new_last_mdfcn_dt is None and existing_last_mdfcn_dt is None:
+                    # 둘 다 수정일시가 없으면 업데이트
+                    should_update = True
+                elif new_last_mdfcn_dt is None:
+                    # 새 데이터에 수정일시가 없으면 스킵
+                    should_update = False
+                elif existing_last_mdfcn_dt is None:
+                    # 기존 데이터에 수정일시가 없으면 업데이트
+                    should_update = True
+                else:
+                    # 둘 다 수정일시가 있으면 비교
+                    should_update = new_last_mdfcn_dt > existing_last_mdfcn_dt
+                
+                if should_update:
+                    updated_policies.append(row)
+                    logger.debug(f"수정된 정책: {plcy_no} (기존: {existing_last_mdfcn_dt}, 새로운: {new_last_mdfcn_dt})")
+                else:
+                    skipped_policies.append(row)
+                    logger.debug(f"변경 없는 정책: {plcy_no} (기존: {existing_last_mdfcn_dt}, 새로운: {new_last_mdfcn_dt})")
+        
+        new_df = pd.DataFrame(new_policies) if new_policies else pd.DataFrame()
+        updated_df = pd.DataFrame(updated_policies) if updated_policies else pd.DataFrame()
+        skipped_df = pd.DataFrame(skipped_policies) if skipped_policies else pd.DataFrame()
+        
+        logger.info(f"데이터 분류 완료 - 새로운: {len(new_df)}, 수정: {len(updated_df)}, 스킵: {len(skipped_df)}")
+        
+        return new_df, updated_df, skipped_df
     
     def create_embedding_text(self, row):
         """정책 데이터로부터 임베딩용 종합 텍스트 생성 (모든 테이블 데이터 포함)"""
@@ -239,8 +333,12 @@ class YouthPolicyDataInserter:
         
         return embeddings
     
-    def insert_policies(self, df):
-        """통합 정책 테이블에 모든 정보 삽입"""
+    def insert_policies(self, df, is_update=False):
+        """통합 정책 테이블에 모든 정보 삽입 또는 업데이트"""
+        if df.empty:
+            logger.info(f"{'업데이트' if is_update else '삽입'}할 정책 데이터가 없습니다.")
+            return
+        
         policies_data = []
         
         for _, row in df.iterrows():
@@ -351,15 +449,19 @@ class YouthPolicyDataInserter:
         
         execute_values(self.cursor, query, policies_data)
         self.conn.commit()
-        logger.info(f"통합 정책 테이블에 {len(policies_data)}개 레코드 삽입 완료")
+        logger.info(f"통합 정책 테이블에 {len(policies_data)}개 레코드 {'업데이트' if is_update else '삽입'} 완료")
     
-    def insert_policy_embeddings(self, df):
-        """정책 임베딩 정보 삽입"""
+    def insert_policy_embeddings(self, df, is_update=False):
+        """정책 임베딩 정보 삽입 또는 업데이트"""
+        if df.empty:
+            logger.info(f"{'업데이트' if is_update else '삽입'}할 임베딩 데이터가 없습니다.")
+            return
+            
         if not openai.api_key:
             logger.warning("OpenAI API 키가 없어 임베딩 생성을 건너뜁니다.")
             return
         
-        logger.info("정책 임베딩 생성 시작...")
+        logger.info(f"정책 임베딩 {'업데이트' if is_update else '생성'} 시작...")
         
         # 임베딩용 텍스트 생성
         embedding_texts = []
@@ -392,10 +494,10 @@ class YouthPolicyDataInserter:
         
         execute_values(self.cursor, query, embedding_data)
         self.conn.commit()
-        logger.info(f"정책 임베딩 테이블에 {len(embedding_data)}개 레코드 삽입 완료")
+        logger.info(f"정책 임베딩 테이블에 {len(embedding_data)}개 레코드 {'업데이트' if is_update else '삽입'} 완료")
     
     def insert_all_data(self, csv_file_path, include_embeddings=True):
-        """전체 데이터 삽입 프로세스"""
+        """전체 데이터 삽입 프로세스 (조건부 업데이트 포함)"""
         try:
             # CSV 데이터 로드 및 전처리
             df = self.load_csv_data(csv_file_path)
@@ -404,16 +506,36 @@ class YouthPolicyDataInserter:
             # DB 연결
             self.connect_db()
             
-            # 통합 정책 테이블에 데이터 삽입
-            logger.info("통합 정책 테이블 데이터 삽입 시작")
-            self.insert_policies(df)
+            # 데이터를 새로운/수정된/변경없음으로 분류
+            new_df, updated_df, skipped_df = self.filter_data_for_update(df)
             
-            # 임베딩 테이블에 데이터 삽입 (선택사항)
-            if include_embeddings:
-                logger.info("정책 임베딩 정보 삽입 시작")
-                self.insert_policy_embeddings(df)
+            # 새로운 정책 데이터 삽입
+            if not new_df.empty:
+                logger.info(f"새로운 정책 {len(new_df)}개 삽입 시작")
+                self.insert_policies(new_df, is_update=False)
+                
+                if include_embeddings:
+                    self.insert_policy_embeddings(new_df, is_update=False)
             
-            logger.info("모든 데이터 삽입 완료")
+            # 수정된 정책 데이터 업데이트
+            if not updated_df.empty:
+                logger.info(f"수정된 정책 {len(updated_df)}개 업데이트 시작")
+                self.insert_policies(updated_df, is_update=True)
+                
+                if include_embeddings:
+                    self.insert_policy_embeddings(updated_df, is_update=True)
+            
+            # 요약 로그
+            logger.info("=" * 50)
+            logger.info("데이터 처리 요약:")
+            logger.info(f"- 새로운 정책: {len(new_df)}개")
+            logger.info(f"- 업데이트된 정책: {len(updated_df)}개") 
+            logger.info(f"- 변경 없는 정책: {len(skipped_df)}개")
+            logger.info(f"- 총 처리된 정책: {len(new_df) + len(updated_df)}개")
+            logger.info(f"- 전체 입력 정책: {len(df)}개")
+            logger.info("=" * 50)
+            
+            logger.info("모든 데이터 처리 완료")
             
         except Exception as e:
             logger.error(f"데이터 삽입 중 오류 발생: {e}")
