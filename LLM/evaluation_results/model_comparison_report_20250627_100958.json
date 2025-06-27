@@ -1,0 +1,125 @@
+{
+  "evaluation_metadata": {
+    "timestamp": "20250627_100958",
+    "evaluated_models": [
+      "gpt-4o",
+      "gpt-4o-mini",
+      "gpt-4.1",
+      "gemini-2.5-flash"
+    ],
+    "total_queries": 20
+  },
+  "overall_statistics": {
+    "total_queries_evaluated": 20,
+    "total_model_responses": 80,
+    "evaluation_timestamp": "20250627_100958",
+    "average_scores_by_model": {
+      "gpt-4o": 4.2,
+      "gpt-4o-mini": 4.2,
+      "gpt-4.1": 4.45,
+      "gemini-2.5-flash": 4.15
+    },
+    "average_response_times_by_model": {
+      "gpt-4o": 15.382297492027282,
+      "gpt-4o-mini": 16.816547870635986,
+      "gpt-4.1": 18.511423099040986,
+      "gemini-2.5-flash": 16.898519480228423
+    }
+  },
+  "model_statistics": {
+    "gpt-4o": {
+      "total_queries": 20,
+      "successful_responses": 20,
+      "average_response_time": 15.382297492027282,
+      "average_quality_score": 4.2,
+      "quality_score_distribution": {
+        "5점": 9,
+        "4점": 7,
+        "3점": 3,
+        "2점": 1,
+        "1점": 0
+      },
+      "error_count": 0
+    },
+    "gpt-4o-mini": {
+      "total_queries": 20,
+      "successful_responses": 20,
+      "average_response_time": 16.816547870635986,
+      "average_quality_score": 4.2,
+      "quality_score_distribution": {
+        "5점": 7,
+        "4점": 11,
+        "3점": 1,
+        "2점": 1,
+        "1점": 0
+      },
+      "error_count": 0
+    },
+    "gpt-4.1": {
+      "total_queries": 20,
+      "successful_responses": 20,
+      "average_response_time": 18.511423099040986,
+      "average_quality_score": 4.45,
+      "quality_score_distribution": {
+        "5점": 13,
+        "4점": 4,
+        "3점": 2,
+        "2점": 1,
+        "1점": 0
+      },
+      "error_count": 0
+    },
+    "gemini-2.5-flash": {
+      "total_queries": 20,
+      "successful_responses": 20,
+      "average_response_time": 16.898519480228423,
+      "average_quality_score": 4.15,
+      "quality_score_distribution": {
+        "5점": 9,
+        "4점": 7,
+        "3점": 2,
+        "2점": 2,
+        "1점": 0
+      },
+      "error_count": 0
+    }
+  },
+  "top_performing_models": {
+    "by_quality": [
+      {
+        "model": "gpt-4.1",
+        "average_quality_score": 4.45
+      },
+      {
+        "model": "gpt-4o",
+        "average_quality_score": 4.2
+      },
+      {
+        "model": "gpt-4o-mini",
+        "average_quality_score": 4.2
+      },
+      {
+        "model": "gemini-2.5-flash",
+        "average_quality_score": 4.15
+      }
+    ],
+    "by_speed": [
+      {
+        "model": "gpt-4o",
+        "average_response_time": 15.382297492027282
+      },
+      {
+        "model": "gpt-4o-mini",
+        "average_response_time": 16.816547870635986
+      },
+      {
+        "model": "gemini-2.5-flash",
+        "average_response_time": 16.898519480228423
+      },
+      {
+        "model": "gpt-4.1",
+        "average_response_time": 18.511423099040986
+      }
+    ]
+  }
+}
