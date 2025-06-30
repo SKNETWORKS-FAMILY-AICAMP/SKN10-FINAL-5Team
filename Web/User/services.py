@@ -6,14 +6,14 @@ from .token import (
     decode_access_token, decode_refresh_token
 )
 import jwt
-import logging
+# import logging
 
-logger = logging.getLogger('User.services')
+# logger = logging.getLogger('User.services')
 
 # 싱글 디바이스 정책 시 RefreshToken DB 삭제 처리
 def clear_refresh_token(refresh_token):
     if refresh_token:
-        logger.info("싱글 디바이스 정책 - RefreshToken DB 삭제 시도")
+        # logger.info("싱글 디바이스 정책 - RefreshToken DB 삭제 시도")
         RefreshToken.objects.filter(token=refresh_token).delete()
 
 # 공통 인증 실패 처리 → 쿠키 삭제 + DB 삭제
@@ -86,28 +86,28 @@ def verify_and_refresh_tokens(request):
     access_token = request.COOKIES.get('access_token')
     refresh_token = request.COOKIES.get('refresh_token')
 
-    logger.info(f"토큰 검증 시작 - Path: {request.path}")
-    logger.info(f"액세스 토큰 존재: {bool(access_token)}")
-    logger.info(f"리프레시 토큰 존재: {bool(refresh_token)}")
+    # logger.info(f"토큰 검증 시작 - Path: {request.path}")
+    # logger.info(f"액세스 토큰 존재: {bool(access_token)}")
+    # logger.info(f"리프레시 토큰 존재: {bool(refresh_token)}")
 
     # 홈 화면에서 토큰이 없는 경우 -> 예외처리
     if request.path == '/' and not access_token:
-        logger.info("홈 페이지 접근 - 토큰 없음")
+        # logger.info("홈 페이지 접근 - 토큰 없음")
         return False, None, None
     # 1. 액세스 토큰 존재 확인
     elif not access_token:
-        logger.warning("액세스 토큰 없음")
+        # logger.warning("액세스 토큰 없음")
         return handle_auth_failure(refresh_token)
 
     # 2. 액세스 토큰 검증
     try:
         # 액세스 토큰이 유효한 경우
         user_id = verify_access_token(access_token)
-        logger.info(f"액세스 토큰 유효 - User ID: {user_id}")
+        # logger.info(f"액세스 토큰 유효 - User ID: {user_id}")
 
         # User DB 확인
         if not User.objects.filter(user_id=user_id).exists():
-            logger.warning(f"유저 존재하지 않음 - User ID: {user_id}")
+            # logger.warning(f"유저 존재하지 않음 - User ID: {user_id}")
             return handle_auth_failure(refresh_token)
 
         # 정상 인증 성공 -> view로 정상 진행
@@ -115,21 +115,21 @@ def verify_and_refresh_tokens(request):
 
     # 3. 액세스 토큰 만료 시 처리
     except jwt.ExpiredSignatureError as e:
-        logger.info(f"액세스 토큰 만료됨: {str(e)}")
+        # logger.info(f"액세스 토큰 만료됨: {str(e)}")
 
         # refresh_token 없으면 인증 실패 처리
         if not refresh_token:
-            logger.warning("리프레시 토큰 없음")
+            # logger.warning("리프레시 토큰 없음")
             return handle_auth_failure(refresh_token)
 
         try:
             # 리프레시 토큰 검증
             user_id = verify_refresh_token(refresh_token)
-            logger.info(f"리프레시 토큰 유효 - User ID: {user_id}")
+            # logger.info(f"리프레시 토큰 유효 - User ID: {user_id}")
 
             # User DB 확인
             if not User.objects.filter(user_id=user_id).exists():
-                logger.warning(f"유저 존재하지 않음 - User ID: {user_id} (refresh_token 검증 시)")
+                # logger.warning(f"유저 존재하지 않음 - User ID: {user_id} (refresh_token 검증 시)")
                 return handle_auth_failure(refresh_token)
             
             # 리프레시 토큰 DB 확인
@@ -139,24 +139,24 @@ def verify_and_refresh_tokens(request):
             ).first()
 
             if not refresh_token_obj:
-                logger.warning(f"DB에 리프레시 토큰 없음 - User ID: {user_id}")
+                # logger.warning(f"DB에 리프레시 토큰 없음 - User ID: {user_id}")
                 return handle_auth_failure(refresh_token)
 
             # 새 액세스 토큰 발급
             new_access_token = create_access_token(user_id)
-            logger.info(f"새 액세스 토큰 발급 완료 - User ID: {user_id}")
-            logger.info(f"새 액세스 토큰: {new_access_token[:20]}...")
+            # logger.info(f"새 액세스 토큰 발급 완료 - User ID: {user_id}")
+            # logger.info(f"새 액세스 토큰: {new_access_token[:20]}...")
 
             # 토큰 갱신 성공 - 새 토큰 반환
             return True, new_access_token, user_id
     
         # refresh_token 만료 / 오류 시 처리
         except (jwt.ExpiredSignatureError, jwt.InvalidTokenError) as e:
-            logger.error(f"리프레시 토큰 오류: {str(e)}")
+            # logger.error(f"리프레시 토큰 오류: {str(e)}")
             return handle_auth_failure(refresh_token)
 
     # 4. 액세스 토큰이 유효하지 않은 경우
     except jwt.InvalidTokenError as e:
-        logger.error(f"액세스 토큰 유효하지 않음: {str(e)}")
+        # logger.error(f"액세스 토큰 유효하지 않음: {str(e)}")
         return handle_auth_failure(refresh_token)
 

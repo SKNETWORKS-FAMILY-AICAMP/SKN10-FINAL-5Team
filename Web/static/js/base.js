@@ -11,16 +11,28 @@ document.addEventListener('DOMContentLoaded', function() {
   let notificationCount = 0;
   let isDropdownOpen = false;
 
-  // 알림 개수 가져오기
-  async function fetchNotificationCount() {
+  // 알림 개수 가져오기 (토큰 갱신 재요청 로직 포함)
+  async function fetchNotificationCount(retry = false) {
     try {
-      const response = await fetch(window.NOTI_COUNT_URL);
+      const response = await fetch(window.NOTI_COUNT_URL, {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
       const data = await response.json();
+      
+      // 토큰 갱신 상태인 경우 재요청
+      if (data.status === 'token_refreshed' && !retry) {
+        // console.log('토큰이 갱신되었습니다. 알림 개수를 다시 요청합니다.');
+        fetchNotificationCount(true);
+        return;
+      }
+      
       notificationCount = data.count;
       const isNew = data.is_new;
       updateNotificationUI(isNew);
     } catch (error) {
-      console.error('알림 개수 가져오기 실패:', error);
+      // console.error('알림 개수 가져오기 실패:', error);
     }
   }
 
@@ -49,18 +61,28 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // 알림 읽음 처리
-  async function markNotificationsAsRead() {
+  // 알림 읽음 처리 (토큰 갱신 재요청 로직 포함)
+  async function markNotificationsAsRead(retry = false) {
     try {
-      await fetch(window.NOTI_READ_URL, {
+      const response = await fetch(window.NOTI_READ_URL, {
         method: 'POST',
         headers: {
           'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+          'X-Requested-With': 'XMLHttpRequest'
         }
       });
+      const data = await response.json();
+      
+      // 토큰 갱신 상태인 경우 재요청
+      if (data.status === 'token_refreshed' && !retry) {
+        // console.log('토큰이 갱신되었습니다. 알림 읽음 처리를 다시 요청합니다.');
+        markNotificationsAsRead(true);
+        return;
+      }
+      
       notificationDot.classList.add('hidden');
     } catch (error) {
-      console.error('알림 읽음 처리 실패:', error);
+      // console.error('알림 읽음 처리 실패:', error);
     }
   }
 

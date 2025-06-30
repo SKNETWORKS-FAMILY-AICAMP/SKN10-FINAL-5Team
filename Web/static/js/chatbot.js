@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const chatContainer = document.getElementById('chat-messages');
         // 채팅 컨테이너가 없으면 에러 로그 출력 후 함수 종료
         if (!chatContainer) {
-            console.error('채팅 컨테이너를 찾을 수 없습니다.');
+            // console.error('채팅 컨테이너를 찾을 수 없습니다.');
             return;
         }
 
@@ -230,17 +230,17 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             // 토큰 재발급 후 재요청 처리
             if (data.status === 'token_refreshed') {
-                console.log('토큰이 갱신되었습니다. 새 세션 생성을 다시 요청합니다.');
+                // console.log('토큰이 갱신되었습니다. 새 세션 생성을 다시 요청합니다.');
                 resetChatSession(); // 재귀적으로 다시 호출
                 return;
             }
-            console.log('새 세션이 생성되었습니다.');
+            // console.log('새 세션이 생성되었습니다.');
             
             // 새 세션 생성 후 사이드바 리스트 업데이트
             loadSessionList();
         })
         .catch(error => {
-            console.error('세션 생성 중 오류 발생:', error);
+            // console.error('세션 생성 중 오류 발생:', error);
         });
     }
 
@@ -270,10 +270,20 @@ document.addEventListener('DOMContentLoaded', function() {
             chatContainer.innerHTML = '';
         }
 
+        // 사용자 메시지 먼저 출력
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const hh = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        const formattedNow = `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+        displayMessage(message, 'user', false, formattedNow);
+
         // 메시지 입력 필드 초기화
         messageInput.value = '';
 
-        // 로딩 메시지를 표시하고 로딩 요소 참조 저장
+        // '답변을 생성중입니다...' 메시지 출력
         const loadingElement = displayMessage('답변을 생성중입니다...', 'bot', true);
 
         // 서버에 메시지 전송을 요청하는 fetch 요청
@@ -299,7 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             // 로딩 요소 제거
             loadingElement.remove();
-            
+
             // 리다이렉트 상태인 경우 해당 URL로 이동
             if (data.status === 'redirect') {
                 window.location.href = data.redirect_url;
@@ -310,6 +320,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 원본 메시지를 저장
                 const originalMessage = message;
                 // 토큰 재발급 후 원본 메시지로 다시 요청
+                // 재요청 시에도 로딩 메시지 표시
+                const retryLoadingElement = displayMessage('답변을 생성중입니다...', 'bot', true);
+                
                 fetch('/chatbot/api/chat/', {
                     method: 'POST',
                     headers: {
@@ -324,63 +337,54 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .then(response => response.json())
                 .then(data => {
-                    // 성공 상태인 경우
-                    if (data.status === 'success') {
-                        // 메시지가 있으면 각 메시지를 화면에 표시
-                        if (data.messages) {
-                            data.messages.forEach(msg => {
+                    // 재요청의 로딩 요소 제거
+                    retryLoadingElement.remove();
+                    
+                    if (data.status === 'success' && data.messages) {
+                        data.messages.forEach(msg => {
+                            if (msg.sender === 'chatbot') {
                                 displayMessage(msg.content, msg.sender, false, msg.created_at, msg.id, msg.sql_result);
-                            });
-                        }
-                        // 세션 리스트 새로고침
+                            }
+                        });
                         loadSessionList();
-                        // 세션이 새로 생성된 경우 session_id 갱신
                         if (data.session_id) {
                             currentSessionId = data.session_id;
                         }
                     } else {
-                        // 에러 메시지 표시
                         displayMessage(data.message || '오류가 발생했습니다.', 'bot');
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
+                    // 재요청 실패 시에도 로딩 요소 제거
+                    retryLoadingElement.remove();
                     displayMessage('네트워크 오류가 발생했습니다. 다시 시도해주세요.', 'bot');
                 });
                 return;
             }
             // 성공 상태인 경우
             else if (data.status === 'success') {
-                // 메시지가 있으면 각 메시지를 화면에 표시
                 if (data.messages) {
                     data.messages.forEach(msg => {
-                        displayMessage(msg.content, msg.sender, false, msg.created_at, msg.id, msg.sql_result);
+                        if (msg.sender === 'chatbot') {
+                            displayMessage(msg.content, msg.sender, false, msg.created_at, msg.id, msg.sql_result);
+                        }
                     });
                 }
-                // 세션 리스트 새로고침
                 loadSessionList();
-                // 세션이 새로 생성된 경우 session_id 갱신
                 if (data.session_id) {
                     currentSessionId = data.session_id;
                 }
             }
             else {
-                // 에러 메시지 표시
                 displayMessage(data.message || '오류가 발생했습니다.', 'bot');
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            // 로딩 요소 제거
             loadingElement.remove();
-            
-            // 인증 실패인 경우 로그인 페이지로 이동
             if (error.message === 'Unauthorized') {
                 window.location.href = '/user/login/';
                 return;
             }
-            
-            // 네트워크 오류 메시지 표시
             displayMessage('네트워크 오류가 발생했습니다. 다시 시도해주세요.', 'bot');
         });
     }
@@ -389,40 +393,50 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayMessage(message, sender, isLoading = false, createdAt = null, messageId = null, sqlResult = null) {
         // 채팅 메시지 컨테이너 요소 선택
         const messagesContainer = document.getElementById('chat-messages');
-        // 채팅 컨테이너가 없으면 에러 로그 출력 후 함수 종료
         if (!messagesContainer) {
-            console.error('채팅 컨테이너를 찾을 수 없습니다.');
+            // console.error('채팅 컨테이너를 찾을 수 없습니다.');
             return;
+        }
+
+        // 시간 포맷을 'YYYY-MM-DD HH:MM'으로 맞추는 함수
+        function formatDateTime(dt) {
+            if (!dt) return '';
+            // 이미 'YYYY-MM-DD HH:MM' 포맷이면 그대로 반환
+            if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(dt)) return dt;
+            // Date 객체로 변환 후 포맷팅
+            const dateObj = new Date(dt);
+            if (isNaN(dateObj.getTime())) return dt; // 변환 실패 시 원본 반환
+            const yyyy = dateObj.getFullYear();
+            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const dd = String(dateObj.getDate()).padStart(2, '0');
+            const hh = String(dateObj.getHours()).padStart(2, '0');
+            const min = String(dateObj.getMinutes()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
         }
 
         // 메시지 래퍼 div 요소 생성
         const wrapper = document.createElement('div');
-        // 사용자 메시지인 경우 오른쪽 정렬, 봇 메시지인 경우 왼쪽 정렬
         wrapper.className = `flex mb-4 w-full ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
-        
-        // 메시지 ID가 있으면 data 속성으로 저장
         if (messageId) {
             wrapper.setAttribute('data-message-id', messageId);
         }
-        
+
         // 메시지 카드 div 요소 생성
         const card = document.createElement('div');
-        // 사용자 메시지인 경우 파란색 배경, 봇 메시지인 경우 회색 배경
         card.className = (sender === 'user' 
             ? 'bg-blue-100 text-blue-800' 
-            : 'bg-slate-100 text-slate-800') + 
+            : 'bg-slate-200 text-slate-800 markdown-body bg-slate-200 list-disc pl-6 mb-2') + 
             ' rounded-lg shadow p-4 break-words max-w-2xl sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl';
-        
-        // 카드 내용 설정 (사용자 메시지는 HTML 이스케이프 처리)
+
         card.innerHTML = `
             <div class="font-semibold mb-1">
                 ${
                     sender === 'user'
                     ? formatUserMessage(message)
-                    : marked.parse(message)
+                    : marked.parse(removeContentBetweenDashes(message))
                 }
             </div>
-            ${createdAt ? `<div class="text-xs text-slate-400 text-right">${createdAt}</div>` : ''}
+            ${createdAt ? `<div class="text-xs text-slate-400 text-right">${formatDateTime(createdAt)}</div>` : ''}
         `;
         // sqlResult가 있고 배열인 경우 정책 카드들을 렌더링
         if (sqlResult && sqlResult.length > 0) {
@@ -447,7 +461,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <h3 class="text-lg font-semibold text-gray-800 mb-2">${escapeHtml(policy.plcy_nm || '정책명 없음')}</h3>
                                 <p class="text-gray-600 text-sm mb-3">${escapeHtml(truncateText(policy.plcy_expln_cn))}</p>
                                 <span class="${categoryColors.bg} ${categoryColors.text} text-xs font-medium px-3 py-1 rounded-full w-fit">${escapeHtml(policy.mclsf_nm || '카테고리 없음')}</span>
-                                <span class="${categoryColors.bg} ${categoryColors.text} text-xs font-medium px-3 py-1 rounded-full w-fit">${escapeHtml(policy.zip_cd || '카테고리 없음')}</span>
+                                <span class="bg-gray-100 text-gray-700 text-xs font-medium px-3 py-1 rounded-full w-fit">${escapeHtml(policy.zip_cd || '카테고리 없음')}</span>
                             </div>
                         </div>
                     </div>
@@ -507,6 +521,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 );
             }
             
+            
             // 기타 정책 컨테이너
             if (otherPolicies.length > 0) {
                 policyContainers += createSliderContainer(
@@ -559,7 +574,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 세션 리스트를 불러오는 함수
     function loadSessionList() {
-        console.log('세션 리스트 로드 시작');
+        // console.log('세션 리스트 로드 시작');
         
         // 서버에서 세션 목록을 요청하는 fetch 요청
         fetch('/chatbot/api/sessions/', {
@@ -569,43 +584,52 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .then(res => {
-            console.log('서버 응답 상태:', res.status);
+            // console.log('서버 응답 상태:', res.status);
             // 401 상태 코드(인증 실패)인 경우 로그인 페이지로 이동
             if (res.status === 401) {
-                console.log('인증 실패, 로그인 페이지로 이동');
+                // console.log('인증 실패, 로그인 페이지로 이동');
                 window.location.href = '/user/login/';
                 return;
-            }
-            // 응답이 성공적이지 않으면 에러 발생
-            if (!res.ok) {
-                throw new Error('세션 목록을 불러오는데 실패했습니다.');
             }
             return res.json();
         })
         .then(data => {
-            console.log('받은 데이터:', data);
-            // 데이터가 없으면 함수 종료
-            if (!data) return;
+            // console.log('받은 데이터:', data);
             
             // 토큰 재발급 후 재요청 처리
             if (data.status === 'token_refreshed') {
-                console.log('토큰이 갱신되었습니다. 세션 목록을 다시 요청합니다.');
+                // console.log('토큰이 갱신되었습니다. 세션 목록을 다시 요청합니다.');
                 loadSessionList(); // 재귀적으로 다시 호출
                 return;
             }
             
             // 세션 리스트 컨테이너 요소 선택
-            const listContainer = document.getElementById('session-list');
-            // 세션 리스트 컨테이너가 없으면 에러 로그 출력 후 함수 종료
-            if (!listContainer) {
-                console.error('세션 리스트 컨테이너를 찾을 수 없습니다.');
+            const sessionListContainer = document.getElementById('session-list');
+            if (!sessionListContainer) {
+                // console.error('세션 리스트 컨테이너를 찾을 수 없습니다.');
                 return;
             }
+            
+            // console.log('세션 목록 렌더링 시작:', data.sessions);
+            
+            // 세션 목록이 비어있는 경우
+            if (!data.sessions || data.sessions.length === 0) {
+                // console.log('세션 목록이 비어있음');
+                sessionListContainer.innerHTML = `
+                    <div class="p-4 text-center text-gray-500">
+                        <p>대화 기록이 없습니다.</p>
+                        <p class="text-sm mt-1">새로운 대화를 시작해보세요!</p>
+                    </div>
+                `;
+                return;
+            }
+            
             // 세션 리스트 컨테이너 내용 초기화
-            listContainer.innerHTML = '';
+            sessionListContainer.innerHTML = '';
+            
             // 세션이 있고 개수가 0보다 크면
             if (data.sessions && data.sessions.length > 0) {
-                console.log('세션 목록 렌더링 시작:', data.sessions);
+                // console.log('세션 목록 렌더링 시작:', data.sessions);
                 // 각 세션에 대해 HTML 요소 생성
                 data.sessions.forEach(session => {
                     // 세션 div 요소 생성
@@ -632,21 +656,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     // 세션 클릭 시 해당 세션의 상세 정보를 불러오는 이벤트 리스너 추가
                     div.addEventListener('click', () => loadSessionDetail(session.id));
                     // 세션 리스트 컨테이너에 세션 div 추가
-                    listContainer.appendChild(div);
+                    sessionListContainer.appendChild(div);
                 });
             } else {
-                console.log('세션 목록이 비어있음');
+                // console.log('세션 목록이 비어있음');
                 // 세션이 없을 때 표시할 메시지
-                listContainer.innerHTML = '<p class="text-center text-slate-500 text-sm py-4">대화 내역이 없습니다.</p>';
+                sessionListContainer.innerHTML = '<p class="text-center text-slate-500 text-sm py-4">대화 내역이 없습니다.</p>';
             }
         })
         .catch(error => {
-            console.error('세션 목록 로드 중 오류:', error);
+            // console.error('세션 목록 로드 중 오류:', error);
             // 세션 리스트 컨테이너 요소 선택
-            const listContainer = document.getElementById('session-list');
+            const sessionListContainer = document.getElementById('session-list');
             // 세션 리스트 컨테이너가 있으면 에러 메시지 표시
-            if (listContainer) {
-                listContainer.innerHTML = '<p class="text-center text-red-500 text-sm py-4">세션 목록을 불러오는데 실패했습니다.</p>';
+            if (sessionListContainer) {
+                sessionListContainer.innerHTML = '<p class="text-center text-red-500 text-sm py-4">세션 목록을 불러오는데 실패했습니다.</p>';
             }
         });
     }
@@ -680,7 +704,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // 토큰 재발급 후 재요청 처리
             if (data.status === 'token_refreshed') {
-                console.log('토큰이 갱신되었습니다. 세션 상세 정보를 다시 요청합니다.');
+                // console.log('토큰이 갱신되었습니다. 세션 상세 정보를 다시 요청합니다.');
                 loadSessionDetail(sessionId); // 재귀적으로 다시 호출
                 return;
             }
@@ -689,7 +713,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const chatContainer = document.getElementById('chat-messages');
             // 채팅 컨테이너가 없으면 에러 로그 출력 후 함수 종료
             if (!chatContainer) {
-                console.error('채팅 컨테이너를 찾을 수 없습니다.');
+                // console.error('채팅 컨테이너를 찾을 수 없습니다.');
                 return;
             }
             // 채팅 컨테이너 내용 초기화
@@ -711,7 +735,7 @@ document.addEventListener('DOMContentLoaded', function() {
             loadSessionList();
         })
         .catch(error => {
-            console.error('세션 상세 정보 로드 중 오류:', error);
+            // console.error('세션 상세 정보 로드 중 오류:', error);
             // 채팅 메시지 컨테이너 요소 선택
             const chatContainer = document.getElementById('chat-messages');
             // 채팅 컨테이너가 있으면 에러 메시지 표시
@@ -767,7 +791,7 @@ document.addEventListener('DOMContentLoaded', function() {
             searchLoading.classList.add('hidden');
             
             if (data.status === 'token_refreshed') {
-                console.log('토큰이 갱신되었습니다. 검색을 다시 요청합니다.');
+                // console.log('토큰이 갱신되었습니다. 검색을 다시 요청합니다.');
                 performSearch(query);
                 return;
             }
@@ -779,7 +803,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
-            console.error('검색 중 오류 발생:', error);
+            // console.error('검색 중 오류 발생:', error);
             searchLoading.classList.add('hidden');
             if (error.message === 'Unauthorized') {
                 window.location.href = '/user/login/';
@@ -856,14 +880,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!data) return;
             
             if (data.status === 'token_refreshed') {
-                console.log('토큰이 갱신되었습니다. 세션 상세 정보를 다시 요청합니다.');
+                // console.log('토큰이 갱신되었습니다. 세션 상세 정보를 다시 요청합니다.');
                 loadSessionWithScroll(sessionId, messageId);
                 return;
             }
             
             const chatContainer = document.getElementById('chat-messages');
             if (!chatContainer) {
-                console.error('채팅 컨테이너를 찾을 수 없습니다.');
+                // console.error('채팅 컨테이너를 찾을 수 없습니다.');
                 return;
             }
             
@@ -901,7 +925,7 @@ document.addEventListener('DOMContentLoaded', function() {
             loadSessionList();
         })
         .catch(error => {
-            console.error('세션 상세 정보 로드 중 오류:', error);
+            // console.error('세션 상세 정보 로드 중 오류:', error);
             const chatContainer = document.getElementById('chat-messages');
             if (chatContainer) {
                 chatContainer.innerHTML = '<p class="text-center text-red-500 text-sm py-4">대화 내용을 불러오는데 실패했습니다.</p>';
@@ -923,7 +947,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 페이지 로드 시 초기화
-    console.log('페이지 로드 완료, 초기화 시작');
+    // console.log('페이지 로드 완료, 초기화 시작');
     // 예시 질문 버튼들에 이벤트 리스너 설정
     setupPresetButtons();
     // 세션 리스트 로드
@@ -938,6 +962,13 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;') // 탭을 4칸 공백으로
             .replace(/  /g, '&nbsp;&nbsp;')             // 연속 공백 보존
             .replace(/\n/g, '<br>');                   // 줄바꿈
+    }
+
+    // --- 사이의 내용을 제거하는 함수
+    function removeContentBetweenDashes(text) {
+        if (!text) return '';
+        // ---로 시작해서 다음 ---까지의 내용을 모두 제거 (각 블록을 개별적으로 처리)
+        return text.replace(/---[\s\S]*?(?=---|$)/g, '').trim();
     }
 });
 
