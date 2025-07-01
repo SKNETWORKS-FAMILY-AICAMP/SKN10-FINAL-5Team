@@ -561,6 +561,7 @@ earn_etc_cn -> string 값 (예: '중위소득 150% 이하', '월소득 200만원
 15. 사용자 조건과 제일 유사한 정책으로 정렬하도록 쿼리를 구성해주세요
     - 정렬 순서: zip_cd > mrg_stts_cd, school_cd, plcy_major_cd, job_cd > query_keywords >earn_etc_cn, additional_requirement
 16. 필터링 할 때는 분류 정보, 조건 정보만 사용해서 쿼리를 구성해야 합니다
+17. is_active 컬럼은 사용하지 마세요.
 
 **주의사항:**
 - 쿼리는 반드시 실행 가능한 형태여야 합니다
