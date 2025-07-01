@@ -1,0 +1,117 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="배포 아키텍처" id="AWS-CICD-EXAMPLE">
+    <mxGraphModel dx="1200" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Dev Tools -->
+        <mxCell id="devtools" value="Dev Tools" style="shape=mxgraph.aws4.developerTools;labelPosition=bottom;verticalLabelPosition=bottom;" vertex="1" parent="1">
+          <mxGeometry x="60" y="100" width="60" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- Github -->
+        <mxCell id="github" value="Github" style="shape=mxgraph.aws4.sourceRepository;labelPosition=bottom;verticalLabelPosition=bottom;" vertex="1" parent="1">
+          <mxGeometry x="200" y="100" width="60" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- Docker -->
+        <mxCell id="docker" value="Docker" style="shape=mxgraph.aws4.container;labelPosition=bottom;verticalLabelPosition=bottom;" vertex="1" parent="1">
+          <mxGeometry x="270" y="100" width="60" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- CodeBuild -->
+        <mxCell id="codebuild" value="CodeBuild" style="shape=mxgraph.aws4.codebuild;labelPosition=bottom;verticalLabelPosition=bottom;" vertex="1" parent="1">
+          <mxGeometry x="350" y="100" width="60" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- CodeDeploy -->
+        <mxCell id="codedeploy" value="CodeDeploy" style="shape=mxgraph.aws4.codedeploy;labelPosition=bottom;verticalLabelPosition=bottom;" vertex="1" parent="1">
+          <mxGeometry x="430" y="100" width="60" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- AWS ECR -->
+        <mxCell id="ecr" value="AWS ECR" style="shape=mxgraph.aws4.ecr;labelPosition=bottom;verticalLabelPosition=bottom;" vertex="1" parent="1">
+          <mxGeometry x="520" y="60" width="60" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="springrepo" value="Spring Boot Repository" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#ff9900;" vertex="1" parent="1">
+          <mxGeometry x="600" y="55" width="120" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="flaskrepo" value="Flask Repository" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#ff9900;" vertex="1" parent="1">
+          <mxGeometry x="600" y="95" width="120" height="30" as="geometry"/>
+        </mxCell>
+        
+        <!-- AWS ECS Cluster -->
+        <mxCell id="ecsbox" value="AWS ECS Cluster" style="swimlane;rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#ff9900;" vertex="1" parent="1">
+          <mxGeometry x="520" y="180" width="400" height="220" as="geometry"/>
+        </mxCell>
+        
+        <!-- Spring Boot Fargate -->
+        <mxCell id="springlb" value="Spring Boot Fargate Load Balancer" style="shape=mxgraph.aws4.elasticloadbalancing;labelPosition=bottom;verticalLabelPosition=bottom;" vertex="1" parent="ecsbox">
+          <mxGeometry x="30" y="40" width="60" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="springtask1" value="Spring Boot Task" style="shape=mxgraph.aws4.ecsContainer;labelPosition=bottom;verticalLabelPosition=bottom;" vertex="1" parent="ecsbox">
+          <mxGeometry x="20" y="120" width="60" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="springtask2" value="Spring Boot Task" style="shape=mxgraph.aws4.ecsContainer;labelPosition=bottom;verticalLabelPosition=bottom;" vertex="1" parent="ecsbox">
+          <mxGeometry x="80" y="120" width="60" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- Flask Fargate -->
+        <mxCell id="flasklb" value="Flask Fargate Load Balancer" style="shape=mxgraph.aws4.elasticloadbalancing;labelPosition=bottom;verticalLabelPosition=bottom;" vertex="1" parent="ecsbox">
+          <mxGeometry x="220" y="40" width="60" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="flasktask1" value="Flask Task" style="shape=mxgraph.aws4.ecsContainer;labelPosition=bottom;verticalLabelPosition=bottom;" vertex="1" parent="ecsbox">
+          <mxGeometry x="210" y="120" width="60" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="flasktask2" value="Flask Task" style="shape=mxgraph.aws4.ecsContainer;labelPosition=bottom;verticalLabelPosition=bottom;" vertex="1" parent="ecsbox">
+          <mxGeometry x="270" y="120" width="60" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- Route 53 -->
+        <mxCell id="route53" value="Route 53 Domain" style="shape=mxgraph.aws4.route53;labelPosition=bottom;verticalLabelPosition=bottom;" vertex="1" parent="1">
+          <mxGeometry x="100" y="320" width="60" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- Certificate Manager -->
+        <mxCell id="certmgr" value="Certificate Manager" style="shape=mxgraph.aws4.certificateManager;labelPosition=bottom;verticalLabelPosition=bottom;" vertex="1" parent="1">
+          <mxGeometry x="30" y="400" width="60" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- Devices -->
+        <mxCell id="devices" value="Devices" style="shape=mxgraph.aws4.client;labelPosition=bottom;verticalLabelPosition=bottom;" vertex="1" parent="1">
+          <mxGeometry x="20" y="320" width="60" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- 연결선 -->
+        <mxCell id="devtools_github" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;" edge="1" parent="1" source="devtools" target="github">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="github_docker" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;" edge="1" parent="1" source="github" target="docker">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="docker_codebuild" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;" edge="1" parent="1" source="docker" target="codebuild">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="codebuild_codedeploy" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;" edge="1" parent="1" source="codebuild" target="codedeploy">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="codebuild_ecr" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;" edge="1" parent="1" source="codebuild" target="ecr">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="codedeploy_ecsbox" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;" edge="1" parent="1" source="codedeploy" target="ecsbox">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="devices_route53" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;" edge="1" parent="1" source="devices" target="route53">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="route53_ecsbox" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;" edge="1" parent="1" source="route53" target="ecsbox">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="certmgr_route53" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;" edge="1" parent="1" source="certmgr" target="route53">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

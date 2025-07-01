@@ -11,12 +11,22 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os 
 from pathlib import Path
-import os
-
 from dotenv import load_dotenv
 
-load_dotenv()
+# 1. 항상 파라미터 스토어에서 먼저 값을 불러옴
+try:
+    from config.aws_param_store import load_parameters_from_aws
+    load_parameters_from_aws(prefix="/youth_main3/")
+except Exception as e:
+    print(f"SSM Parameter Store 로드 실패: {e}")
+    # 개발 환경 등에서만 .env 사용
+    dotenv_path = Path(__file__).resolve().parent.parent.parent / ".env"
+    if dotenv_path.exists():
+        load_dotenv(dotenv_path)
+    else:
+        print(".env 파일도 존재하지 않습니다.")
 
+# 이후 환경변수는 os.environ에서 읽음
 NAVER_CLIENT_ID = os.getenv("NAVER_CLIENT_ID")
 NAVER_CLIENT_SECRET = os.getenv("NAVER_CLIENT_SECRET")
 NAVER_REDIRECT_URI = os.getenv("NAVER_REDIRECT_URI")
@@ -38,7 +48,9 @@ SECRET_KEY = 'django-insecure-&1w#9zdx#874h-&ysau$9wwdm_1nnmjh9tdn^tc*$kwrhm40-7
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "*"  # 모든 호스트 허용
+]
 
 
 # Application definition

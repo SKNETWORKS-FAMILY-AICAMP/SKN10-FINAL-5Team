@@ -1,0 +1,67 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="AWS Django CI/CD Architecture" id="AWS_CICD_ARCH">
+    <mxGraphModel dx="1000" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- GitHub -->
+        <mxCell id="2" value="GitHub (Repo)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#24292e;fontColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="60" y="120" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <!-- CodePipeline -->
+        <mxCell id="3" value="CodePipeline" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4b612c;fontColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="240" y="120" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <!-- CodeBuild -->
+        <mxCell id="4" value="CodeBuild&#10;(Docker build/push)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#19407c;fontColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="420" y="120" width="140" height="50" as="geometry"/>
+        </mxCell>
+        <!-- ECR -->
+        <mxCell id="5" value="ECR (Docker Registry)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f58536;fontColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="620" y="120" width="150" height="50" as="geometry"/>
+        </mxCell>
+        <!-- ECS/Fargate -->
+        <mxCell id="6" value="ECS/Fargate" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#232f3e;fontColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="820" y="120" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <!-- User -->
+        <mxCell id="7" value="User (Web Access)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;fontColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="120" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <!-- Edges -->
+        <mxCell id="8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#000000;" edge="1" parent="1" source="2" target="3">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="180" y="145" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9" value="Push/PR" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="150" y="100" width="60" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#000000;" edge="1" parent="1" source="3" target="4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="11" value="Trigger" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="270" y="100" width="60" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#000000;" edge="1" parent="1" source="4" target="5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="13" value="Docker build/push" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="470" y="100" width="100" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#000000;" edge="1" parent="1" source="5" target="6">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="15" value="Deploy" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="670" y="100" width="60" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#000000;" edge="1" parent="1" source="6" target="7">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="17" value="Web Access" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="900" y="100" width="80" height="20" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
