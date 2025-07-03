@@ -13,10 +13,12 @@ def lambda_handler(event, context):
     정책 DB 유지보수를 위한 Lambda 함수
     EventBridge 스케줄러에 의해 정기적으로 실행됨
     
+    ⚠️ 안전조치: 현재 아카이브 기능은 임시 비활성화됨
+    
     예상 스케줄:
     - 매일 새벽 2시: 만료 예정 알림 체크
-    - 주 1회 일요일: 만료된 정책 아카이브
-    - 월 1회: 전체 유지보수 작업
+    - 주 1회 일요일: 만료된 정책 아카이브 (현재 비활성화)
+    - 월 1회: 전체 유지보수 작업 (현재 비활성화)
     """
     try:
         logger.info("정책 DB 유지보수 Lambda 함수 시작")
@@ -41,50 +43,50 @@ def lambda_handler(event, context):
         # DB 관리자 생성
         manager = PolicyDBManager(db_config, notification_config)
         
-        # 작업 유형에 따른 다른 유지보수 실행
+        # ⚠️ 안전조치: 모든 유지보수 타입에서 아카이브 기능 비활성화
         if maintenance_type == 'daily':
             # 매일: 만료 예정 알림만
             result = manager.run_maintenance(
                 delete_expired=False,
-                archive_expired=False,
+                archive_expired=False,  # 아카이브 비활성화
                 grace_period_days=30,
                 clean_orphans=False,
                 notify_expiring=True
             )
-            operation = "일일 점검"
+            operation = "일일 점검 (안전모드)"
             
         elif maintenance_type == 'weekly':
-            # 주간: 만료된 정책 아카이브 + 고아 임베딩 정리
+            # 주간: 알림만 (아카이브 및 정리 기능 임시 비활성화)
             result = manager.run_maintenance(
                 delete_expired=False,
-                archive_expired=True,
+                archive_expired=False,  # ⚠️ 임시 비활성화
                 grace_period_days=30,
-                clean_orphans=True,
+                clean_orphans=False,    # ⚠️ 임시 비활성화
                 notify_expiring=True
             )
-            operation = "주간 정리"
+            operation = "주간 점검 (안전모드 - 아카이브 비활성화)"
             
         elif maintenance_type == 'monthly':
-            # 월간: 전체 유지보수 (유예기간 60일)
+            # 월간: 알림만 (전체 유지보수 기능 임시 비활성화)
             result = manager.run_maintenance(
                 delete_expired=False,
-                archive_expired=True,
+                archive_expired=False,  # ⚠️ 임시 비활성화
                 grace_period_days=60,
-                clean_orphans=True,
+                clean_orphans=False,    # ⚠️ 임시 비활성화
                 notify_expiring=True
             )
-            operation = "월간 유지보수"
+            operation = "월간 점검 (안전모드 - 아카이브 비활성화)"
             
         else:
             # 기본: 일일 점검
             result = manager.run_maintenance(
                 delete_expired=False,
-                archive_expired=False,
+                archive_expired=False,  # 아카이브 비활성화
                 grace_period_days=30,
                 clean_orphans=False,
                 notify_expiring=True
             )
-            operation = "기본 점검"
+            operation = "기본 점검 (안전모드)"
         
         # 결과 로깅
         logger.info(f"{operation} 완료:")
@@ -98,6 +100,7 @@ def lambda_handler(event, context):
         response_body = {
             'message': f'{operation} 완료',
             'maintenance_type': maintenance_type,
+            'safety_mode': True,  # 안전모드 표시
             'result': {
                 'archived_policies': result.archived_policies,
                 'cleaned_orphan_embeddings': result.cleaned_orphan_embeddings,

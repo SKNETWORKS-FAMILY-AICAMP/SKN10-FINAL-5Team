@@ -160,14 +160,16 @@ class DatabaseMaintenanceManager:
                 );
             """)
             
-            # 아카이브할 정책 찾기 (60일 이상 만료된 정책)
+            # 수정된 만료 정책 조회 로직 - 현재 날짜 기준으로 이미 만료되고 유예기간도 지난 정책만 조회
             cutoff_date = datetime.now() - timedelta(days=grace_period_days)
             
             cursor.execute(f"""
                 SELECT plcy_no FROM {table_name} 
                 WHERE aply_end_ymd IS NOT NULL 
-                AND aply_end_ymd < %s
-                LIMIT 100
+                AND aply_end_ymd < CURRENT_DATE     -- 현재 날짜 기준으로 이미 만료된 정책
+                AND aply_end_ymd < %s               -- 유예기간도 지난 정책
+                ORDER BY aply_end_ymd
+                LIMIT 100                           -- 안전을 위해 한 번에 최대 100개만 처리
             """, (cutoff_date.date(),))
             
             expired_policies = [row[0] for row in cursor.fetchall()]
@@ -175,6 +177,16 @@ class DatabaseMaintenanceManager:
             if not expired_policies:
                 logger.info("아카이브할 만료 정책이 없습니다.")
                 return 0
+            
+            # 안전장치: 대량 삭제 방지
+            MAX_ARCHIVE_COUNT = 100
+            if len(expired_policies) > MAX_ARCHIVE_COUNT:
+                logger.error(f"⚠️ 위험: {len(expired_policies)}개 정책 아카이브 요청됨 (최대 {MAX_ARCHIVE_COUNT}개 허용)")
+                logger.error(f"⚠️ 대량 삭제 방지를 위해 아카이브 작업을 중단합니다 (시뮬레이션 모드)")
+                return 0
+            
+            logger.info(f"아카이브 대상 정책 수: {len(expired_policies)}")
+            logger.info(f"아카이브 대상 정책 예시: {expired_policies[:5]}")
             
             # 아카이브 테이블로 복사
             placeholders = ','.join(['%s'] * len(expired_policies))
@@ -187,10 +199,14 @@ class DatabaseMaintenanceManager:
             
             archived_count = cursor.rowcount
             
-            # 원본 테이블에서 삭제 (시뮬레이션 모드에서는 주석 처리)
-            # cursor.execute(f"DELETE FROM {table_name} WHERE plcy_no IN ({placeholders})", expired_policies)
+            # 원본 테이블에서 삭제 (현재는 시뮬레이션 모드 - 실제 삭제 비활성화)
+            # ⚠️ 안전을 위해 실제 삭제는 주석 처리됨
+            # if archived_count > 0:
+            #     cursor.execute(f"DELETE FROM {table_name} WHERE plcy_no IN ({placeholders})", expired_policies)
+            #     deleted_count = cursor.rowcount
+            #     logger.info(f"✅ 원본 테이블에서 {deleted_count}개 정책 삭제 완료")
             
-            logger.info(f"{archived_count}개 정책 아카이브 완료 (삭제는 시뮬레이션)")
+            logger.info(f"✅ {archived_count}개 정책 아카이브 완료 (삭제는 시뮬레이션 모드)")
             return archived_count
             
         except Exception as e:

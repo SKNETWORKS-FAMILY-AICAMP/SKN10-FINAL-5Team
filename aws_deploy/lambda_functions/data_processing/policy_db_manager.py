@@ -159,19 +159,28 @@ class PolicyDBManager:
             만료된 정책 번호 리스트
         """
         try:
+            # 현재 날짜에서 유예기간을 뺀 날짜 (예: 오늘이 2025-01-01이고 grace_period_days=30이면 2024-12-02)
             grace_date = datetime.now() - timedelta(days=grace_period_days)
             
+            # 수정된 쿼리: 현재 날짜 기준으로 이미 만료되고 유예기간도 지난 정책만 조회
             query = """
                 SELECT plcy_no FROM policies 
                 WHERE aply_end_ymd IS NOT NULL 
-                AND aply_end_ymd < %s
+                AND aply_end_ymd < CURRENT_DATE  -- 현재 날짜 기준으로 이미 만료된 정책
+                AND aply_end_ymd < %s            -- 유예기간도 지난 정책
                 ORDER BY aply_end_ymd
+                LIMIT 100                        -- 안전을 위해 한 번에 최대 100개만 처리
             """
             
             self.cursor.execute(query, (grace_date.date(),))
             expired_policies = [row[0] for row in self.cursor.fetchall()]
             
-            logger.info(f"{grace_period_days}일 유예기간 초과 만료 정책 {len(expired_policies)}개 발견")
+            logger.info(f"현재 날짜 기준 만료 + {grace_period_days}일 유예기간 초과 정책 {len(expired_policies)}개 발견")
+            
+            # 디버깅을 위한 로깅 추가
+            if expired_policies:
+                logger.info(f"만료된 정책 예시 (처음 5개): {expired_policies[:5]}")
+                
             return expired_policies
             
         except Exception as e:
@@ -232,7 +241,19 @@ class PolicyDBManager:
         if not policy_numbers:
             return 0
         
+        # 안전장치: 한 번에 너무 많은 정책을 삭제하는 것을 방지
+        MAX_ARCHIVE_COUNT = 500
+        if len(policy_numbers) > MAX_ARCHIVE_COUNT:
+            logger.error(f"⚠️ 위험: {len(policy_numbers)}개 정책 아카이브 요청됨 (최대 {MAX_ARCHIVE_COUNT}개 허용)")
+            logger.error(f"⚠️ 대량 삭제 방지를 위해 아카이브 작업을 중단합니다")
+            raise ValueError(f"아카이브 요청 정책 수가 너무 많습니다: {len(policy_numbers)}개 (최대 {MAX_ARCHIVE_COUNT}개)")
+        
         try:
+            # 아카이브할 정책들의 세부 정보 로깅
+            logger.info(f"아카이브 대상 정책 수: {len(policy_numbers)}")
+            if policy_numbers:
+                logger.info(f"아카이브 대상 정책 번호 예시: {policy_numbers[:10]}")
+            
             # 아카이브 테이블 존재 확인 및 생성
             self.cursor.execute("""
                 CREATE TABLE IF NOT EXISTS policies_archive (
@@ -251,22 +272,32 @@ class PolicyDBManager:
             self.cursor.execute(archive_query, (policy_numbers,))
             archived_count = self.cursor.rowcount
             
-            # 원본 테이블에서 삭제
-            delete_query = "DELETE FROM policies WHERE plcy_no = ANY(%s)"
-            self.cursor.execute(delete_query, (policy_numbers,))
+            logger.info(f"✅ {archived_count}개 정책을 아카이브 테이블에 복사 완료")
             
-            # 관련 임베딩도 삭제
-            delete_embeddings_query = "DELETE FROM policy_embeddings WHERE plcy_no = ANY(%s)"
-            self.cursor.execute(delete_embeddings_query, (policy_numbers,))
-            
-            self.conn.commit()
-            logger.info(f"{archived_count}개 정책 아카이브 완료")
-            
-            return archived_count
+            # 원본 테이블에서 삭제 (추가 확인)
+            if archived_count > 0:
+                delete_query = "DELETE FROM policies WHERE plcy_no = ANY(%s)"
+                self.cursor.execute(delete_query, (policy_numbers,))
+                deleted_count = self.cursor.rowcount
+                
+                # 관련 임베딩도 삭제
+                delete_embeddings_query = "DELETE FROM policy_embeddings WHERE plcy_no = ANY(%s)"
+                self.cursor.execute(delete_embeddings_query, (policy_numbers,))
+                embedding_deleted_count = self.cursor.rowcount
+                
+                self.conn.commit()
+                
+                logger.info(f"✅ 원본 테이블에서 {deleted_count}개 정책 삭제 완료")
+                logger.info(f"✅ 관련 임베딩 {embedding_deleted_count}개 삭제 완료")
+                
+                return archived_count
+            else:
+                logger.warning("⚠️ 아카이브된 정책이 없어 원본 삭제를 건너뜁니다")
+                return 0
             
         except Exception as e:
             self.conn.rollback()
-            logger.error(f"정책 아카이브 실패: {e}")
+            logger.error(f"❌ 정책 아카이브 실패: {e}")
             raise
     
     def clean_orphan_embeddings(self) -> int:
