@@ -5,6 +5,8 @@
     "DB_NAME": "postgres",
     "DB_USER": "postgres",
     "DB_PASSWORD": "postgres",
-    "S3_BUCKET_NAME": "youth-policy-data-bucket"
+    "S3_BUCKET_NAME": "youth-policy-data-bucket",
+    "POLICIES_TABLE": "policies",
+    "CLASSIFICATIONS_TABLE": "policy_classifications"
   }
 } 
