@@ -95,6 +95,17 @@ class PolicyDBManager:
     def get_policy_statistics(self) -> PolicyStats:
         """정책 통계 정보 조회"""
         try:
+            # 테이블 존재 확인
+            self.cursor.execute("""
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = 'policies'
+            """)
+            
+            if not self.cursor.fetchone():
+                logger.error("⚠️ policies 테이블이 존재하지 않습니다!")
+                raise ValueError("policies 테이블을 찾을 수 없습니다. 데이터베이스 스키마를 확인하세요.")
+            
             # 전체 정책 수
             self.cursor.execute("SELECT COUNT(*) FROM policies")
             total_policies = self.cursor.fetchone()[0]
@@ -159,6 +170,17 @@ class PolicyDBManager:
             만료된 정책 번호 리스트
         """
         try:
+            # 테이블 존재 확인
+            self.cursor.execute("""
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = 'policies'
+            """)
+            
+            if not self.cursor.fetchone():
+                logger.error("⚠️ policies 테이블이 존재하지 않습니다!")
+                raise ValueError("policies 테이블을 찾을 수 없습니다.")
+            
             # 현재 날짜에서 유예기간을 뺀 날짜 (예: 오늘이 2025-01-01이고 grace_period_days=30이면 2024-12-02)
             grace_date = datetime.now() - timedelta(days=grace_period_days)
             

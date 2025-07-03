@@ -83,21 +83,20 @@ class DatabaseMaintenanceManager:
         }
         
         try:
-            # 테이블 존재 확인
+            # policies 테이블 존재 확인 (통일된 테이블명 사용)
             cursor.execute("""
                 SELECT table_name 
                 FROM information_schema.tables 
-                WHERE table_schema = 'public' AND table_name IN ('policies', 'youth_policies')
+                WHERE table_schema = 'public' AND table_name = 'policies'
             """)
             
-            tables = [row[0] for row in cursor.fetchall()]
-            
-            if not tables:
-                logger.warning("정책 테이블이 존재하지 않습니다.")
+            if not cursor.fetchone():
+                logger.error("⚠️ policies 테이블이 존재하지 않습니다!")
+                logger.error("🔧 데이터베이스 스키마를 확인하거나 create_youth_policy_tables.sql을 실행하세요.")
                 return stats
             
-            # 사용할 테이블명 결정
-            table_name = 'policies' if 'policies' in tables else 'youth_policies'
+            # policies 테이블 사용
+            table_name = 'policies'
             
             # 전체 정책 수
             cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
@@ -121,17 +120,18 @@ class DatabaseMaintenanceManager:
             """)
             stats['missing_data'] = cursor.fetchone()[0]
             
-            # 중복 정책 검사
+            # 중복 정책 검사 (정책명 기준)
             cursor.execute(f"""
                 SELECT COUNT(*) - COUNT(DISTINCT plcy_nm) FROM {table_name} 
-                WHERE plcy_nm IS NOT NULL AND plcy_nm != ''
+                WHERE plcy_nm IS NOT NULL
             """)
             stats['duplicate_policies'] = cursor.fetchone()[0]
             
+            logger.info(f"데이터베이스 통계: {stats}")
             return stats
             
         except Exception as e:
-            logger.error(f"통계 수집 실패: {e}")
+            logger.error(f"데이터베이스 통계 수집 실패: {e}")
             return stats
     
     def archive_expired_policies(self, cursor, grace_period_days: int = 60) -> int:
@@ -139,74 +139,81 @@ class DatabaseMaintenanceManager:
         logger.info(f"만료된 정책 아카이브 중... (유예기간: {grace_period_days}일)")
         
         try:
-            # 테이블 존재 확인
+            # policies 테이블 존재 확인
             cursor.execute("""
                 SELECT table_name 
                 FROM information_schema.tables 
-                WHERE table_schema = 'public' AND table_name IN ('policies', 'youth_policies')
+                WHERE table_schema = 'public' AND table_name = 'policies'
             """)
             
-            tables = [row[0] for row in cursor.fetchall()]
-            if not tables:
+            if not cursor.fetchone():
+                logger.error("⚠️ policies 테이블이 존재하지 않습니다!")
                 return 0
             
-            table_name = 'policies' if 'policies' in tables else 'youth_policies'
+            table_name = 'policies'
             archive_table = f"{table_name}_archive"
             
             # 아카이브 테이블 생성 (존재하지 않으면)
             cursor.execute(f"""
                 CREATE TABLE IF NOT EXISTS {archive_table} (
                     LIKE {table_name} INCLUDING ALL
-                );
+                )
             """)
             
-            # 수정된 만료 정책 조회 로직 - 현재 날짜 기준으로 이미 만료되고 유예기간도 지난 정책만 조회
-            cutoff_date = datetime.now() - timedelta(days=grace_period_days)
+            # 🚨 CRITICAL: 안전한 만료 정책 조회 (현재 날짜 기준 + 유예기간)
+            grace_date = datetime.now() - timedelta(days=grace_period_days)
             
             cursor.execute(f"""
-                SELECT plcy_no FROM {table_name} 
+                SELECT plcy_no, plcy_nm, aply_end_ymd 
+                FROM {table_name}
                 WHERE aply_end_ymd IS NOT NULL 
-                AND aply_end_ymd < CURRENT_DATE     -- 현재 날짜 기준으로 이미 만료된 정책
-                AND aply_end_ymd < %s               -- 유예기간도 지난 정책
+                  AND aply_end_ymd < CURRENT_DATE          -- 현재 날짜 기준으로 이미 만료
+                  AND aply_end_ymd < %s                    -- 유예기간도 초과
                 ORDER BY aply_end_ymd
-                LIMIT 100                           -- 안전을 위해 한 번에 최대 100개만 처리
-            """, (cutoff_date.date(),))
+                LIMIT 100                                  -- 🚨 안전장치: 최대 100개만
+            """, (grace_date.date(),))
             
-            expired_policies = [row[0] for row in cursor.fetchall()]
+            expired_policies = cursor.fetchall()
             
             if not expired_policies:
-                logger.info("아카이브할 만료 정책이 없습니다.")
+                logger.info("아카이브할 만료된 정책이 없습니다.")
                 return 0
             
-            # 안전장치: 대량 삭제 방지
+            # 🚨 CRITICAL: 대량 삭제 방지 안전장치
             MAX_ARCHIVE_COUNT = 100
             if len(expired_policies) > MAX_ARCHIVE_COUNT:
                 logger.error(f"⚠️ 위험: {len(expired_policies)}개 정책 아카이브 요청됨 (최대 {MAX_ARCHIVE_COUNT}개 허용)")
-                logger.error(f"⚠️ 대량 삭제 방지를 위해 아카이브 작업을 중단합니다 (시뮬레이션 모드)")
+                logger.error(f"⚠️ 대량 삭제 방지를 위해 아카이브 작업을 중단합니다")
                 return 0
             
-            logger.info(f"아카이브 대상 정책 수: {len(expired_policies)}")
-            logger.info(f"아카이브 대상 정책 예시: {expired_policies[:5]}")
+            policy_numbers = [row[0] for row in expired_policies]
             
-            # 아카이브 테이블로 복사
-            placeholders = ','.join(['%s'] * len(expired_policies))
+            # 아카이브할 정책들의 상세 정보 로깅
+            logger.info(f"아카이브 대상 정책:")
+            for i, (plcy_no, plcy_nm, end_date) in enumerate(expired_policies[:5]):  # 처음 5개만 로깅
+                logger.info(f"  {i+1}. 정책번호: {plcy_no}, 정책명: {plcy_nm[:50]}, 만료일: {end_date}")
+            if len(expired_policies) > 5:
+                logger.info(f"  ... 및 {len(expired_policies) - 5}개 추가")
+            
+            # 원본 데이터를 아카이브 테이블로 복사
             cursor.execute(f"""
-                INSERT INTO {archive_table} 
-                SELECT * FROM {table_name} 
-                WHERE plcy_no IN ({placeholders})
-                ON CONFLICT (plcy_no) DO NOTHING
-            """, expired_policies)
+                INSERT INTO {archive_table}
+                SELECT * FROM {table_name}
+                WHERE plcy_no = ANY(%s)
+            """, (policy_numbers,))
             
             archived_count = cursor.rowcount
+            logger.info(f"아카이브 테이블에 {archived_count}개 정책 복사 완료")
             
-            # 원본 테이블에서 삭제 (현재는 시뮬레이션 모드 - 실제 삭제 비활성화)
-            # ⚠️ 안전을 위해 실제 삭제는 주석 처리됨
-            # if archived_count > 0:
-            #     cursor.execute(f"DELETE FROM {table_name} WHERE plcy_no IN ({placeholders})", expired_policies)
-            #     deleted_count = cursor.rowcount
-            #     logger.info(f"✅ 원본 테이블에서 {deleted_count}개 정책 삭제 완료")
+            # 🚨 CRITICAL: 원본 테이블에서 삭제 (매우 신중하게!)
+            cursor.execute(f"""
+                DELETE FROM {table_name} 
+                WHERE plcy_no = ANY(%s)
+            """, (policy_numbers,))
             
-            logger.info(f"✅ {archived_count}개 정책 아카이브 완료 (삭제는 시뮬레이션 모드)")
+            deleted_count = cursor.rowcount
+            logger.info(f"원본 테이블에서 {deleted_count}개 정책 삭제 완료")
+            
             return archived_count
             
         except Exception as e:
@@ -379,6 +386,53 @@ class DatabaseMaintenanceManager:
             raise
         finally:
             conn.close()
+
+    def check_expiring_policies(self, cursor, days_ahead: int = 7) -> List[Dict]:
+        """만료 예정 정책 확인"""
+        logger.info(f"{days_ahead}일 후 만료 예정 정책 확인 중...")
+        
+        try:
+            # policies 테이블 존재 확인
+            cursor.execute("""
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = 'policies'
+            """)
+            
+            if not cursor.fetchone():
+                logger.error("⚠️ policies 테이블이 존재하지 않습니다!")
+                return []
+            
+            # policies 테이블 사용
+            table_name = 'policies'
+            
+            # 만료 예정 정책 조회
+            cursor.execute(f"""
+                SELECT plcy_no, plcy_nm, aply_end_ymd,
+                       aply_end_ymd - CURRENT_DATE as days_remaining
+                FROM {table_name}
+                WHERE aply_end_ymd IS NOT NULL 
+                  AND aply_end_ymd BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '{days_ahead} days'
+                ORDER BY aply_end_ymd
+            """)
+            
+            expiring_policies = []
+            for row in cursor.fetchall():
+                policy_info = {
+                    'policy_no': row[0],
+                    'policy_name': row[1][:100],  # 정책명은 100자로 제한
+                    'end_date': row[2].strftime('%Y-%m-%d') if row[2] else None,
+                    'days_remaining': row[3]
+                }
+                expiring_policies.append(policy_info)
+            
+            logger.info(f"{days_ahead}일 내 만료 예정 정책 {len(expiring_policies)}개 발견")
+            
+            return expiring_policies
+            
+        except Exception as e:
+            logger.error(f"만료 예정 정책 확인 실패: {e}")
+            return []
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
