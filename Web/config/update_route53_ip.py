@@ -43,6 +43,8 @@ def get_hosted_zone_id(domain_name):
 def update_route53_record(domain_name, public_ip):
     route53 = boto3.client('route53')
     zone_id = get_hosted_zone_id(domain_name)
+    # www 서브도메인으로 레코드 이름 지정
+    record_name = f"www.{domain_name}"
     response = route53.change_resource_record_sets(
         HostedZoneId=zone_id,
         ChangeBatch={
@@ -51,7 +53,7 @@ def update_route53_record(domain_name, public_ip):
                 {
                     'Action': 'UPSERT',
                     'ResourceRecordSet': {
-                        'Name': domain_name,
+                        'Name': record_name,
                         'Type': 'A',
                         'TTL': 60,
                         'ResourceRecords': [{'Value': public_ip}]
@@ -60,7 +62,7 @@ def update_route53_record(domain_name, public_ip):
             ]
         }
     )
-    return response
+    return
 
 if __name__ == "__main__":
     cluster = ECS_CLUSTER
