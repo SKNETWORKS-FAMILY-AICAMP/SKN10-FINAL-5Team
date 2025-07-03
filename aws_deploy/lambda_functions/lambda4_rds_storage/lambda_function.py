@@ -48,8 +48,8 @@ class RDSDataManager:
             'password': os.environ['DB_PASSWORD']
         }
         
-        # 테이블 이름 설정
-        self.policies_table = os.environ.get('POLICIES_TABLE', 'youth_policies')
+        # 테이블 이름 설정 - policies로 통일
+        self.policies_table = os.environ.get('POLICIES_TABLE', 'policies')  # 기본값을 policies로 변경
         self.classifications_table = os.environ.get('CLASSIFICATIONS_TABLE', 'policy_classifications')
     
     def load_classified_data_from_s3(self, s3_key: str) -> pd.DataFrame:
