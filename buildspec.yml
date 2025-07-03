@@ -47,4 +47,5 @@ phases:
 
 artifacts:
     files: 
-      - imagedefinitions.json
+      - '**/*' #모든 소스파일을 아티팩트에 포함
+      #- imagedefinitions.json
