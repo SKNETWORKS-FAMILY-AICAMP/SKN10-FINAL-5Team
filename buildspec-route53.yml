@@ -9,3 +9,5 @@ phases:
 
 artifacts:
   files:
+      - '**/*' # Include all source files in the artifacts
+      #- imagedefinitions.json # Uncomment if you want to include this file
