@@ -43,6 +43,9 @@ phases:
       - echo $ECS_CONTAINER_NAME
       - echo printing imagedefinitions.json
       - cat imagedefinitions.json
+      - export ECS_CLUSTER_NAME=youth-llm
+      - export ECS_SERVICE_NAME=youth-llm-task1-service-1
+      - python Web/config/update_route53_ip.py
 
 artifacts:
     files: 
