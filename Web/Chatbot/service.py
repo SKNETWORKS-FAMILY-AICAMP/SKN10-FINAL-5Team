@@ -227,7 +227,9 @@ def analyze_query_node(state: GraphState) -> GraphState:
         }
         
     except Exception as e:
-        # logger.error(f"질의 분석 실패: {e}")
+        import traceback
+        print(f"질의 분석 실패: {e}")
+        traceback.print_exc()
         return {
             **state,
             "error": f"질의 분석 실패: {str(e)}"
