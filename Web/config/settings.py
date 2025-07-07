@@ -34,6 +34,8 @@ NAVER_REDIRECT_URI = os.getenv("NAVER_REDIRECT_URI")
 ACCESS_SECRET_KEY = os.getenv("ACCESS_SECRET_KEY")
 REFRESH_SECRET_KEY = os.getenv("REFRESH_SECRET_KEY")
 
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
