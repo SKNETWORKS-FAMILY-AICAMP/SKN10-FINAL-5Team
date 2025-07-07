@@ -112,12 +112,17 @@
 
 ---
 
-## 🔮 향후 계획
+## 🔮 아키텍처
 
-- LLM 체인 최적화 및 프롬프트 개선
-- 성능 평가 지표 적용 (Precision, MRR, NDCG)
-- 신규 정책 알림 기능 구현
-- 챗봇 히스토리 저장 기능 구현
-- 데이터 수집 파이프라인 구축 및 AWS 배포
+- **시스템 아키텍처**
+![Image](https://github.com/user-attachments/assets/7d42707d-4694-4d46-85fe-744cb87b2598)
+<br><br>
+
+- **시퀀스 다이어그램**
+<img width="3840" height="2532" alt="Image" src="https://github.com/user-attachments/assets/ec8e7257-f165-4b55-ad9b-dae2e35af3f5"/>
+<br><br>
+
+- **웹 시스템 구성도**
+<img width="922" height="647" alt="Image" src="https://github.com/user-attachments/assets/777fbefc-bedc-4547-9c6e-bc8fbbf6655d"/>
 
 ---
